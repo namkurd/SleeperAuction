@@ -1,0 +1,9 @@
+{
+  "_comment": "Scoring-era markers drawn as dashed gold vertical lines. 'from' is the first season the rule applied, so the line is drawn between (from-1) and from. To add a new era, add a line here and push - no code changes.",
+  "eras": [
+    { "label": "Tiered 0.5 PPR", "from": 2021 },
+    { "label": "1.0 PPR", "from": 2022 },
+    { "label": "Superflex", "from": 2023 },
+    { "label": "0.5 FLEX PPFD<br>0.2 QB PPFD", "from": 2025 }
+  ]
+}

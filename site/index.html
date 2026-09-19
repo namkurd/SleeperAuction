@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DTF Club Auction Archive</title>
+<meta name="description" content="Fourteen-plus years of DTF Club auction-draft prices: league trends, manager profiles and player price history.">
+<meta name="color-scheme" content="dark">
+<style>
+:root{
+  --bg:#1f2124; --bg2:#2a2d31; --card:#2b2e33; --card2:#33373d;
+  --ink:#f1f2f4; --ink2:#b4b9c1; --ink3:#8b9199; --grid:#3f434a; --line:#4a4f57;
+  --gold:#f2b632;
+  --qb:#e0454f; --rb:#77e6a6; --wr:#4c9eff; --te:#e9c43c; --k:#b58cff; --def:#d6903f;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #3a3d43 0%, var(--bg) 60%) fixed, var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+a{color:#8ec1ff}
+header{padding:28px 24px 8px;max-width:1500px;margin:0 auto}
+h1{font-size:26px;letter-spacing:.2px;margin:0 0 4px;font-weight:700}
+.sub{color:var(--ink2);margin:0}
+nav{display:flex;gap:6px;flex-wrap:wrap;max-width:1500px;margin:14px auto 0;padding:0 24px}
+nav button{background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font:inherit;cursor:pointer}
+nav button:hover{background:var(--card2);color:var(--ink)}
+nav button[aria-selected="true"]{background:var(--ink);color:#1b1c1f;border-color:var(--ink);font-weight:600}
+main{max-width:1500px;margin:0 auto;padding:16px 24px 48px}
+section.view{display:none}
+section.view.on{display:block}
+.card{background:var(--card);border:1px solid #3a3e45;border-radius:14px;padding:18px 18px 12px;margin:0 0 22px}
+.card h2{font-size:18px;margin:0 0 2px;font-weight:650}
+.card .lede{color:var(--ink2);margin:0 0 8px;font-size:13.5px}
+.chart{width:100%;height:470px}
+.chart.tall{height:560px}
+#pl-detail{margin-top:6px}
+#pl-results-wrap{margin:0 0 22px}
+.plt{max-width:720px}
+.filters{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:0 0 16px}
+.filters label{color:var(--ink2);font-size:14px;display:flex;gap:8px;align-items:center}
+select,input[type=search]{background:#25272b;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:inherit;min-width:220px}
+select:focus,input:focus,button:focus-visible,summary:focus-visible{outline:2px solid #8ec1ff;outline-offset:2px}
+input[type=checkbox]{accent-color:#8ec1ff;width:16px;height:16px}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--ink2);font-size:13.5px;padding:6px 0}
+.tablewrap{overflow-x:auto;border:1px solid #3a3e45;border-radius:10px;margin:6px 0 10px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 9px;text-align:right;white-space:nowrap;border-bottom:1px solid #383c42}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
+thead th{color:var(--ink2);font-weight:600;background:#30343a;position:sticky;top:0}
+thead th:first-child{background:#30343a}
+tbody tr:hover td{background:#33373d}
+tbody tr:hover td:first-child{background:#33373d}
+.sw{display:inline-block;width:14px;height:0;border-top:3px solid;margin-right:7px;vertical-align:middle;border-radius:2px}
+.notes{color:var(--ink3);font-size:12.5px;margin:4px 2px 0}
+.notes p{margin:3px 0}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 10px;font-size:12px;color:var(--ink2);margin-left:8px}
+.results{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.results button{width:100%;text-align:left;background:#25272b;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;cursor:pointer}
+.results button:hover{background:var(--card2)}
+.results small{display:block;color:var(--ink3)}
+.posdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+.hero{display:flex;gap:26px;flex-wrap:wrap;margin:2px 0 6px}
+.hero div{min-width:110px}
+.hero b{display:block;font-size:24px;font-weight:700}
+.hero span{color:var(--ink3);font-size:12.5px}
+footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font-size:12.5px}
+.err{background:#4a2326;border:1px solid #7a3338;border-radius:10px;padding:14px 16px;margin:20px 24px}
+@media (max-width:700px){
+  header{padding:20px 16px 4px} nav,main,footer{padding-left:16px;padding-right:16px}
+  .chart{height:400px} .chart.tall{height:640px} h1{font-size:22px} select,input[type=search]{min-width:0;width:100%}
+  .filters label{width:100%}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>DTF Club Auction Archive</h1>
+  <p class="sub" id="subtitle"></p>
+</header>
+<nav role="tablist" aria-label="Views">
+  <button role="tab" data-view="league" aria-selected="true">League</button>
+  <button role="tab" data-view="managers" aria-selected="false">Managers</button>
+  <button role="tab" data-view="players" aria-selected="false">Players</button>
+</nav>
+
+<main>
+  <section class="view on" id="view-league">
+    <div class="card">
+      <h2>Auction dollars by position</h2>
+      <p class="lede">Total dollars the whole league spent on each position, per season. Click a legend entry to hide or isolate a position.</p>
+      <div class="chart" id="league-pos"></div>
+      <details open><summary>Data table</summary><div class="tablewrap" id="league-pos-table"></div></details>
+    </div>
+    <div class="card">
+      <h2>Auction dollars by depth chart</h2>
+      <p class="lede">League-wide dollars on each team's Nth-most-expensive player at a position (RB1 = each team's priciest running back, RB2 = their second priciest, and so on).</p>
+      <div class="chart tall" id="league-depth"></div>
+      <details open><summary>Data table</summary><div class="tablewrap" id="league-depth-table"></div></details>
+    </div>
+    <div class="card">
+      <h2>Price per pick</h2>
+      <p class="lede">Every player bought at auction, one dot each. Hover a dot for the player, buyer and price.</p>
+      <div class="filters"><label><input type="checkbox" id="show-kdef"> Show kickers and defenses</label></div>
+      <div class="chart tall" id="league-scatter"></div>
+    </div>
+    <div class="notes" id="notes-league"></div>
+  </section>
+
+  <section class="view" id="view-managers">
+    <div class="filters">
+      <label>Manager <select id="mgr-select" aria-label="Choose a manager"></select></label>
+      <label><input type="checkbox" id="mgr-avg"> Overlay league-average team (dotted)</label>
+    </div>
+    <div class="card">
+      <div class="hero" id="mgr-hero"></div>
+      <h2>Auction dollars by position <span id="mgr-name-1"></span></h2>
+      <p class="lede">What this manager spent on each position, per season played.</p>
+      <div class="chart" id="mgr-pos"></div>
+      <details open><summary>Data table</summary><div class="tablewrap" id="mgr-pos-table"></div></details>
+    </div>
+    <div class="card">
+      <h2>Auction dollars by depth chart <span id="mgr-name-2"></span></h2>
+      <p class="lede">Their most expensive QB / RB / WR / TE (1), second most expensive (2), and so on.</p>
+      <div class="chart tall" id="mgr-depth"></div>
+      <details open><summary>Data table</summary><div class="tablewrap" id="mgr-depth-table"></div></details>
+    </div>
+    <div class="notes" id="notes-mgr"></div>
+  </section>
+
+  <section class="view" id="view-players">
+    <div class="filters">
+      <label>Search a player <input type="search" id="pl-search" placeholder="e.g. Gronkowski, Kelce, Kamara" autocomplete="off" aria-label="Search players"></label>
+    </div>
+    <div id="pl-detail"></div>
+    <div id="pl-results-wrap"></div>
+    <div class="notes" id="notes-players"></div>
+  </section>
+</main>
+<footer id="footer"></footer>
+
+<script src="vendor/plotly-basic.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function(){
+"use strict";
+const D = window.DTF_DATA;
+if(!D){document.body.insertAdjacentHTML("afterbegin",'<div class="err">Could not load data.js. Run <code>python scripts/update_data.py</code> first.</div>');return;}
+
+/* ---------- constants ---------- */
+const POS = ["QB","RB","WR","TE","K","DEF"];
+const COLOR = {QB:"#e0454f",RB:"#77e6a6",WR:"#4c9eff",TE:"#e9c43c",K:"#b58cff",DEF:"#d6903f"};
+const SYMBOL = {QB:"circle",RB:"square",WR:"diamond",TE:"triangle-up",K:"cross",DEF:"x"};   // second encoding besides colour
+const DEPTH_SLOTS = [["QB",3],["RB",3],["WR",3],["TE",2],["K",1]];
+const INK="#f1f2f4", INK2="#b4b9c1", GRID="#3f434a", SURFACE="#2b2e33", GOLD="#f2b632";
+const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+/* ---------- data ---------- */
+const C = D.columns;
+const picks = D.picks.map(r => { const o={}; C.forEach((c,i)=>o[c]=r[i]); return o; });
+const seasons = D.seasons;
+const teamsIn = s => D.teams[String(s)];
+const $ = id => document.getElementById(id);
+const fmt$ = v => v==null ? "" : "$"+Math.round(v).toLocaleString("en-US");
+
+function el(tag, attrs, kids){
+  const e=document.createElement(tag);
+  for(const k in (attrs||{})){ if(k==="text") e.textContent=attrs[k]; else if(k==="class") e.className=attrs[k]; else e.setAttribute(k,attrs[k]); }
+  (kids||[]).forEach(c=>e.appendChild(typeof c==="string"?document.createTextNode(c):c));
+  return e;
+}
+
+/* ---------- aggregation ---------- */
+function posTotals(rows, ss){            // {pos: [value per season]}
+  const out={}; POS.forEach(p=>out[p]=ss.map(()=>0));
+  const idx={}; ss.forEach((s,i)=>idx[s]=i);
+  rows.forEach(r=>{ if(idx[r.season]!==undefined) out[r.position][idx[r.season]]+=r.price; });
+  return out;
+}
+function depthTotals(rows, ss, pos, n){  // null where nobody had that slot
+  const v=ss.map(()=>null), idx={}; ss.forEach((s,i)=>idx[s]=i);
+  rows.forEach(r=>{ if(r.position===pos && r.depth===n && idx[r.season]!==undefined) v[idx[r.season]]=(v[idx[r.season]]||0)+r.price; });
+  return v;
+}
+function span(ss){ const a=[]; for(let s=Math.min(...ss); s<=Math.max(...ss); s++) a.push(s); return a; }
+
+/* ---------- shared chart plumbing ---------- */
+const narrow = () => window.innerWidth < 760;
+function baseLayout(xs, opts){
+  opts=opts||{};
+  const lo=Math.min(...xs)-0.6, hi=Math.max(...xs)+0.6;
+  const shapes=[], annotations=[];
+  (D.eras||[]).forEach((e,i)=>{
+    const x=e.from-0.5;
+    if(x<=lo+0.05||x>=hi) return;
+    shapes.push({type:"line",xref:"x",yref:"paper",x0:x,x1:x,y0:0,y1:1,line:{color:GOLD,width:1.6,dash:"dash"}});
+    annotations.push({xref:"x",yref:"paper",x:x,y:1,yanchor:"bottom",xanchor:(narrow()&&x>(lo+hi)/2)?"right":"center",
+      text:narrow()?e.label.replace("<br>"," / "):e.label,showarrow:false,
+      font:{color:GOLD,size:narrow()?9:12},yshift:narrow()?(shapes.length-1)*13:0});
+  });
+  return {
+    paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
+    font:{family:FONT,color:INK2,size:12.5},
+    margin:{l:narrow()?46:58,r:opts.rightLegend&&!narrow()?190:narrow()?12:22,t:narrow()?(56+13*(D.eras||[]).length):56,b:narrow()?(opts.rightLegend?200:120):opts.bottomLegend?96:52},
+    xaxis:{range:[lo,hi],tickmode:"array",tickvals:xs.filter(s=>Number.isInteger(s)),ticktext:xs.map(String),tickangle:narrow()?-60:0,
+      gridcolor:GRID,gridwidth:1,zeroline:false,linecolor:GRID,fixedrange:true,title:{text:""}},
+    yaxis:{tickprefix:"$",gridcolor:GRID,gridwidth:1,zeroline:false,linecolor:GRID,rangemode:"tozero",fixedrange:true,tickformat:",d"},
+    shapes, annotations,
+    hoverlabel:{bgcolor:"#17181a",bordercolor:"#4a4f57",font:{family:FONT,color:INK,size:13}},
+    legend:opts.rightLegend && !narrow()
+      ? {x:1.01,xanchor:"left",y:1,yanchor:"top",font:{color:INK,size:12},bgcolor:"rgba(0,0,0,0)",tracegroupgap:6}
+      : {orientation:"h",x:0,xanchor:"left",y:narrow()?(opts.rightLegend?-0.22:-0.3):-0.16,yanchor:"top",font:{color:INK,size:narrow()?11:12},bgcolor:"rgba(0,0,0,0)"},
+    hovermode:opts.hovermode||"x unified", dragmode:false
+  };
+}
+const CFG={responsive:true,displayModeBar:false,scrollZoom:false};
+
+function mix(hex, toHex, t){   // t=0 -> hex, t=1 -> toHex
+  const a=parseInt(hex.slice(1),16), b=parseInt(toHex.slice(1),16);
+  const c=(sh)=>Math.round(((a>>sh)&255)*(1-t)+((b>>sh)&255)*t);
+  return "#"+[16,8,0].map(sh=>c(sh).toString(16).padStart(2,"0")).join("");
+}
+const DEPTH_STYLE = {1:{t:0,dash:"solid",w:2.6},2:{t:0.32,dash:"dash",w:2.2},3:{t:0.55,dash:"dot",w:2.2}};
+
+function lineTrace(name, xs, ys, pos, depth, extra){
+  const st = depth ? DEPTH_STYLE[depth] : {t:0,dash:"solid",w:2.6};
+  const col = mix(COLOR[pos], "#2b2e33", st.t);
+  return Object.assign({
+    type:"scatter", mode:"lines+markers", name:name, x:xs, y:ys, connectgaps:false,
+    line:{color:col,width:st.w,dash:st.dash,shape:"linear"},
+    marker:{symbol:SYMBOL[pos],size:7,color:col,line:{color:SURFACE,width:1.5}},
+    hovertemplate:"%{y:$,.0f}", legendgroup:pos
+  }, extra||{});
+}
+
+function renderTable(host, xs, rows){
+  host.textContent="";
+  const t=el("table"), thead=el("thead"), hr=el("tr");
+  hr.appendChild(el("th",{text:""}));
+  xs.forEach(x=>hr.appendChild(el("th",{text:String(x)})));
+  thead.appendChild(hr); t.appendChild(thead);
+  const tb=el("tbody");
+  rows.forEach(r=>{
+    const tr=el("tr");
+    const th=el("td",{},[el("span",{class:"sw",style:"border-color:"+r.color+";border-top-style:"+(r.dash||"solid")}), r.label]);
+    tr.appendChild(th);
+    r.values.forEach(v=>tr.appendChild(el("td",{text:fmt$(v)})));
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); host.appendChild(t);
+}
+
+/* ---------- footnotes ---------- */
+function footnotes(host, extra){
+  host.textContent="";
+  const notes=[];
+  notes.push("Raw dollars, not adjusted for league size or budget.");
+  let prev=null;
+  seasons.forEach(s=>{
+    if(prev!==null && teamsIn(s)!==teamsIn(prev))
+      notes.push(`${s} has ${teamsIn(s)} teams ($${D.spent[String(s)].toLocaleString("en-US")} spent vs about $${D.spent[String(prev)].toLocaleString("en-US")} before), so ${s} totals are not directly comparable with earlier years.`);
+    prev=s;
+  });
+  notes.push("Depth is strictly by price: a team's highest-priced player at a position is 1, the next is 2, and so on (ties go to the earlier pick). Older charts used the spreadsheet's lineup order, so a few depth numbers differ slightly.");
+  notes.push("Sources: " + D.sources_note + " Where the two disagree, Sleeper wins; see data/reconcile_report.md in the repo.");
+  (extra||[]).forEach(n=>notes.push(n));
+  notes.forEach(n=>host.appendChild(el("p",{text:n})));
+}
+
+/* ---------- LEAGUE view ---------- */
+let leagueDrawn=false;
+function positionFigure(chartId, tableId, rows, ss, opts){
+  opts=opts||{};
+  const xs = opts.fillGaps ? span(ss) : ss;
+  const played=new Set(ss);
+  const tot=posTotals(rows, xs);
+  const shown = xs.map(s=>played.has(s));
+  const traces=[], trows=[];
+  POS.forEach(p=>{
+    const y=tot[p].map((v,i)=>shown[i]?v:null);
+    traces.push(lineTrace(p,xs,y,p,0));
+    trows.push({label:p,color:COLOR[p],values:y});
+  });
+  if(opts.avg){
+    const lg=posTotals(picks.filter(r=>played.has(r.season)), xs);
+    POS.forEach(p=>{
+      const y=lg[p].map((v,i)=>shown[i]?v/teamsIn(xs[i]):null);
+      const t=lineTrace(p+" league avg",xs,y,p,0,{mode:"lines",showlegend:false,legendgroup:p,hovertemplate:"%{y:$,.0f} league avg"});
+      t.line={color:COLOR[p],width:1.4,dash:"dot"}; t.opacity=.6; traces.push(t);
+    });
+  }
+  const lay=baseLayout(xs,{bottomLegend:true});
+  if(opts.yMin) lay.yaxis.range=[0,opts.yMin(traces)];
+  Plotly.react(chartId,traces,lay,CFG);
+  renderTable($(tableId),xs,trows);
+}
+function depthFigure(chartId, tableId, rows, ss, opts){
+  opts=opts||{};
+  const xs = opts.fillGaps ? span(ss) : ss;
+  const played=new Set(ss);
+  const traces=[], trows=[];
+  DEPTH_SLOTS.forEach(([p,n])=>{
+    for(let d=1; d<=n; d++){
+      const raw=depthTotals(rows,xs,p,d);
+      const y=raw.map((v,i)=>played.has(xs[i])?v:null);
+      if(y.every(v=>v==null)) continue;
+      const t=lineTrace(p+d,xs,y,p,d);
+      if(d===1 && !narrow()) t.legendgrouptitle={text:p,font:{color:INK2,size:11}};
+      traces.push(t);
+      const col=mix(COLOR[p],"#2b2e33",DEPTH_STYLE[d].t);
+      trows.push({label:p+d,color:col,dash:DEPTH_STYLE[d].dash==="solid"?"solid":(DEPTH_STYLE[d].dash==="dash"?"dashed":"dotted"),values:y});
+    }
+  });
+  if(opts.avg){
+    const lgRows=picks.filter(r=>played.has(r.season));
+    DEPTH_SLOTS.forEach(([p,n])=>{
+      for(let d=1;d<=n;d++){
+        const raw=depthTotals(lgRows,xs,p,d);
+        const y=raw.map((v,i)=>(played.has(xs[i])&&v!=null)?v/teamsIn(xs[i]):null);
+        if(y.every(v=>v==null)) continue;
+        const t=lineTrace(p+d+" league avg",xs,y,p,d,{mode:"lines",showlegend:false,hovertemplate:"%{y:$,.0f} league avg"});
+        t.line={color:COLOR[p],width:1.2,dash:"dot"}; t.opacity=.5; traces.push(t);
+      }
+    });
+  }
+  const lay=baseLayout(xs,{rightLegend:true,stagger:false});
+  if(opts.yMin) lay.yaxis.range=[0,opts.yMin(traces)];
+  Plotly.react(chartId,traces,lay,CFG);
+  renderTable($(tableId),xs,trows);
+}
+function scatterFigure(){
+  const showKD=$("show-kdef").checked;
+  const traces=POS.map(p=>{
+    const rows=picks.filter(r=>r.position===p);
+    return {
+      type:"scatter",mode:"markers",name:p,legendgroup:p,
+      visible:(p==="K"||p==="DEF")&&!showKD?"legendonly":true,
+      x:rows.map((r,i)=>r.season+(((i*37)%100)/100-0.5)*0.5),
+      y:rows.map(r=>r.price),
+      customdata:rows.map(r=>[r.player,r.manager,p+r.depth,r.season]),
+      marker:{color:COLOR[p],symbol:SYMBOL[p],size:(p==="K"||p==="DEF")?7:8,opacity:.88,line:{color:SURFACE,width:1}},
+      hovertemplate:"<b>%{customdata[0]}</b><br>%{customdata[1]} · %{customdata[3]}<br>%{y:$,.0f} · %{customdata[2]}<extra></extra>"
+    };
+  });
+  const lay=baseLayout(seasons,{hovermode:"closest",bottomLegend:true});
+  lay.hoverlabel.align="left";
+  Plotly.react("league-scatter",traces,lay,CFG);
+}
+function drawLeague(){
+  positionFigure("league-pos","league-pos-table",picks,seasons);
+  depthFigure("league-depth","league-depth-table",picks,seasons,{});
+  scatterFigure();
+  footnotes($("notes-league"));
+}
+
+/* ---------- MANAGERS view ---------- */
+const mgrSel=$("mgr-select");
+(function fillMgr(){
+  const cur=D.managers.filter(m=>m.current), old=D.managers.filter(m=>!m.current);
+  const grp=(label,list)=>{ if(!list.length) return; const g=el("optgroup",{label:label}); list.forEach(m=>g.appendChild(el("option",{value:m.name,text:m.name}))); mgrSel.appendChild(g); };
+  grp("Current managers",cur); grp("Former managers",old);
+})();
+function drawManager(name){
+  const m=D.managers.find(x=>x.name===name)||D.managers[0];
+  mgrSel.value=m.name;
+  const rows=picks.filter(r=>r.manager===m.name);
+  const ss=m.seasons;
+  const avg=$("mgr-avg").checked;
+  $("mgr-name-1").textContent=$("mgr-name-2").textContent="· "+m.name;
+  // hero facts
+  const hero=$("mgr-hero"); hero.textContent="";
+  const total=rows.reduce((a,r)=>a+r.price,0), top=rows.reduce((a,r)=>r.price>a.price?r:a,rows[0]);
+  const ranges=[]; let a=ss[0], b=ss[0];
+  for(let i=1;i<=ss.length;i++){ if(ss[i]===b+1){b=ss[i];} else { ranges.push(a===b?String(a):a+"–"+b); a=ss[i]; b=ss[i]; } }
+  [[ss.length+" seasons",ranges.join(", ")+(m.current?"":" (former member)")],[fmt$(total),"spent in total"],[top?fmt$(top.price):"","most expensive buy: "+(top?top.player+" ("+top.season+")":"")]]
+    .forEach(([big,small])=>hero.appendChild(el("div",{},[el("b",{text:big}),el("span",{text:small})])));
+  const yMax=(base)=>(traces)=>Math.max(base,Math.ceil(Math.max(...traces.flatMap(t=>t.y.filter(v=>v!=null)))*1.08/10)*10);
+  positionFigure("mgr-pos","mgr-pos-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(140)});
+  depthFigure("mgr-depth","mgr-depth-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(80)});
+  const extra=[];
+  if(ss.length!==span(ss).length) extra.push(m.name+" sat out some seasons; the gaps in the charts are real years without an auction.");
+  extra.push("Chart axes start at $0 and stop at $140 (position) and $80 (depth) unless a manager's spending goes higher.");
+  footnotes($("notes-mgr"),extra);
+}
+
+/* ---------- PLAYERS view ---------- */
+const players=(function(){
+  const map=new Map();
+  picks.forEach(r=>{
+    let p=map.get(r.player_key);
+    if(!p){ p={key:r.player_key,name:r.player,rows:[],pos:{}}; map.set(r.player_key,p); }
+    p.rows.push(r); p.name=r.player; p.pos[r.position]=(p.pos[r.position]||0)+1;
+  });
+  const list=[...map.values()];
+  list.forEach(p=>{
+    p.rows.sort((a,b)=>a.season-b.season);
+    p.mainPos=Object.entries(p.pos).sort((a,b)=>b[1]-a[1])[0][0];
+    p.total=p.rows.reduce((a,r)=>a+r.price,0);
+    p.max=Math.max(...p.rows.map(r=>r.price));
+    p.q=(p.name+" "+p.rows.map(r=>r.player).join(" ")).toLowerCase().normalize("NFD").replace(/[̀-ͯ.'’-]/g,"");
+  });
+  return list;
+})();
+const playerByKey=new Map(players.map(p=>[p.key,p]));
+const normQ=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ.'’-]/g,"").trim();
+
+function playerButton(p){
+  const b=el("button",{type:"button"},[
+    el("span",{class:"posdot",style:"background:"+COLOR[p.mainPos]}), el("strong",{text:p.name}),
+    el("small",{text:p.mainPos+" · "+p.rows.length+(p.rows.length===1?" auction":" auctions")+" · best price "+fmt$(p.max)})]);
+  b.addEventListener("click",()=>{ location.hash="#players/"+encodeURIComponent(p.key); });
+  return el("li",{},[b]);
+}
+function drawPlayerList(){
+  const q=normQ($("pl-search").value), wrap=$("pl-results-wrap"); wrap.textContent="";
+  let list, title;
+  if(q.length<2){ list=[...players].sort((a,b)=>b.max-a.max).slice(0,24); title="Highest single-auction prices of all time (pick one, or search above)"; }
+  else{
+    const toks=q.split(/\s+/);
+    list=players.filter(p=>toks.every(t=>p.q.includes(t))).sort((a,b)=>(b.q.startsWith(q)-a.q.startsWith(q))||(b.total-a.total)).slice(0,24);
+    title=list.length?list.length+(list.length===24?"+":"")+" match"+(list.length===1?"":"es"):"No players match “"+$("pl-search").value+"”";
+  }
+  wrap.appendChild(el("p",{class:"lede",text:title}));
+  const ul=el("ul",{class:"results"}); list.forEach(p=>ul.appendChild(playerButton(p))); wrap.appendChild(ul);
+}
+function drawPlayer(key){
+  const host=$("pl-detail"); host.textContent="";
+  const p=playerByKey.get(key);
+  if(!p){ return; }
+  const card=el("div",{class:"card"});
+  card.appendChild(el("h2",{},[p.name,el("span",{class:"pill",text:p.mainPos})]));
+  const total=p.total, n=p.rows.length;
+  const hero=el("div",{class:"hero"});
+  [[String(n),n===1?"auction":"auctions"],[fmt$(p.max),"highest price"],[fmt$(total/n),"average price"],[fmt$(total),"total spent"]]
+    .forEach(([b,s])=>hero.appendChild(el("div",{},[el("b",{text:b}),el("span",{text:s})])));
+  card.appendChild(hero);
+  card.appendChild(el("div",{class:"chart",id:"pl-chart",style:"height:340px"}));
+  const tw=el("div",{class:"tablewrap plt"}), t=el("table"), hr=el("tr");
+  ["Season","Paid by","Position","Depth slot","Price"].forEach((h,i)=>hr.appendChild(el("th",{text:h,style:i<2?"text-align:left":""})));
+  t.appendChild(el("thead",{},[hr]));
+  const tb=el("tbody");
+  p.rows.forEach(r=>{
+    const tr=el("tr");
+    tr.appendChild(el("td",{text:String(r.season)}));
+    tr.appendChild(el("td",{text:r.manager,style:"text-align:left"}));
+    tr.appendChild(el("td",{text:r.position})); tr.appendChild(el("td",{text:r.position+r.depth}));
+    tr.appendChild(el("td",{text:fmt$(r.price)})); tb.appendChild(tr);
+  });
+  t.appendChild(tb); tw.appendChild(t); card.appendChild(el("details",{open:""},[el("summary",{text:"Every auction"}),tw]));
+  host.appendChild(card);
+  const xs=span(p.rows.map(r=>r.season));
+  const by=new Map(p.rows.map(r=>[r.season,r]));
+  const lay=baseLayout(seasons,{hovermode:"closest"});
+  lay.xaxis.range=[Math.min(...xs)-0.6,Math.max(...xs)+0.6];
+  lay.xaxis.tickvals=xs; lay.xaxis.ticktext=xs.map(String);
+  lay.margin.b=46; lay.legend={visible:false}; lay.showlegend=false;
+  // era markers keep only those inside this player's span
+  const inRange=(e)=>e.from-0.5>lay.xaxis.range[0]+0.05 && e.from-0.5<lay.xaxis.range[1];
+  lay.shapes=lay.shapes.filter(s=>s.x0>lay.xaxis.range[0]+0.05&&s.x0<lay.xaxis.range[1]);
+  lay.annotations=lay.annotations.filter(a=>a.x>lay.xaxis.range[0]+0.05&&a.x<lay.xaxis.range[1]);
+  const col=COLOR[p.mainPos];
+  const trace={type:"scatter",mode:"lines+markers+text",x:xs,y:xs.map(s=>by.has(s)?by.get(s).price:null),connectgaps:false,
+    line:{color:col,width:2.2},marker:{color:col,symbol:SYMBOL[p.mainPos],size:10,line:{color:SURFACE,width:1.5}},
+    text:xs.map(s=>by.has(s)?"$"+by.get(s).price:""),textposition:"top center",textfont:{color:INK,size:12},
+    customdata:xs.map(s=>by.has(s)?[by.get(s).manager,by.get(s).position+by.get(s).depth]:["",""]),
+    hovertemplate:"%{x}: <b>%{y:$,.0f}</b><br>%{customdata[0]} · %{customdata[1]}<extra></extra>",cliponaxis:false};
+  lay.yaxis.range=[0,Math.max(...p.rows.map(r=>r.price))*1.25+2];
+  Plotly.newPlot("pl-chart",[trace],lay,CFG);
+  footnotes($("notes-players"),["Player identity: Sleeper player id for 2021 on. Older spreadsheet names were matched to real players by name and era (misspellings, nicknames and abbreviations included); a small number could not be matched and appear under their spreadsheet name."]);
+}
+
+/* ---------- routing ---------- */
+const views=["league","managers","players"];
+function show(view){
+  views.forEach(v=>{ $("view-"+v).classList.toggle("on",v===view); });
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.view===view)));
+}
+function route(){
+  const parts=(location.hash||"#league").slice(1).split("/");
+  const view=views.includes(parts[0])?parts[0]:"league";
+  show(view);
+  const arg=parts[1]?decodeURIComponent(parts.slice(1).join("/")):"";
+  if(view==="league") drawLeague();
+  else if(view==="managers") drawManager(arg||mgrSel.value||"Ben");
+  else { drawPlayerList(); if(arg){ drawPlayer(arg); } else { $("pl-detail").textContent=""; footnotes($("notes-players")); } }
+  document.querySelectorAll('.chart').forEach(c=>{ if(c.offsetParent!==null && c.data) Plotly.Plots.resize(c); });
+}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{
+  const v=b.dataset.view; const cur=(location.hash||"#league").slice(1).split("/")[0];
+  if(v!==cur) location.hash="#"+v; else route();
+}));
+window.addEventListener("hashchange",route);
+mgrSel.addEventListener("change",()=>{ location.hash="#managers/"+encodeURIComponent(mgrSel.value); });
+$("mgr-avg").addEventListener("change",()=>drawManager(mgrSel.value));
+$("show-kdef").addEventListener("change",scatterFigure);
+$("pl-search").addEventListener("input",drawPlayerList);
+let lastNarrow=narrow(), rt;
+window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(narrow()!==lastNarrow){ lastNarrow=narrow(); route(); } },200); });
+
+$("subtitle").textContent=`Every auction draft since ${seasons[0]} · ${seasons.length} seasons · ${picks.length.toLocaleString("en-US")} picks · ${D.managers.length} managers`;
+$("footer").appendChild(el("span",{text:"Data last changed "+D.generated+". Updates itself when a new Sleeper auction draft completes. "}));
+$("footer").appendChild(el("a",{href:"https://github.com/namkurd/SleeperAuction",text:"Source on GitHub"}));
+route();
+})();
+</script>
+</body>
+</html>

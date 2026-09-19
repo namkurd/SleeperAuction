@@ -1,0 +1,30 @@
+{
+  "_comment": "Maps Sleeper user_id -> the manager's display name. Use user_id (stable) not username. roster_overrides fixes seasons where Sleeper has no owner for a roster: {season: {roster_id: manager}}. A user that is not listed here still works: they appear under their Sleeper display name and the run prints a warning telling you to add them here.",
+  "root_user_id": "611688251123699712",
+  "seed_league_id": "1389416556617801728",
+  "users": {
+    "611688251123699712": "Ben",
+    "621896714877599744": "Steven",
+    "473908924727160832": "Rohaan",
+    "893989602594234368": "Christian",
+    "735661741740056576": "Ryan",
+    "1389426153571229696": "Stephanie",
+    "992141374650753024": "Kaitlyn",
+    "622284153274048512": "Aidan",
+    "683108507217653760": "Jake",
+    "622233730559348736": "Joe",
+    "740989628160614400": "Alex",
+    "734157966206455808": "Ankit",
+    "622238358105575424": "Tommy",
+    "732065507691356160": "Oleg"
+  },
+  "usernames_for_reference": {
+    "Ben": "namkurd", "Steven": "Stevster77", "Rohaan": "HaanRolo", "Christian": "Hellerch",
+    "Ryan": "rrakower", "Stephanie": "slondon1", "Kaitlyn": "kohagan18", "Aidan": "Legendaly",
+    "Jake": "thehebrewhammer24", "Joe": "GreenBayBlay", "Alex": "ilovelamp917", "Ankit": "lalu101",
+    "Tommy": "tkitaev", "Oleg": "Ozviagin"
+  },
+  "roster_overrides": {
+    "2023": { "9": "Tommy" }
+  }
+}

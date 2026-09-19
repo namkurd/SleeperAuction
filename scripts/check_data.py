@@ -3,7 +3,7 @@
 Sleeper response can never overwrite good data or reach the site. Exit code 1 = problem."""
 import csv
 import sys
-from collections import defaultdict
+from collections import defaultdict, Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -31,6 +31,10 @@ for s in seasons:
     n = sum(1 for (ss, _) in spend if ss == s)
     if n < 8:
         problems.append(f"{s} has only {n} teams")
+lines = Counter((r["season"], r["manager"], r["row"]) for r in rows)
+for (s, m, line), n in lines.items():
+    if n > 1:
+        problems.append(f"{s} {m}: {n} players share board line {line}")
 for (s, k), n in keys.items():
     if n > 1:
         problems.append(f"{s}: player {k} bought {n} times")

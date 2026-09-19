@@ -21,7 +21,9 @@ Seasons 2012-2020 come from the spreadsheet.
 import csv
 import datetime as dt
 import json
+import re
 import sys
+import unicodedata
 import time
 import urllib.error
 import urllib.request
@@ -35,7 +37,7 @@ SHEET_LAST_SEASON = 2020
 PICK_COLS = ["season", "draft_id", "pick_no", "roster_id", "picked_by", "manager", "player_id",
              "first_name", "last_name", "position", "nfl_team", "amount"]
 CANON_COLS = ["season", "manager", "player", "player_id", "player_key", "position", "price",
-              "pick_no", "depth", "source"]
+              "pick_no", "depth", "slot", "row", "source"]
 
 # team abbreviation -> nickname, so defenses look identical in every era
 DEF_NICK = {
@@ -214,7 +216,8 @@ def canonical_rows(history, sleeper):
         rows.append({"season": int(r["season"]), "manager": r["manager"], "player": r["player"],
                      "player_id": r["player_id"], "player_key": r["player_key"],
                      "position": r["position"], "price": int(r["price"]), "pick_no": "",
-                     "_order": int(r["row_order"]), "source": "sheet"})
+                     "_order": int(r["row_order"]), "source": "sheet",
+                     "slot": r.get("slot", "")})
     for r in sleeper:
         pos = r["position"]
         if pos == "DEF":
@@ -240,6 +243,123 @@ def add_depth(rows):
         for i, r in enumerate(g, 1):
             r["depth"] = i
     rows.sort(key=lambda r: (r["season"], r["manager"], r["position"], r["depth"]))
+
+
+def _last_name(name):
+    """Lower-case last word of a player name, ignoring accents, punctuation and Jr./III."""
+    t = "".join(c for c in unicodedata.normalize("NFKD", str(name)) if not unicodedata.combining(c))
+    t = re.sub(r"[.'\u2019`]", "", t.lower())
+    words = [w for w in re.split(r"[^a-z0-9$-]+", t) if w and w not in ("jr", "sr", "ii", "iii", "iv", "v")]
+    return words[-1] if words else ""
+
+
+def _sheet_slots(picks, ref):
+    """Give Sleeper picks the lineup slot the old spreadsheet had for the same team and season.
+
+    Rows are paired by price (strong), position, and last name; each side is used at most once.
+    Picks that find no partner keep no slot and are placed by the rule in add_slots()."""
+    pairs = []
+    for i, p in enumerate(picks):
+        pl = _last_name(p["player"])
+        for j, q in enumerate(ref):
+            same_price = p["price"] == int(q["price"])
+            same_name = bool(pl) and pl == _last_name(q["name_raw"])
+            if not (same_price or (same_name and p["position"] == q["position"])):
+                continue
+            score = 4 * same_price + 3 * same_name + 2 * (p["position"] == q["position"])
+            pairs.append((-score, p["_order"], j, i))
+    pairs.sort()
+    used_p, used_q = set(), set()
+    for _, _, j, i in pairs:
+        if i in used_p or j in used_q:
+            continue
+        used_p.add(i)
+        used_q.add(j)
+        picks[i]["slot"] = ref[j]["slot"]
+    return len(picks) - len(used_p)
+
+
+def add_slots(rows, reference=()):
+    """Lay each team out like a lineup card, for the Drafts view.
+
+    Slot labels come from the old spreadsheet wherever it has them (2012-2020 rows carry them;
+    2021+ Sleeper picks inherit them by matching price/position/name). Anything without a slot,
+    which is every season added after the spreadsheet, is placed by rule: fixed slots (QB, RB, WR,
+    TE, K, D/ST) take that position's priciest players, then the flex slots (fewest eligible
+    positions first) take the priciest player left, and the rest go to the bench. Ties go to the
+    earlier pick. The starting lineup itself is config/lineups.json. Sets r["slot"] and r["row"]
+    (line on the board) and returns ({season: [slot label for each board line]}, {season: placed mostly by rule?}).
+    """
+    cfg = load_json("lineups.json")
+    eligible, lineups = cfg["eligible"], sorted(cfg["lineups"], key=lambda e: e["from"])
+    ref_by = defaultdict(list)
+    for q in reference:
+        ref_by[(int(q["season"]), q["manager"])].append(q)
+    teams = defaultdict(list)
+    for r in rows:
+        teams[(r["season"], r["manager"])].append(r)
+    starters_of, bench_len, unmatched = {}, defaultdict(int), 0
+    n_loose, n_all = defaultdict(int), defaultdict(int)
+    price_first = lambda r: (-r["price"], r["_order"])
+    for (season, mgr), rs in teams.items():
+        starters = next((e["starters"] for e in reversed(lineups) if e["from"] <= season),
+                        lineups[0]["starters"])
+        starters_of[season] = starters
+        sleeper_rows = [r for r in rs if r["source"] == "sleeper"]
+        if sleeper_rows and ref_by.get((season, mgr)):
+            unmatched += _sheet_slots(sleeper_rows, ref_by[(season, mgr)])
+        filled, bench, loose = [None] * len(starters), [], []
+        # 1) picks that arrive with a slot: put them in the matching starting line, else on the bench
+        for r in sorted(rs, key=price_first):
+            label = r.get("slot") or ""
+            if label == "BE":
+                bench.append(r)
+            elif label:
+                line = next((i for i, sl in enumerate(starters) if sl == label and filled[i] is None), None)
+                if line is None:
+                    bench.append(r)
+                else:
+                    filled[line] = r
+            else:
+                loose.append(r)
+        # 2) picks with no slot: fill any empty starting lines by the price rule
+        for i in sorted(range(len(starters)), key=lambda i: (len(eligible[starters[i]]), i)):
+            if filled[i] is None:
+                ok = eligible[starters[i]]
+                pick = next((r for r in loose if r["position"] in ok), None)
+                if pick:
+                    loose.remove(pick)
+                    filled[i] = pick
+        n_loose[season] += len(loose)
+        n_all[season] += len(rs)
+        bench = sorted(bench + loose, key=price_first)
+        for i, r in enumerate(filled):
+            if r:
+                r["slot"], r["row"] = starters[i], i
+        for k, r in enumerate(bench):
+            r["slot"], r["row"] = "BE", len(starters) + k
+        bench_len[season] = max(bench_len[season], len(bench))
+    if unmatched:
+        print(f"note: {unmatched} Sleeper picks had no partner row in the old spreadsheet; placed by the price rule")
+    by_rule = {s: n_loose[s] > n_all[s] / 2 for s in starters_of}     # True: mostly placed by the price rule
+    return {s: starters_of[s] + ["BE"] * bench_len[s] for s in starters_of}, by_rule
+
+
+def add_order(canon):
+    """Left-to-right manager order for each season's board: the old spreadsheet's order
+    (data/board_order.json), and for newer seasons last season's order, newcomers at the end."""
+    path = ROOT / "data" / "board_order.json"
+    known = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    present = defaultdict(set)
+    for r in canon:
+        present[r["season"]].add(r["manager"])
+    order, prev = {}, []
+    for s in sorted(present):
+        base = known.get(str(s)) or prev
+        cur = [m for m in base if m in present[s]]
+        cur += sorted(present[s] - set(cur), key=str.lower)
+        order[s] = prev = cur
+    return order
 
 
 # ----------------------------------------------------------------------------- reconcile
@@ -305,7 +425,7 @@ def reconcile(canon, reference):
 
 
 # ----------------------------------------------------------------------------- site data
-def build_site_json(canon, sources_note):
+def build_site_json(canon, sources_note, boards):
     eras = load_json("eras.json")["eras"]
     seasons = sorted({r["season"] for r in canon})
     latest = seasons[-1]
@@ -317,14 +437,15 @@ def build_site_json(canon, sources_note):
     teams = {str(s): len({r["manager"] for r in canon if r["season"] == s}) for s in seasons}
     spent = {str(s): sum(r["price"] for r in canon if r["season"] == s) for s in seasons}
     source = {str(s): next(r["source"] for r in canon if r["season"] == s) for s in seasons}
-    cols = ["season", "manager", "player", "player_key", "position", "price", "depth", "pick_no"]
+    cols = ["season", "manager", "player", "player_key", "position", "price", "depth", "pick_no", "row"]
     return {
         "generated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "latest_season": latest, "seasons": seasons, "teams": teams, "spent": spent,
         "source": source, "eras": eras, "managers": managers, "sources_note": sources_note,
-        "columns": cols,
+        "boards": boards, "columns": cols,
         "picks": [[r["season"], r["manager"], r["player"], r["player_key"], r["position"],
-                   r["price"], r["depth"], r["pick_no"] if r["pick_no"] != "" else None] for r in canon],
+                   r["price"], r["depth"], r["pick_no"] if r["pick_no"] != "" else None, r["row"]]
+                  for r in canon],
     }
 
 
@@ -344,22 +465,25 @@ def main(argv):
     history = read_csv(ROOT / "data" / "history_2012_2020.csv")
     canon = canonical_rows(history, sleeper)
     add_depth(canon)
+    ref_path = ROOT / "data" / "sheet_reference_2021_plus.csv"
+    reference = read_csv(ref_path) if ref_path.exists() else []
+    (slots, by_rule), order = add_slots(canon, reference), add_order(canon)
+    boards = {str(s): {"slots": slots[s], "order": order[s], "by_rule": by_rule[s]} for s in sorted(slots)}
     write_csv(ROOT / "data" / "picks.csv", canon, CANON_COLS)
 
-    ref_path = ROOT / "data" / "sheet_reference_2021_plus.csv"
-    report = reconcile(canon, read_csv(ref_path) if ref_path.exists() else [])
+    report = reconcile(canon, reference)
     (ROOT / "data" / "reconcile_report.md").write_text(report, encoding="utf-8")
 
     first_sleeper = min((int(r["season"]) for r in sleeper), default=None)
     note = (f"2012-{SHEET_LAST_SEASON}: spreadsheet. {first_sleeper}-{max(r['season'] for r in canon)}: Sleeper."
             if first_sleeper else "Spreadsheet only.")
-    site = build_site_json(canon, note)
+    site = build_site_json(canon, note, boards)
     out = ROOT / "site" / "data.json"
     out.parent.mkdir(exist_ok=True)
     if out.exists():  # keep the old timestamp when nothing changed, so runs don't create empty commits
         try:
             old = json.loads(out.read_text(encoding="utf-8"))
-            if old.get("picks") == site["picks"] and old.get("eras") == site["eras"]:
+            if all(old.get(k) == site[k] for k in ("picks", "eras", "boards")):
                 site["generated"] = old["generated"]
         except (ValueError, KeyError):
             pass

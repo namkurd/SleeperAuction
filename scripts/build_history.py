@@ -15,7 +15,10 @@ What it does
   * resolves messy player names ("cmc", "Gostowski", "Antionio Brown") to a real
     player using Sleeper's public player database (fuzzy match + manual overrides in
     config/aliases.json -> sheet_name_overrides)
+  * keeps each row's lineup slot (QB, RB, FLEX, BE ...) so the Drafts view can rebuild the old boards
   * writes data/history_2012_2020.csv and data/history_name_map.csv (audit trail)
+  * writes data/board_order.json: the left-to-right manager order of each season's board on the
+    `Auctions` tab (used by the site's Drafts view)
   * writes data/sheet_reference_2021_plus.csv: the spreadsheet's later rows, kept ONLY so
     update_data.py can print a sheet-vs-Sleeper reconcile report (never used for charts)
 """
@@ -32,6 +35,7 @@ from rapidfuzz import fuzz
 ROOT = Path(__file__).resolve().parent.parent
 LAST_SHEET_SEASON = 2020
 SKILL = {"QB", "RB", "WR", "TE", "K"}
+ORDER_ONLY = False
 SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
 
 # nickname -> canonical DEF label. Keys are matched against words in the sheet cell.
@@ -69,6 +73,12 @@ TEAMS = {
     "Titans": ["titans", "tennessee", "ten"],
     "Commanders": ["commanders", "redskins", "football team", "washington", "was"],
 }
+
+
+def slot_name(raw):
+    """The sheet's lineup slot for a row, spelled the way config/lineups.json does."""
+    raw = str(raw).strip().upper()
+    return "D/ST" if raw in ("DST", "DEF", "D/ST") else raw
 
 
 def strip_accents(s):
@@ -200,9 +210,27 @@ def _match(query, pool, year, target, min_score=85):
     return c["full"], c["pid"], method + "+age", best, "ambiguous: " + "; ".join(f"{x['full']} ({x['by']})" for x in top)
 
 
+def write_board_order(xlsx, owner_alias):
+    """Read the manager column order of every board on the `Auctions` tab -> data/board_order.json."""
+    a = pd.read_excel(xlsx, sheet_name="Auctions", header=None)
+    order = {}
+    for i, row in a.iterrows():
+        cell = row[0]
+        if isinstance(cell, str) and cell.strip().endswith("Auction Draft") and cell.strip()[:4].isdigit():
+            names = [v for v in a.iloc[i + 1, 1:] if isinstance(v, str)]
+            order[cell.strip()[:4]] = [owner_alias.get(n, n) for n in names]
+    (ROOT / "data").mkdir(exist_ok=True)
+    (ROOT / "data" / "board_order.json").write_text(
+        json.dumps(dict(sorted(order.items())), indent=1), encoding="utf-8")
+    print(f"wrote board order for {len(order)} seasons")
+
+
 def main(xlsx):
     aliases = json.loads((ROOT / "config" / "aliases.json").read_text())
     owner_alias = aliases["owner_aliases"]
+    write_board_order(xlsx, owner_alias)
+    if ORDER_ONLY:
+        return
     overrides = {"|".join([norm(k.split("|")[0])] + k.split("|")[1:]): v
                  for k, v in aliases["sheet_name_overrides"].items()}
 
@@ -210,8 +238,9 @@ def main(xlsx):
     ref = full[full.Year > LAST_SHEET_SEASON].copy()
     ref["manager"] = ref.Owner.replace(owner_alias)
     ref = ref.rename(columns={"Year": "season", "Position": "position", "Player": "name_raw", "Price": "price"})
+    ref["slot"] = ref.Roster.map(slot_name)
     (ROOT / "data").mkdir(exist_ok=True)
-    ref[["season", "manager", "position", "name_raw", "price"]].to_csv(
+    ref[["season", "manager", "position", "name_raw", "price", "slot"]].to_csv(
         ROOT / "data" / "sheet_reference_2021_plus.csv", index=False)   # only used by the reconcile report
     df = full[full.Year <= LAST_SHEET_SEASON].reset_index(drop=True)
     df["row_order"] = range(len(df))
@@ -242,6 +271,7 @@ def main(xlsx):
             "season": year, "manager": r.manager, "player": player, "player_id": pid,
             "player_key": key, "position": pos, "price": int(r.Price),
             "pick_no": "", "row_order": r.row_order, "name_raw": raw, "source": "sheet",
+            "slot": slot_name(r.Roster),
         })
         namemap[(raw, pos, year)] = (player, pid, method, score, note)
 
@@ -262,4 +292,6 @@ def main(xlsx):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "DTF Auction.xlsx")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    ORDER_ONLY = "--order-only" in sys.argv       # refresh only data/board_order.json
+    main(args[0] if args else "DTF Auction.xlsx")

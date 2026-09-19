@@ -2,6 +2,7 @@
   "_comment": "owner_aliases folds co-owner labels from the old spreadsheet into one manager. sheet_name_overrides fixes nicknames/misspellings in the 2012-2020 spreadsheet names (key = name as typed, optionally 'name|POS'; value = real full name). Only used by scripts/build_history.py. Keys may also be 'name|POS|YEAR' to fix a single season. A value starting with '=' keeps the player unmatched but shows the given name.",
   "owner_aliases": {
     "Fernando/Ben": "Ben",
+    "Ben/Fernando": "Ben",
     "Jake/David": "Jake",
     "Oleg/Eric": "Oleg",
     "Haan": "Rohaan"

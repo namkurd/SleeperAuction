@@ -1,31 +1,33 @@
 # DTF Club Auction Archive
 
-An auto-updating dashboard of every DTF Club auction draft since 2012: league-wide market trends, a profile for each manager, and a price history for any player.
+An auto-updating dashboard of every DTF Club auction draft since 2012: league-wide market trends, a profile for each manager, every draft board laid out like the old spreadsheet, and a price history for any player.
 
 **Live site:** https://namkurd.github.io/SleeperAuction/
 
 When a new season's Sleeper auction draft is marked complete, a GitHub Action picks it up, rebuilds the data and republishes the site. Nobody has to touch anything.
 
-## One-time setup (about 5 minutes, no command line)
+## Setup (about 5 minutes, no command line)
 
-1. On github.com click **New repository**, name it `SleeperAuction`, keep it **Public**, and create it (no README or other files).
-2. In the new repo open **Settings > Pages** and set **Source** to **GitHub Actions**.
-3. Unzip the download. Back in the repo click **Add file > Upload files** and drag in everything from the unzipped folder: `README.md`, `config`, `data`, `scripts`, `site` **and the hidden `.github` and `.gitignore`** (on a Mac press Cmd+Shift+. in Finder to show hidden files first; Windows shows them already). Click **Commit changes**.
-4. Open the **Actions** tab. The run that starts is the first build; when it is green the site is live at the address above. If the run failed because step 2 was skipped, do step 2 and click **Re-run failed jobs**.
+1. **Create the repository.** On github.com click **New repository**, name it `SleeperAuction`, choose **Public**, leave everything else empty, and click **Create repository**.
+2. **Upload the files.** Unzip the download. In the new repo click **uploading an existing file** (or **Add file > Upload files**), drag in everything from the unzipped folder, and click **Commit changes**.
+3. **Turn on GitHub Pages.** In the repo open **Settings > Pages**. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+4. **Add the automation (copy and paste).** Open the **Actions** tab and click **set up a workflow yourself**. At the top, change the file name from `main.yml` to `update.yml`. Select everything in the editor and delete it. Open `workflow-to-paste.txt` from the unzipped folder, copy all of it, paste it into the editor, then click **Commit changes** and confirm.
+5. **Watch it build.** Stay on the **Actions** tab. A run called "Update auction data and publish site" starts by itself and takes a minute or two. When it turns green the site is live at the address at the top of this page. If it fails on a Pages error, you skipped step 3: do it, then open the failed run and click **Re-run failed jobs**.
 
-If the Actions tab is empty, `.github/workflows/update.yml` didn't upload. Click **Add file > Create new file**, type `.github/workflows/update.yml` as the name, paste in that file's contents from the unzipped folder, and commit.
+Why step 4 is a paste: GitHub only runs automations that live in a hidden folder (`.github/workflows`), and dragging hidden folders into the browser upload is unreliable. Pasting into GitHub's own editor creates the folder correctly. After it works you can delete `workflow-to-paste.txt` from the repo.
 
-Prefer a terminal? `git init -b main && git add . && git commit -m "Initial import"`, then `gh repo create namkurd/SleeperAuction --public --source=. --remote=origin`, `gh api -X POST repos/namkurd/SleeperAuction/pages -f build_type=workflow`, `git push -u origin main`.
+Prefer a terminal? `mkdir -p .github/workflows && cp workflow-to-paste.txt .github/workflows/update.yml`, then `git init -b main && git add . && git commit -m "Initial import"`, `gh repo create namkurd/SleeperAuction --public --source=. --remote=origin`, `gh api -X POST repos/namkurd/SleeperAuction/pages -f build_type=workflow`, `git push -u origin main`.
 
 ## What's in the dashboard
 
 | Tab | What it shows |
 |---|---|
-| League | Dollars per position per season, dollars per depth slot (QB1-3, RB1-3, WR1-3, TE1-2, K1), and a dot for every pick ever made. Dashed gold lines mark scoring-rule changes. |
+| League | Average dollars per team per position per season, average dollars per team per depth slot (QB1-3, RB1-3, WR1-3, TE1-2, K1), and a dot for every pick ever made. Dashed gold lines mark scoring-rule changes. |
 | Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. |
-| Players | Search any player: what they cost each year they were bought, who bought them, and their depth slot on that team. |
+| Drafts | Every draft board, newest first, in the style of the old `Auctions` sheet: a column per manager, a row per lineup slot (QB, RB, RB, WR, WR, TE, FLEX, SFLEX, D/ST, K, bench), player and price in each cell. Jump to a season, search a player or manager to highlight every match, or switch to full player names. |
+| Players | Type a name and pick from the drop-down (position, number of auctions and best price are shown for each match) to see what that player cost each year, who bought them, and their depth slot. |
 
-Every chart has a data table under it. All amounts are raw dollars.
+Every chart has a data table under it. The League charts divide each season's league total by that season's number of teams (10 through 2025, 12 in 2026), so seasons of different sizes compare fairly; the Managers charts and the price-per-pick dots are raw dollars. The site is built to fit a phone held sideways without side-to-side scrolling.
 
 ## How it works
 
@@ -38,6 +40,7 @@ spreadsheet ─┘   (2012-2020 frozen in data/history_2012_2020.csv)
 - **2012-2020** come from the old spreadsheet, cleaned once and frozen in `data/history_2012_2020.csv` (co-owners folded into one manager, misspelled and nicknamed players matched to real players).
 - **2021 onward** come from Sleeper. Its prices match the spreadsheet apart from two $1 discrepancies in 2021, and its positions are right where the spreadsheet has a few mislabels (a TE typed as WR, a kicker typed as DEF). Sleeper also has real player ids and cleaner names, so it wins wherever the two differ. `data/reconcile_report.md` lists every difference so you can look.
 - **Depth is strictly by price.** Within a manager, season and position the highest-priced player is 1, the next is 2, and so on (ties go to the earlier pick). The old charts used the spreadsheet's lineup order, so a few depth numbers moved slightly.
+- **Draft boards** need a lineup slot for every player. For 2012-2026 the slots are the ones recorded in the old spreadsheet (2021-2026 Sleeper picks inherit them by matching team, price, position and last name). Seasons added after that have no such record, so they are laid out by price: fixed slots take the priciest QB, RBs, WRs, TE, K and D/ST, then the flex slots take the priciest players left, and the rest sit on the bench. Managers appear in the spreadsheet's left-to-right order (`data/board_order.json`); new seasons reuse last season's order with newcomers at the end.
 - Finished Sleeper seasons are cached in `data/sleeper_picks.csv`, so the archive survives even if Sleeper someday deletes an old league.
 
 ### Files
@@ -46,16 +49,19 @@ spreadsheet ─┘   (2012-2020 frozen in data/history_2012_2020.csv)
 |---|---|
 | `scripts/update_data.py` | Fetches Sleeper, computes depth, writes every data file. Standard library only. |
 | `scripts/check_data.py` | Sanity checks (budgets, gaps, duplicates). The Action stops before publishing if these fail. |
-| `scripts/build_history.py` | One-time importer for the spreadsheet. You will almost never need it again. |
+| `scripts/build_history.py` | One-time importer for the spreadsheet (names, lineup slots, board order). You will almost never need it again. |
 | `config/managers.json` | Sleeper `user_id` to manager name, plus roster overrides. |
 | `config/eras.json` | The dashed scoring-era lines. |
+| `config/lineups.json` | The starting lineup of each era (which slots the Drafts boards show). |
 | `config/aliases.json` | Co-owner folding and player-name fixes for the spreadsheet years. |
 | `site/` | The static website (`index.html`, Plotly bundled in `vendor/`). |
-| `.github/workflows/update.yml` | Runs every 6 hours, on demand, and when you push. |
+| `.github/workflows/update.yml` | The automation: runs every 6 hours, on demand, and when you push. You create it in setup step 4 from `workflow-to-paste.txt`. |
 
 ## Everyday tasks
 
 **A new manager joins.** Nothing breaks: they show up under their Sleeper display name and the run prints a warning. To give them a proper name, add their Sleeper `user_id` to `config/managers.json` (find it at `https://api.sleeper.app/v1/user/<username>`), then run the workflow.
+
+**The starting lineup changes.** Add an entry to `config/lineups.json`, for example one more FLEX: `{ "from": 2027, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "SFLEX", "D/ST", "K"] }`. Until you do, new seasons use the latest lineup listed and any extra players just show on the bench.
 
 **Scoring rules change.** Add a line to `config/eras.json`, for example `{ "label": "Full PPR", "from": 2027 }`, and push. `from` is the first season the rule applies; the line is drawn between the previous season and that one. Use `<br>` in a label for a line break.
 
@@ -79,7 +85,8 @@ GitHub turns scheduled workflows off after 60 days without repository activity, 
 
 ## Known quirks
 
-- **2026 has 12 teams** ($2,398 spent vs about $2,000 before), so 2026 totals are not comparable with earlier years. The site says so in a footnote.
+- **2026 has 12 teams** ($2,398 spent vs about $2,000 before). The League charts and tables average per team so they stay comparable; the Managers charts show what one person actually paid, so their dollars are unaffected. Very narrow phones round the League tables to whole dollars; hover a chart point for one decimal.
+- **The spreadsheet starts in 2012.** There is no 2010 or 2011 data in it, so the Drafts tab begins with 2012.
 - **Sleeper records a player's position as of today.** If someone changes position later (a QB turned TE, say), Sleeper would show the new one. In the 2021-2026 seasons compared against the spreadsheet, every position difference turned out to be a spreadsheet mislabel, not a position change, and the reconcile report would flag a real one.
 - **A few old spreadsheet names could not be matched** to a real player (retired players missing from Sleeper's database, joke nicknames). They keep their spreadsheet name. See `data/history_name_map.csv` for every match decision and fix any by adding to `config/aliases.json`, then re-running `scripts/build_history.py`.
 - **Manager position charts include every player a manager bought**, bench depth included, so each season adds up to their budget. The older manager screenshots only counted their top three RBs and WRs.

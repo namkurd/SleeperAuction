@@ -1,0 +1,13 @@
+{
+  "_comment": "Starting lineup of each era, used only to lay out the Drafts view. 'from' is the first season it applies; a season uses the latest entry whose 'from' is not after it. Everyone not in a starting slot goes to the bench (BE). Add a new entry when the league changes its lineup. Slot names: QB RB WR TE K D/ST plus FLEX (RB/WR/TE), W/T (WR/TE) and SFLEX (QB/RB/WR/TE).",
+  "eligible": {
+    "QB": ["QB"], "RB": ["RB"], "WR": ["WR"], "TE": ["TE"], "K": ["K"], "D/ST": ["DEF"],
+    "W/T": ["WR", "TE"], "FLEX": ["RB", "WR", "TE"], "SFLEX": ["QB", "RB", "WR", "TE"]
+  },
+  "lineups": [
+    { "from": 2012, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "D/ST", "K"] },
+    { "from": 2020, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "FLEX", "D/ST", "K"] },
+    { "from": 2022, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "W/T", "D/ST", "K"] },
+    { "from": 2023, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "SFLEX", "D/ST", "K"] }
+  ]
+}

@@ -76,13 +76,18 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .chip.alt{border-style:dashed}
 .board{margin:0 0 20px;border-radius:10px;overflow:hidden;border:1px solid #0d0e10;background:#0d0e10;scroll-margin-top:12px}
 .board.nohit{display:none}
-.board>summary.band{list-style:none;position:relative;display:flex;align-items:baseline;justify-content:center;gap:4px 16px;flex-wrap:wrap;background:#f7c99a;color:#2a1808;padding:7px 34px;cursor:pointer;text-align:center;font-size:inherit}
+.board>summary.band{list-style:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#f7c99a;color:#2a1808;padding:8px 40px;cursor:pointer;text-align:center;font-size:inherit}
 .board>summary.band::-webkit-details-marker{display:none}
-.board>summary.band::before{content:"\25B8";position:absolute;left:13px;top:50%;margin-top:-.62em;line-height:1.2;transition:transform .15s}
+.board>summary.band::before{content:"\25B8";position:absolute;left:14px;top:50%;line-height:1;margin-top:-.5em;transition:transform .15s}
 .board[open]>summary.band::before{transform:rotate(90deg)}
 .board[open]>summary.band{border-bottom:2px solid #0d0e10}
-.band .yr{font-size:19px;font-weight:800;letter-spacing:.2px}
-.band .meta{font-size:12.5px;color:#5c3b1b}
+.band .yr{display:block;font-size:19px;font-weight:800;letter-spacing:.2px;line-height:1.25}
+.band .meta{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:1px 14px;font-size:12px;color:#5c3b1b;line-height:1.35}
+.band .tn{font-weight:600}
+.band .tbl{display:flex;flex-wrap:wrap;justify-content:center;gap:1px 12px}
+.band .lbl{font-weight:700;margin-right:2px;text-transform:uppercase;font-size:10.5px;letter-spacing:.4px}
+.band .tb b{font-weight:800;margin-right:4px;color:#2a1808}
+.band .tb em{font-style:normal;opacity:.75}
 .bgrid{display:grid;grid-template-columns:46px repeat(var(--n),minmax(0,1fr))}
 .bcol{min-width:0;background:var(--bg,#123f78);color:var(--fg,#fff)}
 .bgrid:not(.cards) .bcol.m+.bcol.m{border-left:1px solid rgba(0,0,0,.4)}
@@ -90,11 +95,10 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .bh{height:26px;line-height:26px;text-align:center;font-weight:800;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;border-bottom:1px solid rgba(0,0,0,.4);background:rgba(0,0,0,.1)}
 .bc{height:23px;display:flex;align-items:center;gap:4px;padding:0 5px;font-size:11.5px;border-bottom:1px solid rgba(0,0,0,.2);font-variant-numeric:tabular-nums;white-space:nowrap}
 .bc .sl{display:none;font-style:normal;font-weight:700;font-size:9.5px;opacity:.7;width:36px;flex:none}
-.bc .pt{font-size:7.5px;font-weight:700;opacity:.6;letter-spacing:0;flex:none;width:12px;text-align:left}
+.bc .pt{font-size:8px;font-weight:700;opacity:.62;letter-spacing:0;flex:none;width:14px;text-align:right}
 .bc .pl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .bc .pr{flex:none;font-weight:800;min-width:22px;text-align:right}
 .bc.empty .pl{opacity:.45;font-weight:400}
-.bc.top{box-shadow:inset 0 0 0 2px #f2b632}
 .slots .bc{justify-content:center;font-weight:800;font-size:11px;padding:0}
 .bgrid.cards{grid-template-columns:repeat(auto-fill,minmax(var(--cw,165px),1fr))}
 .bgrid.cards .slots{display:none}
@@ -102,7 +106,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .bgrid.cards .bcol{border-right:1px solid rgba(0,0,0,.45);border-bottom:2px solid #0d0e10}
 .finding .bcol.m .bc:not(.hit){opacity:.3}
 .bc.hit{background:rgba(255,224,138,.45);outline:2px solid #ffe08a;outline-offset:-2px}
-@media (max-width:700px){ .band .yr{font-size:17px} .band .meta{font-size:11.5px} }
+@media (max-width:700px){ .band .lbl{flex:0 0 100%;text-align:center;margin:0} .board>summary.band{padding:8px 28px} .band .yr{font-size:17px} .band .meta{font-size:11.5px} }
 html,body{max-width:100%}
 .card,.tablewrap{min-width:0}
 /* tables shrink to fit the screen instead of scrolling sideways */
@@ -129,7 +133,7 @@ html,body{max-width:100%}
 </head>
 <body>
 <header>
-  <h1>DTF Club Auction Archive</h1>
+  <h1><span id="league-name">DTF Club</span> Auction Archive</h1>
   <p class="sub" id="subtitle"></p>
 </header>
 <nav role="tablist" aria-label="Views">
@@ -619,9 +623,13 @@ function buildBoard(season, open){
   const order=cfg.order, slots=cfg.slots, n=order.length, full=$("dr-full").checked;
   const det=el("details",{class:"board",id:"board-"+season,"data-season":String(season)});
   if(open) det.setAttribute("open","");
+  const tops=["QB","RB","WR","TE"].map(pos=>{
+    const best=rows.filter(r=>r.position===pos).reduce((a,r)=>(!a||r.price>a.price)?r:a,null);
+    return best?el("span",{class:"tb",title:best.player+" · "+best.manager},[el("b",{text:pos}),best.player+" "+fmt$(best.price),el("em",{text:" ("+best.manager+")"})]):null;
+  }).filter(Boolean);
   det.appendChild(el("summary",{class:"band"},[
     el("span",{class:"yr",text:season+" Auction Draft"}),
-    el("span",{class:"meta",text:n+" teams · top bid "+fmt$(top.price)+" ("+top.player+", "+top.manager+")"})]));
+    el("span",{class:"meta"},[el("span",{class:"tn",text:n+" teams"}),el("span",{class:"tbl"},[el("b",{class:"lbl",text:"Top bids"}),...tops])])]));
   const grid=el("div",{class:"bgrid","data-n":String(n),style:"--n:"+n});
   const sc=el("div",{class:"bcol slots"},[el("div",{class:"bh",text:fmt$(top.price),title:"Highest price this year"})]);
   slots.forEach(sl=>sc.appendChild(el("div",{class:"bc"},[sl])));
@@ -632,10 +640,10 @@ function buildBoard(season, open){
     col.appendChild(el("div",{class:"bh",text:m,title:m}));
     slots.forEach((sl,k)=>{
       const r=(by[m]||[])[k];
-      const cell=el("div",{class:"bc"+(r?"":" empty")+(r&&r===top?" top":"")},[el("i",{class:"sl",text:sl})]);
+      const cell=el("div",{class:"bc"+(r?"":" empty")+""},[el("i",{class:"sl",text:sl})]);
       if(r){
-        if(FLEXY.has(sl)&&r.position!=="DEF") cell.appendChild(el("b",{class:"pt",text:r.position}));
         cell.appendChild(el("span",{class:"pl",text:full?r.player:shortName(r.player,r.position)}));
+        if(FLEXY.has(sl)&&r.position!=="DEF") cell.appendChild(el("b",{class:"pt",text:r.position}));
         cell.appendChild(el("span",{class:"pr",text:fmt$(r.price)}));
         cell.setAttribute("title",r.player+" · "+r.position+" · "+fmt$(r.price)+" · "+m+" "+season);
         cell.setAttribute("data-q",normQ(r.player+" "+m));
@@ -671,7 +679,7 @@ function drawDrafts(arg){
     const wasOpen=new Set([...host.querySelectorAll("details[open]")].map(d=>d.dataset.season));
     host.textContent="";
     const ds=seasonsDesc();
-    ds.forEach((s,i)=>{ const b=buildBoard(s, wasOpen.size?wasOpen.has(String(s)):i<(window.innerWidth<900?1:2)); if(b) host.appendChild(b); });
+    ds.forEach((s,i)=>{ const b=buildBoard(s, wasOpen.size?wasOpen.has(String(s)):true); if(b) host.appendChild(b); });
     if(!draftsBuilt){
       const chips=$("dr-chips");
       ds.forEach(s=>chips.appendChild(el("button",{type:"button",class:"chip",text:String(s),"data-season":String(s)})));
@@ -686,10 +694,10 @@ function drawDrafts(arg){
     }
     draftsBuilt=true; findDrafts();
   }
-  $("dr-lede").textContent="Every auction draft laid out like a lineup card: a column per manager, a row per lineup slot, the player and the price paid. Tap a season’s banner to open or close it.";
+  $("dr-lede").textContent="Every auction draft laid out like a lineup card: a column per manager, a row per lineup slot, the player and the price paid. Tap a season’s banner to collapse or expand it.";
   const rule=seasons.filter(s=>(boardCfg[String(s)]||{}).by_rule);
   const notes=$("notes-drafts"); notes.textContent="";
-  [ "Names are the validated ones: nicknames, misspellings and initials in the old spreadsheet were matched to real players (see data/history_name_map.csv). Flex and bench rows show each player’s position; a gold outline marks the year’s highest price, also shown in the top-left corner of each board.",
+  [ "Names are the validated ones: nicknames, misspellings and initials in the old spreadsheet were matched to real players (see data/history_name_map.csv). Flex and bench rows show each player’s position; each board’s top-left corner shows the year’s highest price.",
     "Lineup slots follow the old spreadsheet, which recorded who each manager started, so a few starters are not the priciest player at their position."+(rule.length?" Seasons "+rule.join(", ")+" have no such record and are laid out by price: the priciest players fill the starting slots, the rest sit on the bench.":" Seasons added after the spreadsheet are laid out by price: the priciest players fill the starting slots, the rest sit on the bench."),
     "Sources: "+D.sources_note+" Where the two disagree, Sleeper wins; see data/reconcile_report.md in the repo."
   ].forEach(t=>notes.appendChild(el("p",{text:t})));
@@ -714,7 +722,7 @@ function findDrafts(){
   if(q.length>=2) fitBoards();
   const lede=$("dr-lede");
   if(q.length>=2) lede.textContent=hits?hits+(hits===1?" pick":" picks")+" in "+ss+(ss===1?" season":" seasons")+" match “"+$("dr-find").value.trim()+"”. Clear the box to see every draft.":"Nothing matches “"+$("dr-find").value.trim()+"”.";
-  else if(draftsBuilt) lede.textContent="Every auction draft laid out like a lineup card: a column per manager, a row per lineup slot, the player and the price paid. Tap a season’s banner to open or close it.";
+  else if(draftsBuilt) lede.textContent="Every auction draft laid out like a lineup card: a column per manager, a row per lineup slot, the player and the price paid. Tap a season’s banner to collapse or expand it.";
 }
 
 /* ---------- routing ---------- */
@@ -750,6 +758,16 @@ $("dr-full").addEventListener("change",()=>drawDrafts(lastDraftArg?String(lastDr
 let lastMode=layoutMode(), rt;
 window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ fitBoards(); if(layoutMode()!==lastMode){ lastMode=layoutMode(); route(); } },200); });
 
+(function leagueName(){
+  const lg=D.league||{}, apply=n=>{ if(!n) return; $("league-name").textContent=n; document.title=n+" Auction Archive"; };
+  apply(lg.name);
+  if(lg.id && window.fetch){                     // ask Sleeper for the name as it is right now (falls back to the built-in one)
+    const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),6000);
+    fetch("https://api.sleeper.app/v1/league/"+encodeURIComponent(lg.id),{signal:ctl.signal})
+      .then(r=>r.ok?r.json():null).then(j=>{ if(j&&typeof j.name==="string"&&j.name.trim()) apply(j.name.trim()); })
+      .catch(()=>{}).finally(()=>clearTimeout(t));
+  }
+})();
 $("subtitle").textContent=`Every auction draft since ${seasons[0]} · ${seasons.length} seasons · ${picks.length.toLocaleString("en-US")} picks · ${D.managers.length} managers`;
 $("footer").appendChild(el("span",{text:"Data last changed "+D.generated+". Updates itself when a new Sleeper auction draft completes. "}));
 $("footer").appendChild(el("a",{href:"https://github.com/namkurd/SleeperAuction",text:"Source on GitHub"}));

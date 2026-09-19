@@ -4,6 +4,8 @@ An auto-updating dashboard of every DTF Club auction draft since 2012: league-wi
 
 **Live site:** https://namkurd.github.io/SleeperAuction/
 
+The page title uses the league's current name on Sleeper ("DTF Club" today). The update run saves it, and the open page also asks Sleeper for it, so a rename shows up without any edit.
+
 When a new season's Sleeper auction draft is marked complete, a GitHub Action picks it up, rebuilds the data and republishes the site. Nobody has to touch anything.
 
 ## Setup (about 5 minutes, no command line)
@@ -24,7 +26,7 @@ Prefer a terminal? `mkdir -p .github/workflows && cp workflow-to-paste.txt .gith
 |---|---|
 | League | Average dollars per team per position per season, average dollars per team per depth slot (QB1-3, RB1-3, WR1-3, TE1-2, K1), and a dot for every pick ever made. Dashed gold lines mark scoring-rule changes. |
 | Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. |
-| Drafts | Every draft board, newest first, in the style of the old `Auctions` sheet: a column per manager, a row per lineup slot (QB, RB, RB, WR, WR, TE, FLEX, SFLEX, D/ST, K, bench), player and price in each cell. Jump to a season, search a player or manager to highlight every match, or switch to full player names. |
+| Drafts | Every draft board, newest first, in the style of the old `Auctions` sheet: a column per manager, a row per lineup slot (QB, RB, RB, WR, WR, TE, FLEX, SFLEX, D/ST, K, bench), player and price in each cell. Every board starts expanded, with each year's top QB, RB, WR and TE bids in its banner. Jump to a season, search a player or manager to highlight every match, or switch to full player names. |
 | Players | Type a name and pick from the drop-down (position, number of auctions and best price are shown for each match) to see what that player cost each year, who bought them, and their depth slot. |
 
 Every chart has a data table under it. The League charts divide each season's league total by that season's number of teams (10 through 2025, 12 in 2026), so seasons of different sizes compare fairly; the Managers charts and the price-per-pick dots are raw dollars. The site is built to fit a phone held sideways without side-to-side scrolling.

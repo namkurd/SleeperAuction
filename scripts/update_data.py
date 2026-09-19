@@ -204,7 +204,9 @@ def sync_sleeper(cfg, refresh):
         cached = [r for r in cached if int(r["season"]) not in replaced] + [
             {k: str(v) for k, v in r.items()} for r in new_rows]
         cached.sort(key=lambda r: (int(r["season"]), int(r["pick_no"])))
-    return cached, cache_path
+    newest = leagues[max(leagues)]
+    latest = {"id": str(newest["league_id"]), "name": newest.get("name") or ""}
+    return cached, cache_path, latest
 
 
 # ----------------------------------------------------------------------------- canonical table
@@ -425,7 +427,7 @@ def reconcile(canon, reference):
 
 
 # ----------------------------------------------------------------------------- site data
-def build_site_json(canon, sources_note, boards):
+def build_site_json(canon, sources_note, boards, league):
     eras = load_json("eras.json")["eras"]
     seasons = sorted({r["season"] for r in canon})
     latest = seasons[-1]
@@ -441,7 +443,7 @@ def build_site_json(canon, sources_note, boards):
     return {
         "generated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "latest_season": latest, "seasons": seasons, "teams": teams, "spent": spent,
-        "source": source, "eras": eras, "managers": managers, "sources_note": sources_note,
+        "source": source, "league": league, "eras": eras, "managers": managers, "sources_note": sources_note,
         "boards": boards, "columns": cols,
         "picks": [[r["season"], r["manager"], r["player"], r["player_key"], r["position"],
                    r["price"], r["depth"], r["pick_no"] if r["pick_no"] != "" else None, r["row"]]
@@ -455,12 +457,25 @@ def main(argv):
     offline = "--offline" in argv
     cfg = load_json("managers.json")
 
+    latest = None
     if offline:
         cache_path = ROOT / "data" / "sleeper_picks.csv"
         sleeper = read_csv(cache_path) if cache_path.exists() else []
     else:
-        sleeper, cache_path = sync_sleeper(cfg, refresh)
+        sleeper, cache_path, latest = sync_sleeper(cfg, refresh)
         write_csv(cache_path, sleeper, PICK_COLS)
+    # the league's current name on Sleeper (it can be renamed); offline runs keep what the last run saw
+    league = {"id": str(cfg["seed_league_id"]), "name": "DTF Club"}
+    old_site = ROOT / "site" / "data.json"
+    if old_site.exists():
+        try:
+            league.update({k: v for k, v in json.loads(old_site.read_text(encoding="utf-8")).get("league", {}).items() if v})
+        except ValueError:
+            pass
+    if latest:
+        league["id"] = latest["id"]
+        if latest["name"]:
+            league["name"] = latest["name"]
 
     history = read_csv(ROOT / "data" / "history_2012_2020.csv")
     canon = canonical_rows(history, sleeper)
@@ -477,13 +492,13 @@ def main(argv):
     first_sleeper = min((int(r["season"]) for r in sleeper), default=None)
     note = (f"2012-{SHEET_LAST_SEASON}: spreadsheet. {first_sleeper}-{max(r['season'] for r in canon)}: Sleeper."
             if first_sleeper else "Spreadsheet only.")
-    site = build_site_json(canon, note, boards)
+    site = build_site_json(canon, note, boards, league)
     out = ROOT / "site" / "data.json"
     out.parent.mkdir(exist_ok=True)
     if out.exists():  # keep the old timestamp when nothing changed, so runs don't create empty commits
         try:
             old = json.loads(out.read_text(encoding="utf-8"))
-            if all(old.get(k) == site[k] for k in ("picks", "eras", "boards")):
+            if all(old.get(k) == site[k] for k in ("picks", "eras", "boards", "league")):
                 site["generated"] = old["generated"]
         except (ValueError, KeyError):
             pass

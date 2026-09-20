@@ -1,0 +1,68 @@
+{
+  "_comment": "Playoff podium (champion, runner-up, third place) for every season through 2025, taken from the league's own record of playoff finishes (gold, silver and bronze in the league sheet). Sleeper's playoff brackets are deliberately NOT used for these years. From 2026 the podium comes from Sleeper's bracket automatically; an entry here would still win over it. Names are as shown on the site (Rohaan = Haan in the old sheet).",
+  "2013": {
+    "champion": "Oleg",
+    "second": "Steven",
+    "third": "Joe"
+  },
+  "2014": {
+    "champion": "Ryan",
+    "second": "Ben",
+    "third": "Steven"
+  },
+  "2015": {
+    "champion": "Tommy",
+    "second": "Eli",
+    "third": "Jake"
+  },
+  "2016": {
+    "champion": "Jake",
+    "second": "Ben",
+    "third": "Joe"
+  },
+  "2017": {
+    "champion": "Tommy",
+    "second": "Ryan",
+    "third": "Steven"
+  },
+  "2018": {
+    "champion": "Ben",
+    "second": "Joe",
+    "third": "Tommy"
+  },
+  "2019": {
+    "champion": "Ryan",
+    "second": "Jake",
+    "third": "Aidan"
+  },
+  "2020": {
+    "champion": "Rohaan",
+    "second": "Ryan",
+    "third": "Ben"
+  },
+  "2021": {
+    "champion": "Ben",
+    "second": "Ryan",
+    "third": "Aidan"
+  },
+  "2022": {
+    "champion": "Ben",
+    "second": "Aidan",
+    "third": "Rohaan"
+  },
+  "2023": {
+    "champion": "Ankit",
+    "second": "Joe",
+    "third": "Steven"
+  },
+  "2024": {
+    "champion": "Alex",
+    "second": "Aidan",
+    "third": "Ben"
+  },
+  "2025": {
+    "champion": "Rohaan",
+    "second": "Steven",
+    "third": "Aidan"
+  }
+}

@@ -304,23 +304,96 @@ const narrow = () => window.innerWidth < 760;          // portrait phones and sm
 const tight  = () => window.innerWidth < 1100;         // any phone or small tablet
 const wideLegend = () => window.innerWidth >= 900;     // room for a legend beside the chart
 const layoutMode = () => { const w=window.innerWidth; return w<600?"p":w<760?"n":w<900?"c":w<1100?"t":"w"; };
+/* ---------- standings pills (Managers charts) and scoring-era labels ---------- */
+const ORD=n=>{ const t=n%100,u=n%10; return n+(t>=11&&t<=13?"th":u===1?"st":u===2?"nd":u===3?"rd":"th"); };
+const MEDAL={1:{bg:"#f2b632",fg:"#2a2100",name:"Champion"},2:{bg:"#c3c9d2",fg:"#1e2126",name:"Runner-up"},3:{bg:"#cd7f32",fg:"#241203",name:"Third place"}};
+const standingFor=(season,mgr)=>{ const s=D.standings&&D.standings[String(season)]; return (s&&s[mgr])||null; };
+const standPx=()=>narrow()?21:24;
+function standingAnnotations(xs, mgr){
+  const out=[];
+  if(!mgr) return out;
+  xs.forEach(x=>{
+    const v=Number.isInteger(x)?standingFor(x,mgr):null; if(!v) return;
+    const rank=v[0], place=v[1], n=v[6], md=MEDAL[place];
+    const tie=Object.values(D.standings[String(x)]).filter(o=>o[0]===rank).length>1;
+    const txt=(tie?"T-":"")+ORD(rank);
+    out.push({xref:"x",yref:"paper",x:x,y:1,xanchor:"center",yanchor:"bottom",yshift:3,showarrow:false,text:txt,
+      font:{size:narrow()?9:11,color:md?md.fg:INK},bgcolor:md?md.bg:SURFACE,bordercolor:md?md.bg:"#5a5f68",borderwidth:1,borderpad:2,
+      captureevents:true,
+      hovertext:"<b>"+x+"</b><br>Finished "+txt+" of "+n+" · "+v[2]+"-"+v[3]+" · "+v[4].toLocaleString("en-US")+" PF"+(md?"<br><b>"+md.name+"</b>":""),
+      hoverlabel:{bgcolor:"#17181a",bordercolor:md?md.bg:"#4a4f57",font:{color:INK,size:12}}});
+  });
+  return out;
+}
+/* Where each scoring-era label goes. On a phone the labels are placed so each one sits directly above its own
+   dashed line: it starts at the line (or ends at it, near the right edge), and the labels are stacked on
+   different rows so none overlaps another or has a line running through it. Each line is drawn up to its label. */
+function planEras(lo, hi, opts, ml, mr){
+  const raw=[];
+  (D.eras||[]).forEach(e=>{ const x=e.from-0.5; if(x>lo+0.05&&x<hi) raw.push({e:e,x:x}); });
+  if(!raw.length) return {items:[],off:[],stack:0,fs:12};
+  if(!tight()) return {items:raw.map(r=>({x:r.x,text:r.e.label,anchor:"center",level:0})),off:[0],stack:34,fs:12};
+  const fs=narrow()?9:10, lh=fs*1.25, cw=fs*0.56;
+  const host=opts.host&&$(opts.host), W=(host&&host.clientWidth)||window.innerWidth-56;
+  const plotW=Math.max(120,W-ml-mr);
+  const items=raw.map(r=>{
+    const parts=r.e.label.split("<br>"), one=parts.join(" / ");
+    const lines=(parts.length>1&&one.length*cw>150)?parts:[one];
+    const w=Math.max(...lines.map(t=>t.length))*cw+6, px=ml+(r.x-lo)/(hi-lo)*plotW, an=[];
+    if(px+w<=W-2) an.push("left");
+    if(px-w>=2) an.push("right");
+    if(!an.length) an.push(px<W/2?"left":"right");
+    return {x:r.x,px:px,w:w,h:lines.length*lh+3,text:lines.join("<br>"),anchors:an};
+  });
+  const span=(it,a)=>a==="left"?[it.px-1,it.px+it.w]:[it.px-it.w,it.px+1], pad=3;
+  const within=(v,r)=>v>r[0]-pad&&v<r[1]+pad;
+  let best=null;
+  for(let maxL=0; maxL<items.length && !best; maxL++){
+    const as=[];
+    const fits=k=>{
+      const A=span(items[k],as[k].a);
+      for(let j=0;j<k;j++){
+        const B=span(items[j],as[j].a);
+        if(A[0]<B[1]+pad&&B[0]<A[1]+pad&&as[j].L===as[k].L) return false;   // same row, overlapping text
+        if(within(items[j].px,A)&&!(as[j].L<as[k].L)) return false;          // j's line would pass through k's label
+        if(within(items[k].px,B)&&!(as[k].L<as[j].L)) return false;
+      }
+      return true;
+    };
+    const dfs=k=>{
+      if(k===items.length) return true;
+      for(const a of items[k].anchors) for(let L=0;L<=maxL;L++){ as[k]={a:a,L:L}; if(fits(k)&&dfs(k+1)) return true; }
+      return false;
+    };
+    if(dfs(0)) best=as.slice();
+  }
+  if(!best) best=items.map((it,i)=>({a:it.anchors[0],L:items.length-1-i}));
+  const nL=Math.max(...best.map(b=>b.L))+1, rowH=Array(nL).fill(0);
+  items.forEach((it,i)=>{ it.anchor=best[i].a; it.level=best[i].L; rowH[it.level]=Math.max(rowH[it.level],it.h); });
+  const off=[]; let acc=0; rowH.forEach((h,i)=>{ off[i]=acc; acc+=h; });
+  return {items:items,off:off,stack:acc+2,fs:fs};
+}
 function baseLayout(xs, opts){
   opts=opts||{};
   const lo=Math.min(...xs)-0.6, hi=Math.max(...xs)+0.6;
-  const shapes=[], annotations=[];
-  (D.eras||[]).forEach((e,i)=>{
-    const x=e.from-0.5;
-    if(x<=lo+0.05||x>=hi) return;
-    shapes.push({type:"line",xref:"x",yref:"paper",x0:x,x1:x,y0:0,y1:1,line:{color:GOLD,width:1.6,dash:"dash"}});
-    annotations.push({xref:"x",yref:"paper",x:x,y:1,yanchor:"bottom",xanchor:(tight()&&x>(lo+hi)/2)?"right":"center",
-      text:tight()?e.label.replace("<br>"," / "):e.label,showarrow:false,
-      font:{color:GOLD,size:narrow()?9:tight()?10:12},yshift:tight()?(shapes.length-1)*13:0});
+  const shapes=[], annotations=standingAnnotations(xs,opts.manager);
+  const sp=annotations.length?standPx():0;
+  const ml=narrow()?46:58, mr=opts.rightLegend&&wideLegend()?190:narrow()?12:22;
+  const mb=narrow()?(opts.rightLegend?200:120):(opts.rightLegend&&!wideLegend())?150:opts.bottomLegend?96:52;
+  const plan=planEras(lo,hi,opts,ml,mr);
+  const mt=tight()?Math.max(20,10+sp+plan.stack):56+sp;
+  const host=opts.host&&$(opts.host), H=(host&&host.clientHeight)||470, plotH=Math.max(80,H-mt-mb);
+  plan.items.forEach(it=>{
+    const up=sp+2+(plan.off[it.level]||0);
+    shapes.push({type:"line",xref:"x",yref:"paper",x0:it.x,x1:it.x,y0:0,y1:1+up/plotH,line:{color:GOLD,width:1.6,dash:"dash"}});
+    annotations.push({xref:"x",yref:"paper",x:it.x,y:1,yanchor:"bottom",xanchor:it.anchor,
+      xshift:it.anchor==="left"?2:it.anchor==="right"?-2:0,yshift:up-4,align:it.anchor==="center"?"center":it.anchor,
+      text:it.text,showarrow:false,font:{color:GOLD,size:plan.fs}});
   });
   return {
     paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
     font:{family:FONT,color:INK2,size:12.5},
-    margin:{l:narrow()?46:58,r:opts.rightLegend&&wideLegend()?190:narrow()?12:22,t:tight()?(56+13*(D.eras||[]).length):56,
-      b:narrow()?(opts.rightLegend?200:120):(opts.rightLegend&&!wideLegend())?150:opts.bottomLegend?96:52},
+    margin:{l:ml,r:mr,t:mt,b:mb},
     xaxis:{range:[lo,hi],tickmode:"array",tickvals:xs.filter(s=>Number.isInteger(s)),ticktext:xs.map(String),tickangle:narrow()?-60:"auto",
       gridcolor:GRID,gridwidth:1,zeroline:false,linecolor:GRID,fixedrange:true,title:{text:""}},
     yaxis:{tickprefix:"$",gridcolor:GRID,gridwidth:1,zeroline:false,linecolor:GRID,rangemode:"tozero",fixedrange:true,tickformat:",d"},
@@ -435,7 +508,7 @@ function positionFigure(chartId, tableId, rows, ss, opts){
       traces.push(t);
     });
   }
-  const lay=baseLayout(xs,{bottomLegend:true,hovermode:opts.contrib?"closest":undefined});
+  const lay=baseLayout(xs,{bottomLegend:true,host:chartId,manager:opts.manager,hovermode:opts.contrib?"closest":undefined});
   if(opts.contrib){ lay.hoverdistance=40; lay.hoverlabel.align="left"; }
   if(opts.yMin) lay.yaxis.range=[0,opts.yMin(traces)];
   Plotly.react(chartId,traces,lay,CFG);
@@ -479,7 +552,7 @@ function depthFigure(chartId, tableId, rows, ss, opts){
       }
     });
   }
-  const lay=baseLayout(xs,{rightLegend:true,stagger:false,hovermode:opts.contrib?"closest":undefined});
+  const lay=baseLayout(xs,{rightLegend:true,host:chartId,manager:opts.manager,hovermode:opts.contrib?"closest":undefined});
   if(opts.contrib){ lay.hoverdistance=40; lay.hoverlabel.align="left"; }
   if(opts.yMin) lay.yaxis.range=[0,opts.yMin(traces)];
   Plotly.react(chartId,traces,lay,CFG);
@@ -499,7 +572,7 @@ function scatterFigure(){
       hovertemplate:"<b>%{customdata[0]}</b><br>%{customdata[1]} · %{customdata[3]}<br>%{y:$,.0f} · %{customdata[2]}<extra></extra>"
     };
   });
-  const lay=baseLayout(seasons,{hovermode:"closest",bottomLegend:true});
+  const lay=baseLayout(seasons,{hovermode:"closest",bottomLegend:true,host:"league-scatter"});
   lay.hoverlabel.align="left";
   Plotly.react("league-scatter",traces,lay,CFG);
 }
@@ -571,12 +644,17 @@ function drawManager(name){
   [[ss.length+" seasons",ranges.join(", ")+(m.current?"":" (former member)")],[fmt$(total),"spent in total"],[top?fmt$(top.price):"","most expensive buy: "+(top?top.player+" ("+top.season+")":"")]]
     .forEach(([big,small])=>hero.appendChild(el("div",{},[el("b",{text:big}),el("span",{text:small})])));
   const yMax=(base)=>(traces)=>Math.max(base,Math.ceil(Math.max(...traces.flatMap(t=>t.y.filter(v=>v!=null)))*1.08/10)*10);
-  positionFigure("mgr-pos","mgr-pos-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(140),contrib:true});
-  depthFigure("mgr-depth","mgr-depth-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(80),contrib:true});
+  positionFigure("mgr-pos","mgr-pos-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(140),contrib:true,manager:m.name});
+  depthFigure("mgr-depth","mgr-depth-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(80),contrib:true,manager:m.name});
   drawOrigins(m.name,rows);
   const extra=[];
   if(ss.length!==span(ss).length) extra.push(m.name+" sat out some seasons; the gaps in the charts are real years without an auction.");
   extra.push("Chart axes start at $0 and stop at $140 (position) and $80 (depth) unless a manager's spending goes higher.");
+  if(ss.some(x=>standingFor(x,m.name))){
+    extra.push("The label above each year is that team's regular-season finish by Rumbles (each week: 1 point per team outscored, plus 9 for winning the matchup; the league's official standings since 2022, ranked the same way for earlier seasons). Gold = champion, silver = runner-up, bronze = third place, no fill = no podium finish. Hover a label for the record. Standings start in 2013, and a season appears once its regular season is over.");
+    const noMedal=Object.keys(D.standings).filter(y=>!Object.values(D.standings[y]).some(v=>v[1])).map(Number);
+    if(noMedal.length) extra.push("Playoff results are not recorded yet for "+noMedal.join(", ")+", so those years show no medals. They can be added in config/playoffs.json.");
+  }
   footnotes($("notes-mgr"),extra);
 }
 
@@ -727,7 +805,7 @@ function drawPlayer(key){
   host.appendChild(card);
   const xs=span(p.rows.map(r=>r.season));
   const by=new Map(p.rows.map(r=>[r.season,r]));
-  const lay=baseLayout(seasons,{hovermode:"closest"});
+  const lay=baseLayout(xs,{hovermode:"closest",host:"pl-chart"});
   lay.xaxis.range=[Math.min(...xs)-0.6,Math.max(...xs)+0.6];
   lay.xaxis.tickvals=xs; lay.xaxis.ticktext=xs.map(String);
   lay.margin.b=46; lay.legend={visible:false}; lay.showlegend=false;

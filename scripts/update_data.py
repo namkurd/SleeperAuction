@@ -236,7 +236,119 @@ def sync_sleeper(cfg, refresh):
         cached.sort(key=lambda r: (int(r["season"]), int(r["pick_no"])))
     newest = leagues[max(leagues)]
     latest = {"id": str(newest["league_id"]), "name": newest.get("name") or ""}
-    return cached, cache_path, latest
+    return cached, cache_path, latest, leagues
+
+
+# ----------------------------------------------------------------------------- standings
+STANDING_COLS = ["season", "manager", "rank", "rumbles", "h2h_w", "h2h_l", "pf", "teams", "place"]
+SLEEPER_PLAYOFFS_FROM = 2026   # earlier podiums are recorded by hand in config/playoffs.json, not taken from Sleeper
+RUMBLE_BONUS = 9      # a head-to-head win is worth 9 on top of 1 per team outscored (a perfect week = teams + 8)
+
+
+def fetch_standings(cfg, season, league, picks_cache):
+    """Finish of every team in a completed Sleeper season, by the league's own 'Rumbles' rule.
+
+    Each regular-season week a team earns 1 rumble per team it outscored plus 9 for winning its matchup
+    (so a perfect week is teams + 8: 18 with 10 teams, 20 with 12). Rank is by total rumbles, then points
+    for. This reproduces the spreadsheet's Rumble R for every team in 2021-2025. Also finds the playoff
+    result (1 champion, 2 runner-up, 3 third place) from Sleeper's bracket, from 2026 on only.
+    """
+    lid = league["league_id"]
+    if league.get("status") != "complete":
+        return [], f"{season}: league is '{league.get('status')}', standings not final yet"
+    start = int((league.get("settings") or {}).get("playoff_week_start") or 0)
+    weeks = start - 1 if start > 1 else 15
+    mgr = {}
+    for r in picks_cache:
+        if int(r["season"]) == season:
+            mgr[int(r["roster_id"])] = r["manager"]
+    for rid, name in roster_managers(cfg, season, lid, []).items():
+        mgr.setdefault(int(rid), name)
+    rumbles, pf, hw, hl = Counter(), Counter(), Counter(), Counter()
+    for w in range(1, weeks + 1):
+        games = get(f"/league/{lid}/matchups/{w}") or []
+        pts = {g["roster_id"]: float(g.get("points") or 0) for g in games}
+        mid = {g["roster_id"]: g.get("matchup_id") for g in games}
+        if not pts or not any(pts.values()):
+            continue
+        for rid, p in pts.items():
+            opp = [k for k in pts if k != rid and mid.get(k) is not None and mid[k] == mid[rid]]
+            won = bool(opp) and p > pts[opp[0]]
+            rumbles[rid] += sum(1 for k, v in pts.items() if k != rid and p > v) + (RUMBLE_BONUS if won else 0)
+            pf[rid] += p
+            hw[rid] += 1 if won else 0
+            hl[rid] += 1 if opp and p < pts[opp[0]] else 0
+    if not rumbles:
+        return [], f"{season}: no matchup scores found"
+    order = sorted(rumbles, key=lambda k: (-rumbles[k], -pf[k]))
+    place = {}
+    try:
+        bracket = (get(f"/league/{lid}/winners_bracket") or []) if season >= SLEEPER_PLAYOFFS_FROM else []
+    except RuntimeError:
+        bracket = []
+    for g in bracket:
+        if g.get("w") is None:
+            continue
+        if g.get("p") == 1:
+            place[g["w"]], place[g["l"]] = 1, 2
+        elif g.get("p") == 3:
+            place[g["w"]] = 3
+    rows = [{"season": season, "manager": mgr.get(rid, f"Roster {rid}"), "rank": i, "rumbles": rumbles[rid],
+             "h2h_w": hw[rid], "h2h_l": hl[rid], "pf": round(pf[rid]), "teams": len(order), "place": place.get(rid, 0)}
+            for i, rid in enumerate(order, 1)]
+    return rows, f"{season}: standings for {len(rows)} teams ({weeks} regular-season weeks)"
+
+
+def sync_standings(cfg, leagues, picks_cache, refresh):
+    path = ROOT / "data" / "sleeper_standings.csv"
+    cached = read_csv(path) if path.exists() else []
+    have = {int(r["season"]) for r in cached}
+    new = []
+    for season, league in leagues.items():
+        if season in have and not refresh:
+            continue
+        rows, note = fetch_standings(cfg, season, league, picks_cache)
+        print("  " + note)
+        new += rows
+    if new:
+        got = {r["season"] for r in new}
+        cached = [r for r in cached if int(r["season"]) not in got] + [{k: str(v) for k, v in r.items()} for r in new]
+        cached.sort(key=lambda r: (int(r["season"]), int(r["rank"])))
+        write_csv(path, cached, STANDING_COLS)
+    return cached
+
+
+def build_standings(sleeper_rows):
+    """{season: {manager: [rank, place, wins, losses, points for, rumbles, teams]}}; place 0 = no playoff podium.
+
+    2013-2020 come from data/history_standings.csv (the spreadsheet's Lifetime tab), 2021 on from Sleeper.
+    The podium through 2025 is in config/playoffs.json; from 2026 it comes from Sleeper's bracket (a
+    config entry, if present, wins)."""
+    rows = {}
+    hist = ROOT / "data" / "history_standings.csv"
+    for r in (read_csv(hist) if hist.exists() else []):
+        rows.setdefault(int(r["season"]), {})[r["manager"]] = [int(r["rank"]), 0, int(r["h2h_w"]), int(r["h2h_l"]),
+                                                              int(r["pf"]), int(float(r["rumbles"])), int(r["teams"])]
+    for r in sleeper_rows:
+        rows.setdefault(int(r["season"]), {})[r["manager"]] = [int(r["rank"]), int(r.get("place") or 0) if int(r["season"]) >= SLEEPER_PLAYOFFS_FROM else 0, int(r["h2h_w"]),
+                                                              int(r["h2h_l"]), int(r["pf"]), int(float(r["rumbles"])), int(r["teams"])]
+    p = ROOT / "config" / "playoffs.json"
+    manual = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    for season, podium in manual.items():
+        if season.startswith("_") or int(season) not in rows:
+            continue
+        for key, code in (("champion", 1), ("second", 2), ("third", 3)):
+            name = podium.get(key)
+            if not name:
+                continue
+            if name not in rows[int(season)]:
+                print(f"  WARNING config/playoffs.json: {season} {key} '{name}' is not a manager that season")
+                continue
+            for v in rows[int(season)].values():        # one team per podium spot
+                if v[1] == code:
+                    v[1] = 0
+            rows[int(season)][name][1] = code
+    return {str(s): rows[s] for s in sorted(rows)}
 
 
 # ----------------------------------------------------------------------------- canonical table
@@ -438,7 +550,7 @@ def reconcile(canon, reference):
 
 
 # ----------------------------------------------------------------------------- site data
-def build_site_json(canon, sources_note, boards, league):
+def build_site_json(canon, sources_note, boards, league, standings):
     eras = load_json("eras.json")["eras"]
     seasons = sorted({r["season"] for r in canon})
     latest = seasons[-1]
@@ -456,6 +568,8 @@ def build_site_json(canon, sources_note, boards, league):
         "latest_season": latest, "seasons": seasons, "teams": teams, "spent": spent,
         "source": source, "league": league, "eras": eras, "managers": managers, "sources_note": sources_note,
         "boards": boards, "columns": cols,
+        "standings": standings,
+        "standings_columns": ["rank", "place", "wins", "losses", "points_for", "rumbles", "teams"],
         "picks": [[r["season"], r["manager"], r["player"], r["player_key"], r["position"],
                    r["price"], r["depth"], r["pick_no"] if r["pick_no"] != "" else None, r["row"],
                    r["team"], r["college"]]
@@ -473,9 +587,12 @@ def main(argv):
     if offline:
         cache_path = ROOT / "data" / "sleeper_picks.csv"
         sleeper = read_csv(cache_path) if cache_path.exists() else []
+        sp = ROOT / "data" / "sleeper_standings.csv"
+        sleeper_standings = read_csv(sp) if sp.exists() else []
     else:
-        sleeper, cache_path, latest = sync_sleeper(cfg, refresh)
+        sleeper, cache_path, latest, leagues = sync_sleeper(cfg, refresh)
         write_csv(cache_path, sleeper, PICK_COLS)
+        sleeper_standings = sync_standings(cfg, leagues, sleeper, refresh)
     # the league's current name on Sleeper (it can be renamed); offline runs keep what the last run saw
     league = {"id": str(cfg["seed_league_id"]), "name": "DTF Club"}
     old_site = ROOT / "site" / "data.json"
@@ -505,13 +622,13 @@ def main(argv):
     first_sleeper = min((int(r["season"]) for r in sleeper), default=None)
     note = (f"2012-{SHEET_LAST_SEASON}: spreadsheet. {first_sleeper}-{max(r['season'] for r in canon)}: Sleeper."
             if first_sleeper else "Spreadsheet only.")
-    site = build_site_json(canon, note, boards, league)
+    site = build_site_json(canon, note, boards, league, build_standings(sleeper_standings))
     out = ROOT / "site" / "data.json"
     out.parent.mkdir(exist_ok=True)
     if out.exists():  # keep the old timestamp when nothing changed, so runs don't create empty commits
         try:
             old = json.loads(out.read_text(encoding="utf-8"))
-            if all(old.get(k) == site[k] for k in ("picks", "eras", "boards", "league")):
+            if all(old.get(k) == site[k] for k in ("picks", "eras", "boards", "league", "standings")):
                 site["generated"] = old["generated"]
         except (ValueError, KeyError):
             pass

@@ -39,6 +39,22 @@ for (s, k), n in keys.items():
     if n > 1:
         problems.append(f"{s}: player {k} bought {n} times")
 
+# standings (drawn above each year on the Manager charts): every team of a season has a rank, at most one per podium spot
+import json
+site = json.loads((ROOT / "site" / "data.json").read_text(encoding="utf-8")) if (ROOT / "site" / "data.json").exists() else {}
+teams_in = {}
+for r in rows:
+    teams_in.setdefault(int(r["season"]), set()).add(r["manager"])
+for season, block in (site.get("standings") or {}).items():
+    n = len(block)
+    if set(block) - teams_in.get(int(season), set()):
+        problems.append(f"{season} standings name(s) not in that season's draft: {sorted(set(block) - teams_in.get(int(season), set()))}")
+    if any(not 1 <= v[0] <= n for v in block.values()):
+        problems.append(f"{season} standings: a rank is outside 1..{n}")
+    for spot in (1, 2, 3):
+        if sum(1 for v in block.values() if v[1] == spot) > 1:
+            problems.append(f"{season} standings: more than one team in podium spot {spot}")
+
 if problems:
     print("DATA CHECK FAILED:")
     print("\n".join(" - " + p for p in problems))

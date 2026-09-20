@@ -24,8 +24,8 @@ Prefer a terminal? `mkdir -p .github/workflows && cp workflow-to-paste.txt .gith
 
 | Tab | What it shows |
 |---|---|
-| League | Average dollars per team per position per season, average dollars per team per depth slot (QB1-3, RB1-3, WR1-3, TE1-2, K1), and a dot for every pick ever made. Dashed gold lines mark scoring-rule changes. |
-| Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. Hover a chart point to see which players make up that value. Two tables list the NFL teams and the colleges their drafted players came from; hover a count to see the players and years. |
+| League | Average dollars per team per position per season, average dollars per team per depth slot (QB1-3, RB1-3, WR1-3, TE1-2, K1), and a dot for every pick ever made. Dashed gold lines mark scoring-rule changes. Below the charts, two tables count the players each manager has bought from every NFL team and every college (defenses excluded); hover or tap a number for the players and years. |
+| Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. Hover a chart point to see which players make up that value. Two tables list the NFL teams and the colleges their drafted players came from (defenses excluded); hover a count to see the players and years. |
 | Drafts | Every draft board, newest first, in the style of the old `Auctions` sheet: a column per manager, a row per lineup slot (QB, RB, RB, WR, WR, TE, FLEX, SFLEX, D/ST, K, bench), player and price in each cell. Every board starts expanded, with each year's top QB, RB, WR and TE bids in its banner. Jump to a season, search a player or manager to highlight every match, or switch to full player names. |
 | Players | Type a name and pick from the drop-down (position, number of auctions and best price are shown for each match) to see what that player cost each year, who bought them, and their depth slot. |
 

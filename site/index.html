@@ -73,6 +73,14 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .twocol{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
 .twocol .card{margin:0 0 22px;min-width:0}
 .teamtable{max-height:480px;overflow-x:hidden;overflow-y:auto}
+.mxwrap{max-height:560px;overflow:auto}
+.mx th,.mx td{text-align:center;padding:4px 3px;font-size:12px}
+.mx th:first-child,.mx td:first-child{text-align:left;white-space:normal;min-width:104px;max-width:150px;padding-left:9px}
+.mx th.v{writing-mode:vertical-rl;transform:rotate(180deg);height:66px;text-align:left;padding:6px 2px;font-weight:600}
+.mx td.z{color:var(--ink3)}
+.mx td.hv{cursor:help}
+.mx td.hv:hover{outline:1px solid #8ec1ff;outline-offset:-1px}
+.mx .sep{border-left:2px solid #4a4f57}
 .teamtable td{white-space:normal}
 .teamtable td:last-child,.teamtable th:last-child{text-align:right;width:84px}
 .cnt{background:#25272b;color:var(--ink);border:1px solid var(--line);border-radius:8px;min-width:44px;padding:1px 10px;font:inherit;font-variant-numeric:tabular-nums;cursor:help}
@@ -175,6 +183,16 @@ html,body{max-width:100%}
       <div class="filters"><label><input type="checkbox" id="show-kdef"> Show kickers and defenses</label></div>
       <div class="chart tall" id="league-scatter"></div>
     </div>
+    <div class="card">
+      <h2>Players drafted from each NFL team, by manager</h2>
+      <p class="lede">How many players each manager has bought from each NFL team: the team the player was on that season, defenses excluded, one count per year bought. Sorted by total. Hover or tap a number for the players and years; former managers are on the right.</p>
+      <div class="tablewrap mxwrap" id="lg-nfl"></div>
+    </div>
+    <div class="card">
+      <h2>Players drafted from each college, by manager</h2>
+      <p class="lede">The same table by college (defenses excluded). Sorted by total; scroll inside the table for the full list.</p>
+      <div class="tablewrap mxwrap" id="lg-college"></div>
+    </div>
     <div class="notes" id="notes-league"></div>
   </section>
 
@@ -199,7 +217,7 @@ html,body{max-width:100%}
     <div class="twocol">
       <div class="card">
         <h2>NFL teams drafted from <span id="mgr-name-3"></span></h2>
-        <p class="lede">The NFL team each drafted player was on that season (a defense counts for its own team). A player bought in several years counts each time. Hover or tap a number to see the players and years.</p>
+        <p class="lede">The NFL team each drafted player was on that season (defenses excluded). A player bought in several years counts each time. Hover or tap a number to see the players and years.</p>
         <div class="tablewrap teamtable" id="mgr-nfl"></div>
       </div>
       <div class="card">
@@ -235,12 +253,14 @@ html,body{max-width:100%}
 <footer id="footer"></footer>
 
 <script src="vendor/plotly-basic.min.js"></script>
-<script src="data.js"></script>
+<script>document.write('<script src="data.js?v='+Date.now()+'"><\/script>')</script>
 <script>
 (function(){
 "use strict";
 const D = window.DTF_DATA;
 if(!D){document.body.insertAdjacentHTML("afterbegin",'<div class="err">Could not load data.js. Run <code>python scripts/update_data.py</code> first.</div>');return;}
+
+if(!D.columns||D.columns.indexOf("team")<0||D.columns.indexOf("college")<0){document.body.insertAdjacentHTML("afterbegin",'<div class="err">This page is showing an out-of-date data.js (no NFL team or college columns). Hard-refresh the page (Cmd+Shift+R or Ctrl+Shift+R). If it persists, re-run the “Update auction data and publish site” workflow.</div>');}
 
 /* ---------- constants ---------- */
 const POS = ["QB","RB","WR","TE","K","DEF"];
@@ -483,6 +503,40 @@ function scatterFigure(){
   lay.hoverlabel.align="left";
   Plotly.react("league-scatter",traces,lay,CFG);
 }
+
+/* ---------- LEAGUE: players drafted from each NFL team / college, by manager ---------- */
+function matrixTable(host, label, keyOf){
+  const rows=picks.filter(r=>r.position!=="DEF");
+  const groups=groupBy(rows,keyOf);
+  const mgrs=[...D.managers.filter(m=>m.current),...D.managers.filter(m=>!m.current)].filter(m=>rows.some(r=>r.manager===m.name));
+  const firstOld=mgrs.findIndex(m=>!m.current);
+  const cells=groups.map(g=>{ const by=new Map(); g.rows.forEach(r=>{ if(!by.has(r.manager)) by.set(r.manager,[]); by.get(r.manager).push(r); }); return by; });
+  const maxV=Math.max(1,...cells.map(by=>Math.max(0,...[...by.values()].map(v=>v.length))));
+  host.textContent="";
+  const t=el("table",{class:"mx"}), hr=el("tr");
+  hr.appendChild(el("th",{text:label}));
+  hr.appendChild(el("th",{class:"v",text:"Total"}));
+  mgrs.forEach((m,i)=>hr.appendChild(el("th",{class:"v"+(i===firstOld&&firstOld>0?" sep":""),text:m.name})));
+  t.appendChild(el("thead",{},[hr]));
+  const tb=el("tbody");
+  groups.forEach((g,gi)=>{
+    const tr=el("tr");
+    tr.appendChild(el("td",{text:g.name,style:g.unknown?"color:var(--ink3)":""}));
+    tr.appendChild(el("td",{text:String(g.rows.length),style:"font-weight:650"}));
+    mgrs.forEach((m,i)=>{
+      const v=cells[gi].get(m.name)||[], sep=i===firstOld&&firstOld>0?" sep":"";
+      if(!v.length){ tr.appendChild(el("td",{class:"z"+sep,text:"·"})); return; }
+      const td=el("td",{class:"hv"+sep,text:String(v.length),style:"background:rgba(76,158,255,"+(0.14+0.5*v.length/maxV).toFixed(2)+")"});
+      td._tip={title:m.name+" · "+g.name+" · "+v.length+(v.length===1?" pick":" picks"),
+        lines:[...v].sort((a,b)=>a.season-b.season||b.price-a.price).map(r=>[String(r.season),r.player+" ("+r.position+")",fmt$(r.price)])};
+      td.addEventListener("mouseenter",()=>showTip(td)); td.addEventListener("mouseleave",hideTip);
+      td.addEventListener("click",e=>{ e.stopPropagation(); showTip(td); });
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); host.appendChild(t);
+}
 function drawLeague(){
   const tt=teamText();
   $("league-pos-lede").textContent="Average dollars each team spent on each position, per season (league total divided by the number of teams: "+tt+"). Click a legend entry to hide or isolate a position.";
@@ -490,6 +544,8 @@ function drawLeague(){
   positionFigure("league-pos","league-pos-table",picks,seasons,{perTeam:true});
   depthFigure("league-depth","league-depth-table",picks,seasons,{perTeam:true});
   scatterFigure();
+  matrixTable($("lg-nfl"),"NFL team",r=>r.team);
+  matrixTable($("lg-college"),"College",r=>r.college);
   footnotes($("notes-league"),[],true);
 }
 
@@ -540,7 +596,7 @@ function showTip(btn){
   let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
   tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
 }
-document.addEventListener("click",e=>{ if(!e.target.closest(".cnt")&&!e.target.closest(".tip")) hideTip(); });
+document.addEventListener("click",e=>{ if(!e.target.closest(".cnt")&&!e.target.closest(".hv")&&!e.target.closest(".tip")) hideTip(); });
 window.addEventListener("scroll",hideTip,{passive:true}); window.addEventListener("resize",hideTip);
 function originTable(host, label, groups){
   host.textContent="";
@@ -570,7 +626,7 @@ function groupBy(rows, keyOf){
 function drawOrigins(name, rows){
   hideTip();
   $("mgr-name-3").textContent=$("mgr-name-4").textContent="· "+name;
-  originTable($("mgr-nfl"),"NFL team",groupBy(rows,r=>r.team));
+  originTable($("mgr-nfl"),"NFL team",groupBy(rows.filter(r=>r.position!=="DEF"),r=>r.team));
   originTable($("mgr-college"),"College",groupBy(rows.filter(r=>r.position!=="DEF"),r=>r.college));
 }
 
@@ -815,6 +871,7 @@ function findDrafts(){
   if(q.length>=2) lede.textContent=hits?hits+(hits===1?" pick":" picks")+" in "+ss+(ss===1?" season":" seasons")+" match “"+$("dr-find").value.trim()+"”. Clear the box to see every draft.":"Nothing matches “"+$("dr-find").value.trim()+"”.";
   else if(draftsBuilt) lede.textContent="Every auction draft laid out like a lineup card: a column per manager, a row per lineup slot, the player and the price paid. Tap a season’s banner to collapse or expand it.";
 }
+
 
 /* ---------- routing ---------- */
 const views=["league","managers","drafts","players"];

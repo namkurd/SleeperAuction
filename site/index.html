@@ -70,6 +70,18 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .combo li small{display:block;color:var(--ink3)}
 .combo li.hd{padding:6px 10px 4px;color:var(--ink3);font-size:12px;cursor:default}
 /* Drafts: lineup-card boards, a nod to the old spreadsheet */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+.twocol .card{margin:0 0 22px;min-width:0}
+.teamtable{max-height:480px;overflow-x:hidden;overflow-y:auto}
+.teamtable td{white-space:normal}
+.teamtable td:last-child,.teamtable th:last-child{text-align:right;width:84px}
+.cnt{background:#25272b;color:var(--ink);border:1px solid var(--line);border-radius:8px;min-width:44px;padding:1px 10px;font:inherit;font-variant-numeric:tabular-nums;cursor:help}
+.cnt:hover,.cnt:focus-visible,.cnt.on{background:var(--card2);border-color:#8ec1ff}
+.tip{position:fixed;z-index:60;max-width:min(340px,calc(100vw - 16px));max-height:min(56vh,420px);overflow-y:auto;background:#17181a;border:1px solid #4a4f57;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 14px 34px rgba(0,0,0,.55);color:var(--ink)}
+.tip b{display:block;margin-bottom:3px}
+.tip div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tip i{font-style:normal;color:var(--ink3)}
+@media (max-width:900px){ .twocol{grid-template-columns:1fr} }
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
 .chip{background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:8px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
 .chip:hover{background:var(--card2);color:var(--ink)}
@@ -174,15 +186,27 @@ html,body{max-width:100%}
     <div class="card">
       <div class="hero" id="mgr-hero"></div>
       <h2>Auction dollars by position <span id="mgr-name-1"></span></h2>
-      <p class="lede">What this manager spent on each position, per season played.</p>
+      <p class="lede">What this manager spent on each position, per season played. Hover a point to see the players behind that total.</p>
       <div class="chart" id="mgr-pos"></div>
       <details open><summary>Data table</summary><div class="tablewrap" id="mgr-pos-table"></div></details>
     </div>
     <div class="card">
       <h2>Auction dollars by depth chart <span id="mgr-name-2"></span></h2>
-      <p class="lede">Their most expensive QB / RB / WR / TE (1), second most expensive (2), and so on.</p>
+      <p class="lede">Their most expensive QB / RB / WR / TE (1), second most expensive (2), and so on. Hover a point to see the player.</p>
       <div class="chart tall" id="mgr-depth"></div>
       <details open><summary>Data table</summary><div class="tablewrap" id="mgr-depth-table"></div></details>
+    </div>
+    <div class="twocol">
+      <div class="card">
+        <h2>NFL teams drafted from <span id="mgr-name-3"></span></h2>
+        <p class="lede">The NFL team each drafted player was on that season (a defense counts for its own team). A player bought in several years counts each time. Hover or tap a number to see the players and years.</p>
+        <div class="tablewrap teamtable" id="mgr-nfl"></div>
+      </div>
+      <div class="card">
+        <h2>College teams drafted from <span id="mgr-name-4"></span></h2>
+        <p class="lede">Where each drafted player went to college (defenses excluded). A player bought in several years counts each time. Hover or tap a number to see the players and years.</p>
+        <div class="tablewrap teamtable" id="mgr-college"></div>
+      </div>
     </div>
     <div class="notes" id="notes-mgr"></div>
   </section>
@@ -360,6 +384,7 @@ function footnotes(host, extra, perTeam){
 
 /* ---------- LEAGUE view ---------- */
 let leagueDrawn=false;
+const esc=t=>String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 function positionFigure(chartId, tableId, rows, ss, opts){
   opts=opts||{};
   const xs = opts.fillGaps ? span(ss) : ss;
@@ -371,7 +396,13 @@ function positionFigure(chartId, tableId, rows, ss, opts){
   const traces=[], trows=[];
   POS.forEach(p=>{
     const y=tot[p].map((v,i)=>shown[i]?v/div(i):null);
-    traces.push(lineTrace(p,xs,y,p,0,{hovertemplate:hov}));
+    const ex={hovertemplate:hov};
+    if(opts.contrib){                       // manager page: hover a point to see who made up that total
+      ex.customdata=xs.map(s=>rows.filter(r=>r.season===s&&r.position===p).sort((a,b)=>b.price-a.price)
+        .map(r=>esc(r.player)+" "+fmt$(r.price)).join("<br>")||"nobody bought");
+      ex.hovertemplate="<b>%{x} · "+p+" %{y:$,.0f}</b><br>%{customdata}<extra></extra>";
+    }
+    traces.push(lineTrace(p,xs,y,p,0,ex));
     trows.push({label:p,color:COLOR[p],values:y});
   });
   if(opts.avg){
@@ -379,10 +410,13 @@ function positionFigure(chartId, tableId, rows, ss, opts){
     POS.forEach(p=>{
       const y=lg[p].map((v,i)=>shown[i]?v/teamsIn(xs[i]):null);
       const t=lineTrace(p+" league avg",xs,y,p,0,{mode:"lines",showlegend:false,legendgroup:p,hovertemplate:"%{y:$,.0f} league avg"});
-      t.line={color:COLOR[p],width:1.4,dash:"dot"}; t.opacity=.6; traces.push(t);
+      t.line={color:COLOR[p],width:1.4,dash:"dot"}; t.opacity=.6;
+      if(opts.contrib){ delete t.hovertemplate; t.hoverinfo="skip"; }
+      traces.push(t);
     });
   }
-  const lay=baseLayout(xs,{bottomLegend:true});
+  const lay=baseLayout(xs,{bottomLegend:true,hovermode:opts.contrib?"closest":undefined});
+  if(opts.contrib){ lay.hoverdistance=40; lay.hoverlabel.align="left"; }
   if(opts.yMin) lay.yaxis.range=[0,opts.yMin(traces)];
   Plotly.react(chartId,traces,lay,CFG);
   renderTable($(tableId),xs,trows,opts.perTeam&&window.innerWidth>=1100?1:0);
@@ -399,7 +433,12 @@ function depthFigure(chartId, tableId, rows, ss, opts){
       const raw=depthTotals(rows,xs,p,d);
       const y=raw.map((v,i)=>(played.has(xs[i])&&v!=null)?v/div(i):null);
       if(y.every(v=>v==null)) continue;
-      const t=lineTrace(p+d,xs,y,p,d,{hovertemplate:hov});
+      const ex={hovertemplate:hov};
+      if(opts.contrib){
+        ex.customdata=xs.map(s=>{ const r=rows.find(r=>r.season===s&&r.position===p&&r.depth===d); return r?esc(r.player)+" · "+fmt$(r.price):""; });
+        ex.hovertemplate="<b>%{x} · "+p+d+" %{y:$,.0f}</b><br>%{customdata}<extra></extra>";
+      }
+      const t=lineTrace(p+d,xs,y,p,d,ex);
       if(d===1 && wideLegend()) t.legendgrouptitle={text:p,font:{color:INK2,size:11}};
       traces.push(t);
       const col=mix(COLOR[p],"#2b2e33",DEPTH_STYLE[d].t);
@@ -414,11 +453,14 @@ function depthFigure(chartId, tableId, rows, ss, opts){
         const y=raw.map((v,i)=>(played.has(xs[i])&&v!=null)?v/teamsIn(xs[i]):null);
         if(y.every(v=>v==null)) continue;
         const t=lineTrace(p+d+" league avg",xs,y,p,d,{mode:"lines",showlegend:false,hovertemplate:"%{y:$,.0f} league avg"});
-        t.line={color:COLOR[p],width:1.2,dash:"dot"}; t.opacity=.5; traces.push(t);
+        t.line={color:COLOR[p],width:1.2,dash:"dot"}; t.opacity=.5;
+        if(opts.contrib){ delete t.hovertemplate; t.hoverinfo="skip"; }
+        traces.push(t);
       }
     });
   }
-  const lay=baseLayout(xs,{rightLegend:true,stagger:false});
+  const lay=baseLayout(xs,{rightLegend:true,stagger:false,hovermode:opts.contrib?"closest":undefined});
+  if(opts.contrib){ lay.hoverdistance=40; lay.hoverlabel.align="left"; }
   if(opts.yMin) lay.yaxis.range=[0,opts.yMin(traces)];
   Plotly.react(chartId,traces,lay,CFG);
   renderTable($(tableId),xs,trows,opts.perTeam&&window.innerWidth>=1100?1:0);
@@ -473,12 +515,63 @@ function drawManager(name){
   [[ss.length+" seasons",ranges.join(", ")+(m.current?"":" (former member)")],[fmt$(total),"spent in total"],[top?fmt$(top.price):"","most expensive buy: "+(top?top.player+" ("+top.season+")":"")]]
     .forEach(([big,small])=>hero.appendChild(el("div",{},[el("b",{text:big}),el("span",{text:small})])));
   const yMax=(base)=>(traces)=>Math.max(base,Math.ceil(Math.max(...traces.flatMap(t=>t.y.filter(v=>v!=null)))*1.08/10)*10);
-  positionFigure("mgr-pos","mgr-pos-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(140)});
-  depthFigure("mgr-depth","mgr-depth-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(80)});
+  positionFigure("mgr-pos","mgr-pos-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(140),contrib:true});
+  depthFigure("mgr-depth","mgr-depth-table",rows,ss,{fillGaps:true,avg:avg,yMin:yMax(80),contrib:true});
+  drawOrigins(m.name,rows);
   const extra=[];
   if(ss.length!==span(ss).length) extra.push(m.name+" sat out some seasons; the gaps in the charts are real years without an auction.");
   extra.push("Chart axes start at $0 and stop at $140 (position) and $80 (depth) unless a manager's spending goes higher.");
   footnotes($("notes-mgr"),extra);
+}
+
+/* ---------- team / college tables (Managers view) ---------- */
+const tipEl=el("div",{class:"tip",role:"tooltip",hidden:""}); document.body.appendChild(tipEl);
+let tipFor=null;
+function hideTip(){ tipEl.hidden=true; if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
+function showTip(btn){
+  const d=btn._tip; if(!d) return;
+  if(tipFor&&tipFor!==btn) tipFor.classList.remove("on");
+  tipFor=btn; btn.classList.add("on");
+  tipEl.textContent=""; tipEl.appendChild(el("b",{text:d.title}));
+  d.lines.forEach(l=>tipEl.appendChild(el("div",{},[l[0]+" · "+l[1]+" ",el("i",{text:l[2]})])));
+  tipEl.hidden=false;
+  const r=btn.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
+  const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
+  let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
+  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
+}
+document.addEventListener("click",e=>{ if(!e.target.closest(".cnt")&&!e.target.closest(".tip")) hideTip(); });
+window.addEventListener("scroll",hideTip,{passive:true}); window.addEventListener("resize",hideTip);
+function originTable(host, label, groups){
+  host.textContent="";
+  if(!groups.length){ host.appendChild(el("p",{class:"lede",style:"padding:10px 12px",text:"Nothing to show."})); return; }
+  const t=el("table"), hr=el("tr");
+  hr.appendChild(el("th",{text:label,style:"text-align:left"})); hr.appendChild(el("th",{text:"Players"}));
+  t.appendChild(el("thead",{},[hr]));
+  const tb=el("tbody");
+  groups.forEach(g=>{
+    const b=el("button",{type:"button",class:"cnt",text:String(g.rows.length),"aria-label":g.name+": "+g.rows.length+" picks, hover or tap for the list"});
+    b._tip={title:g.name+" · "+g.rows.length+(g.rows.length===1?" pick":" picks"),
+      lines:[...g.rows].sort((a,b)=>a.season-b.season||b.price-a.price).map(r=>[String(r.season),r.player+(r.position==="DEF"?" (D/ST)":" ("+r.position+")"),fmt$(r.price)])};
+    b.addEventListener("mouseenter",()=>showTip(b)); b.addEventListener("mouseleave",hideTip);
+    b.addEventListener("focus",()=>showTip(b)); b.addEventListener("blur",hideTip);
+    b.addEventListener("click",e=>{ e.stopPropagation(); showTip(b); });
+    const tr=el("tr"); tr.appendChild(el("td",{text:g.name,style:g.unknown?"color:var(--ink3)":""}));
+    tr.appendChild(el("td",{},[b])); tb.appendChild(tr);
+  });
+  t.appendChild(tb); host.appendChild(t);
+}
+function groupBy(rows, keyOf){
+  const m=new Map();
+  rows.forEach(r=>{ const k=keyOf(r)||""; if(!m.has(k)) m.set(k,[]); m.get(k).push(r); });
+  return [...m].map(([k,v])=>({name:k||"Unknown",unknown:!k,rows:v}))
+    .sort((a,b)=>(a.unknown-b.unknown)||(b.rows.length-a.rows.length)||a.name.localeCompare(b.name));
+}
+function drawOrigins(name, rows){
+  hideTip();
+  $("mgr-name-3").textContent=$("mgr-name-4").textContent="· "+name;
+  originTable($("mgr-nfl"),"NFL team",groupBy(rows,r=>r.team));
+  originTable($("mgr-college"),"College",groupBy(rows.filter(r=>r.position!=="DEF"),r=>r.college));
 }
 
 /* ---------- PLAYERS view ---------- */
@@ -619,7 +712,6 @@ function buildBoard(season, open){
   const cfg=boardCfg[String(season)]; if(!cfg) return null;
   const rows=picks.filter(r=>r.season===season);
   const by={}; rows.forEach(r=>{ (by[r.manager]||(by[r.manager]=[]))[r.row]=r; });
-  const top=rows.reduce((a,r)=>r.price>a.price?r:a,rows[0]);
   const order=cfg.order, slots=cfg.slots, n=order.length, full=$("dr-full").checked;
   const det=el("details",{class:"board",id:"board-"+season,"data-season":String(season)});
   if(open) det.setAttribute("open","");
@@ -631,7 +723,7 @@ function buildBoard(season, open){
     el("span",{class:"yr",text:season+" Auction Draft"}),
     el("span",{class:"meta"},[el("span",{class:"tn",text:n+" teams"}),el("span",{class:"tbl"},[el("b",{class:"lbl",text:"Top bids"}),...tops])])]));
   const grid=el("div",{class:"bgrid","data-n":String(n),style:"--n:"+n});
-  const sc=el("div",{class:"bcol slots"},[el("div",{class:"bh",text:fmt$(top.price),title:"Highest price this year"})]);
+  const sc=el("div",{class:"bcol slots"},[el("div",{class:"bh",text:""})]);
   slots.forEach(sl=>sc.appendChild(el("div",{class:"bc"},[sl])));
   grid.appendChild(sc);
   order.forEach((m,i)=>{
@@ -695,10 +787,9 @@ function drawDrafts(arg){
     draftsBuilt=true; findDrafts();
   }
   $("dr-lede").textContent="Every auction draft laid out like a lineup card: a column per manager, a row per lineup slot, the player and the price paid. Tap a season’s banner to collapse or expand it.";
-  const rule=seasons.filter(s=>(boardCfg[String(s)]||{}).by_rule);
   const notes=$("notes-drafts"); notes.textContent="";
-  [ "Names are the validated ones: nicknames, misspellings and initials in the old spreadsheet were matched to real players (see data/history_name_map.csv). Flex and bench rows show each player’s position; each board’s top-left corner shows the year’s highest price.",
-    "Lineup slots follow the old spreadsheet, which recorded who each manager started, so a few starters are not the priciest player at their position."+(rule.length?" Seasons "+rule.join(", ")+" have no such record and are laid out by price: the priciest players fill the starting slots, the rest sit on the bench.":" Seasons added after the spreadsheet are laid out by price: the priciest players fill the starting slots, the rest sit on the bench."),
+  [ "Names are the validated ones: nicknames, misspellings and initials in the old spreadsheet were matched to real players (see data/history_name_map.csv). Flex and bench rows show each player’s position.",
+    "Every team is laid out the same way, by price: its priciest QB in QB, its second QB in SFLEX (2023 on), its two priciest RBs and two priciest WRs in the RB and WR slots, the next-best RB or WR in FLEX, the priciest TE, K and D/ST, and everyone else on the bench, priciest first. (2020 and 2021 had two FLEX slots and 2022 a WR/TE flex; those take the next-best players in the same way.) Ties go to the earlier pick.",
     "Sources: "+D.sources_note+" Where the two disagree, Sleeper wins; see data/reconcile_report.md in the repo."
   ].forEach(t=>notes.appendChild(el("p",{text:t})));
   fitBoards();

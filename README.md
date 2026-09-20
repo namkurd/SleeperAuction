@@ -25,7 +25,7 @@ Prefer a terminal? `mkdir -p .github/workflows && cp workflow-to-paste.txt .gith
 | Tab | What it shows |
 |---|---|
 | League | Average dollars per team per position per season, average dollars per team per depth slot (QB1-3, RB1-3, WR1-3, TE1-2, K1), and a dot for every pick ever made. Dashed gold lines mark scoring-rule changes. |
-| Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. |
+| Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. Hover a chart point to see which players make up that value. Two tables list the NFL teams and the colleges their drafted players came from; hover a count to see the players and years. |
 | Drafts | Every draft board, newest first, in the style of the old `Auctions` sheet: a column per manager, a row per lineup slot (QB, RB, RB, WR, WR, TE, FLEX, SFLEX, D/ST, K, bench), player and price in each cell. Every board starts expanded, with each year's top QB, RB, WR and TE bids in its banner. Jump to a season, search a player or manager to highlight every match, or switch to full player names. |
 | Players | Type a name and pick from the drop-down (position, number of auctions and best price are shown for each match) to see what that player cost each year, who bought them, and their depth slot. |
 
@@ -42,7 +42,8 @@ spreadsheet ─┘   (2012-2020 frozen in data/history_2012_2020.csv)
 - **2012-2020** come from the old spreadsheet, cleaned once and frozen in `data/history_2012_2020.csv` (co-owners folded into one manager, misspelled and nicknamed players matched to real players).
 - **2021 onward** come from Sleeper. Its prices match the spreadsheet apart from two $1 discrepancies in 2021, and its positions are right where the spreadsheet has a few mislabels (a TE typed as WR, a kicker typed as DEF). Sleeper also has real player ids and cleaner names, so it wins wherever the two differ. `data/reconcile_report.md` lists every difference so you can look.
 - **Depth is strictly by price.** Within a manager, season and position the highest-priced player is 1, the next is 2, and so on (ties go to the earlier pick). The old charts used the spreadsheet's lineup order, so a few depth numbers moved slightly.
-- **Draft boards** need a lineup slot for every player. For 2012-2026 the slots are the ones recorded in the old spreadsheet (2021-2026 Sleeper picks inherit them by matching team, price, position and last name). Seasons added after that have no such record, so they are laid out by price: fixed slots take the priciest QB, RBs, WRs, TE, K and D/ST, then the flex slots take the priciest players left, and the rest sit on the bench. Managers appear in the spreadsheet's left-to-right order (`data/board_order.json`); new seasons reuse last season's order with newcomers at the end.
+- **Draft boards** are laid out by price, the same rule for every team and year: the priciest QB takes QB, the 2nd QB takes SFLEX (if a team has no 2nd QB, SFLEX takes its priciest RB, WR or TE), the two priciest RBs and two priciest WRs take those slots, the next-priciest RB or WR takes FLEX, then the priciest TE, K and D/ST, and everyone else sits on the bench, priciest first. Which slots exist each year is in `config/lineups.json`. Managers appear in the spreadsheet's left-to-right order (`data/board_order.json`); new seasons reuse last season's order with newcomers at the end.
+- **NFL team and college** for each pick: 2021 onward the team is stored on the Sleeper pick and the college comes from Sleeper's player database. For 2012-2020 the team is that season's roster from the public [nflverse](https://github.com/nflverse/nflverse-data) data (a player traded mid-season can show either team). About 25 retired players missing from both sources were filled in by hand in `config/player_extras.json`, from general knowledge, so check those if a college looks off.
 - Finished Sleeper seasons are cached in `data/sleeper_picks.csv`, so the archive survives even if Sleeper someday deletes an old league.
 
 ### Files
@@ -51,7 +52,10 @@ spreadsheet ─┘   (2012-2020 frozen in data/history_2012_2020.csv)
 |---|---|
 | `scripts/update_data.py` | Fetches Sleeper, computes depth, writes every data file. Standard library only. |
 | `scripts/check_data.py` | Sanity checks (budgets, gaps, duplicates). The Action stops before publishing if these fail. |
-| `scripts/build_history.py` | One-time importer for the spreadsheet (names, lineup slots, board order). You will almost never need it again. |
+| `scripts/build_history.py` | One-time importer for the spreadsheet (names, board order). You will almost never need it again. |
+| `scripts/build_player_meta.py` | One-time: NFL team per season and college for 2012-2020 players (downloads nflverse rosters). Writes `data/history_teams.csv` and `data/player_meta.csv`; `update_data.py` adds new players to the latter itself. |
+| `scripts/export_excel.py` | Optional: writes `DTF Auction - Updated.xlsx` (Drafting, Auctions, Player origins, Name fixes, Differences tabs) from the current data. Needs `pip install openpyxl`; not part of the Action. |
+| `config/player_extras.json` | Hand-filled colleges and teams for players the data sources lack. |
 | `config/managers.json` | Sleeper `user_id` to manager name, plus roster overrides. |
 | `config/eras.json` | The dashed scoring-era lines. |
 | `config/lineups.json` | The starting lineup of each era (which slots the Drafts boards show). |
@@ -63,7 +67,7 @@ spreadsheet ─┘   (2012-2020 frozen in data/history_2012_2020.csv)
 
 **A new manager joins.** Nothing breaks: they show up under their Sleeper display name and the run prints a warning. To give them a proper name, add their Sleeper `user_id` to `config/managers.json` (find it at `https://api.sleeper.app/v1/user/<username>`), then run the workflow.
 
-**The starting lineup changes.** Add an entry to `config/lineups.json`, for example one more FLEX: `{ "from": 2027, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "SFLEX", "D/ST", "K"] }`. Until you do, new seasons use the latest lineup listed and any extra players just show on the bench.
+**The starting lineup changes.** Add an entry to `config/lineups.json`, for example one more FLEX: `{ "from": 2027, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "FLEX", "SFLEX", "D/ST", "K"] }`. FLEX takes RB/WR only (the `eligible` list in the same file). Until you add an entry, new seasons use the latest lineup listed and any extra players just show on the bench.
 
 **Scoring rules change.** Add a line to `config/eras.json`, for example `{ "label": "Full PPR", "from": 2027 }`, and push. `from` is the first season the rule applies; the line is drawn between the previous season and that one. Use `<br>` in a label for a line break.
 

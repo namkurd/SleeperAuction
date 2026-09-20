@@ -1,0 +1,708 @@
+player_key,college
+id:1004,Auburn
+id:1020,Ohio State
+id:10213,Cincinnati
+id:10222,Michigan State
+id:10225,Ole Miss
+id:10229,SMU
+id:10232,Stanford
+id:10236,Utah
+id:1026,Kansas State
+id:1029,Arizona
+id:103,Tulane
+id:1048,Miami (FL)
+id:1049,Texas A&M
+id:1067,California
+id:1071,Rutgers
+id:1077,Miami (FL)
+id:108,Kentucky
+id:1082,Alabama
+id:10859,Iowa
+id:1097,Baylor
+id:11,Oklahoma
+id:110,Memphis
+id:1106,Mississippi State
+id:1107,Stanford
+id:1110,Florida International
+id:1111,Stanford
+id:1114,Oklahoma State
+id:1123,San Diego State
+id:1139,Louisiana-Lafayette
+id:1149,South Carolina
+id:11533,Notre Dame
+id:11539,Arkansas
+id:1154,Oklahoma
+id:11559,Washington
+id:11560,USC
+id:11563,Oregon
+id:11564,North Carolina
+id:11565,Michigan
+id:11566,LSU
+id:11575,Kentucky
+id:11576,Wisconsin
+id:11581,USC
+id:11583,Texas
+id:11584,Oregon
+id:11586,Michigan
+id:11589,Florida State
+id:11604,Georgia
+id:11618,Washington
+id:11620,Washington
+id:11624,Texas
+id:11625,Texas
+id:11626,South Carolina
+id:11628,Ohio State
+id:11631,LSU
+id:11632,LSU
+id:11635,Georgia
+id:11637,Florida State
+id:11638,Florida
+id:1164,Louisiana State
+id:11646,Holy Cross
+id:11651,Louisville
+id:11655,Purdue
+id:1166,Michigan State
+id:1169,Baylor
+id:1170,Florida Atlantic
+id:11786,Arkansas
+id:11792,Alabama
+id:118,Florida State
+id:1195,Boise State
+id:120,South Dakota State
+id:1201,Wake Forest
+id:12015,Missouri
+id:1206,Cincinnati
+id:1208,Appalachian State
+id:1214,Georgia
+id:1219,Notre Dame
+id:122,"Monmouth, N.J."
+id:1234,Wisconsin
+id:1244,Baylor
+id:12457,Texas
+id:12469,Tennessee
+id:12474,USC
+id:12481,Arizona State
+id:12484,Iowa State
+id:12489,UCF
+id:12490,Virginia Tech
+id:12492,Illinois
+id:12501,Texas
+id:12504,Iowa
+id:12506,Bowling Green
+id:12507,North Carolina
+id:12508,Ole Miss
+id:12512,Ohio State
+id:12514,Ohio State
+id:12517,Michigan
+id:12518,Penn State
+id:12519,Missouri
+id:12522,Miami (FL)
+id:12526,Arizona
+id:12527,Boise State
+id:12529,Ohio State
+id:12530,Colorado
+id:12533,Arizona
+id:12534,Rutgers
+id:12545,Louisville
+id:1263,Temple
+id:1264,Texas
+id:1265,Abilene Christian
+id:1266,Missouri Western
+id:12670,Auburn
+id:127,Baylor
+id:12711,Arizona
+id:12713,Miami (FL)
+id:128,Northern Colorado
+id:1290,Washington
+id:13269,Indiana
+id:13279,Ohio State
+id:13281,Arizona State
+id:13286,Notre Dame
+id:13287,Notre Dame
+id:1329,Monmouth
+id:13293,USC
+id:13294,USC
+id:13298,Texas A&M
+id:13305,Arkansas
+id:13317,Georgia State
+id:13320,Georgia
+id:1339,Stanford
+id:13413,Cincinnati
+id:13414,Indiana
+id:13417,Ole Miss
+id:13424,Kentucky
+id:1346,Texas
+id:1349,Florida State
+id:1352,USC
+id:1353,Florida
+id:13545,Florida
+id:1358,Florida
+id:1365,Marshall
+id:1373,West Virginia
+id:138,Miami (OH)
+id:1386,North Carolina
+id:1387,Nebraska
+id:1388,Notre Dame
+id:14,South Carolina
+id:1408,Michigan State
+id:1413,Oregon State
+id:1418,Tennessee
+id:142,Eastern Illinois
+id:1426,Clemson
+id:1433,Temple
+id:144,Louisiana State
+id:1441,Utah State
+id:145,Illinois
+id:1451,California
+id:1454,Wisconsin
+id:1463,Arkansas
+id:1466,Cincinnati
+id:147,California
+id:1476,UCF
+id:1479,California
+id:1487,Oklahoma State
+id:1490,Baylor
+id:1500,Florida
+id:1502,Florida State
+id:1517,Notre Dame
+id:1527,Alabama
+id:1530,Grand Valley State
+id:1535,Tennessee
+id:1546,Oregon
+id:1555,Oklahoma
+id:1567,West Virginia
+id:1573,Vanderbilt
+id:1575,Clemson
+id:1587,Rice
+id:1596,Texas A&M
+id:16,Rutgers
+id:1601,Louisiana State
+id:1654,Nevada
+id:1655,Cincinnati
+id:167,Michigan
+id:168,Maryland
+id:1689,Minnesota State
+id:169,Utah
+id:1698,Notre Dame
+id:17,UCF
+id:1706,Western Kentucky
+id:1720,West Texas A&M
+id:175,Kansas State
+id:1759,Grambling
+id:177,Texas Tech
+id:179,Southern California
+id:1793,Florida
+id:1800,Vanderbilt
+id:1817,Clemson
+id:1825,LSU
+id:1833,Oklahoma
+id:1837,Eastern Illinois
+id:184,Oklahoma
+id:1848,Wisconsin
+id:188,Mississippi
+id:1892,Louisiana State
+id:1901,Alabama State
+id:1903,Abilene Christian
+id:1907,Texas A&M
+id:1911,Ball State
+id:1912,Towson
+id:1916,Clemson
+id:1937,Washington
+id:194,Miami
+id:1944,Louisiana State
+id:1945,Rice
+id:1971,Mississippi
+id:1974,Auburn
+id:1979,UCF
+id:1984,Miami (FL)
+id:1992,Penn State
+id:200,Maryland
+id:201,Hofstra
+id:2020,Tulane
+id:2024,Abilene Christian
+id:2028,Fresno State
+id:203,Lane
+id:2078,LSU
+id:2088,Boston College
+id:2133,Fresno State
+id:2140,Saginaw Valley State
+id:2161,Georgia Southern
+id:2168,Florida State
+id:218,Oregon
+id:2182,Florida State
+id:2189,Stanford
+id:2197,Oregon State
+id:2216,Texas A&M
+id:2223,West Virginia
+id:223,Pittsburgh
+id:2231,Auburn
+id:2238,Pittsburg State
+id:2251,Virginia Tech
+id:2257,Ohio State
+id:228,Coe
+id:229,Texas
+id:2295,Washington
+id:23,Tennessee
+id:230,Tennessee
+id:2306,Florida State
+id:2307,Oregon
+id:2309,Alabama
+id:2312,West Virginia
+id:2315,Georgia
+id:2319,Louisville
+id:232,Miami (FL)
+id:2320,Wisconsin
+id:2325,USC
+id:2331,UCF
+id:2341,Alabama
+id:2345,Missouri
+id:2346,Michigan
+id:2359,Nebraska
+id:2374,Kansas State
+id:2378,Indiana
+id:2382,Miami (FL)
+id:2391,Northern Iowa
+id:2399,Stanford
+id:24,Boston College
+id:240,Georgia Tech
+id:2400,Florida
+id:2410,Duke
+id:2411,Michigan State
+id:2431,South Carolina
+id:2441,Minnesota
+id:2449,Maryland
+id:2452,Boise State
+id:246,Kansas State
+id:2462,UAB
+id:2477,Auburn
+id:2505,Georgia Tech
+id:253,San Jose State
+id:2583,Western Oregon
+id:2585,Central Michigan
+id:2588,Texas
+id:264,Western Michigan
+id:268,Utah
+id:269,Mount Union
+id:2699,Illinois State
+id:270,Toledo
+id:272,East Carolina
+id:2747,Marist
+id:2749,Purdue
+id:284,Central Missouri
+id:286,Louisiana State
+id:289,Purdue
+id:293,UCLA
+id:294,Tennessee
+id:297,Virginia Tech
+id:300,Miami
+id:306,Memphis
+id:3157,Notre Dame
+id:316,Wyoming
+id:3161,North Dakota State
+id:3163,California
+id:3164,Ohio State
+id:3177,Baylor
+id:3178,TCU
+id:3198,Alabama
+id:3199,Ohio State
+id:32,Kentucky
+id:3200,Oklahoma
+id:3204,Notre Dame
+id:3209,Utah
+id:321,Coastal Carolina
+id:3211,UCLA
+id:3214,Arkansas
+id:322,Kent State
+id:3225,Pittsburgh
+id:323,Texas
+id:3242,Alabama
+id:3257,North Carolina State
+id:326,Arkansas
+id:3271,Western Kentucky
+id:3280,San Jose State
+id:3294,Mississippi State
+id:3297,UMass
+id:3300,Texas Tech
+id:3306,Indiana
+id:331,North Carolina State
+id:3321,West Alabama
+id:3327,Arkansas
+id:339,Ohio State
+id:34,Illinois
+id:3423,Temple
+id:344,Kent State
+id:3451,UCLA
+id:348,Iowa
+id:3594,Auburn
+id:365,Mississippi
+id:3657,Tulane
+id:366,Rutgers
+id:3664,Arkansas State
+id:367,South Carolina
+id:3678,Georgia State
+id:370,Tiffin
+id:377,Connecticut
+id:380,Liberty
+id:386,Illinois
+id:387,Georgia
+id:391,South Carolina
+id:394,Maryland
+id:3969,LSU
+id:397,Iowa
+id:3976,North Carolina
+id:4,Alabama-Birmingham
+id:40,Texas A&M
+id:4017,Clemson
+id:4018,Oklahoma
+id:4029,Florida State
+id:4033,Miami (FL)
+id:4034,Stanford
+id:4035,Tennessee
+id:4036,Western Michigan
+id:4037,Penn State
+id:4038,Washington
+id:4039,Eastern Washington
+id:4040,USC
+id:4046,Texas Tech
+id:4055,Alabama
+id:4066,Ole Miss
+id:4068,Clemson
+id:4080,East Carolina
+id:4082,Ohio State
+id:4098,Toledo
+id:411,Missouri
+id:4111,Texas
+id:4131,Northern Illinois
+id:4137,Pittsburgh
+id:4144,Florida International
+id:4146,Oklahoma
+id:4147,Oklahoma
+id:4149,BYU
+id:4150,Clemson
+id:4152,South Florida
+id:4157,North Carolina A&T
+id:416,Vanderbilt
+id:4195,Memphis
+id:4197,Georgia
+id:4199,UTEP
+id:421,Georgia
+id:4217,Iowa
+id:4227,Georgia Tech
+id:4233,Arizona State
+id:4273,Oklahoma State
+id:429,Florida
+id:4455,Georgia Southern
+id:455,Texas Tech
+id:458,California
+id:4602,Indiana State
+id:461,Virginia Tech
+id:4622,Kentucky Wesleyan
+id:465,Oklahoma State
+id:4663,Western Colorado
+id:4666,Georgia Southern
+id:474,North Carolina
+id:4866,Penn State
+id:4881,Louisville
+id:4892,Oklahoma
+id:49,Penn State
+id:491,Texas Tech
+id:4943,USC
+id:4949,LSU
+id:4950,Texas A&M
+id:4951,LSU
+id:4962,Georgia
+id:4973,South Carolina
+id:4981,Alabama
+id:4983,Maryland
+id:4984,Wyoming
+id:4985,San Diego State
+id:4988,Georgia
+id:4992,Washington
+id:4993,Penn State
+id:4994,Arizona State
+id:5000,Fordham
+id:5001,Stanford
+id:5004,Southern Miss
+id:5009,Miami (FL)
+id:5012,Oklahoma
+id:5013,Memphis
+id:5022,South Dakota State
+id:5024,Oklahoma State
+id:5026,UCF
+id:503,Florida State
+id:5038,Colorado State
+id:5045,SMU
+id:5046,Oregon
+id:5052,USC
+id:5068,Auburn
+id:507,Clemson
+id:5086,South Florida
+id:5095,Auburn
+id:5100,Ole Miss
+id:5107,North Carolina State
+id:5110,LSU
+id:5119,New Mexico
+id:5122,Louisiana Tech
+id:5131,Northwestern
+id:515,Arizona
+id:516,Florida
+id:5170,Colorado
+id:5185,Iowa State
+id:5248,Rutgers
+id:527,Brigham Young
+id:5284,North Texas
+id:5347,North Carolina State
+id:536,Central Michigan
+id:538,SMU
+id:558,Minnesota
+id:559,Florida
+id:560,Georgia Tech
+id:57,Oregon State
+id:571,Fresno State
+id:574,Oklahoma State
+id:58,Miami
+id:582,Florida
+id:5820,Mississippi
+id:5844,Iowa
+id:5846,Ole Miss
+id:5848,Oklahoma
+id:5849,Oklahoma
+id:5850,Alabama
+id:5857,Iowa
+id:5859,Ole Miss
+id:5870,Duke
+id:5872,South Carolina
+id:5880,Ohio State
+id:5890,Alabama
+id:5892,Iowa State
+id:59,Colorado
+id:5906,Ole Miss
+id:5916,Memphis
+id:5917,Georgia
+id:592,California
+id:5927,Ohio State
+id:5937,Toledo
+id:5947,NC State
+id:5955,Clemson
+id:5967,Memphis
+id:5980,Washington
+id:5987,Boise State
+id:5995,Oklahoma State
+id:6039,Maryland
+id:604,Stanford
+id:6083,Utah
+id:6126,Alabama
+id:613,Louisiana State
+id:6130,Florida Atlantic
+id:6148,Colorado State
+id:6149,Auburn
+id:6151,Penn State
+id:616,Miami (FL)
+id:6178,Utah State
+id:621,Oklahoma
+id:642,Notre Dame
+id:648,Central Florida
+id:650,Arizona
+id:651,Ohio State
+id:655,Florida State
+id:660,Arkansas
+id:6650,Illinois
+id:669,Tennessee
+id:676,Pittsburgh
+id:6768,Alabama
+id:6770,LSU
+id:6783,Alabama
+id:6786,Oklahoma
+id:6789,Alabama
+id:6790,Georgia
+id:6794,LSU
+id:6797,Oregon
+id:6798,TCU
+id:68,Michigan
+id:6801,Clemson
+id:6803,Arizona State
+id:6804,Utah State
+id:6806,Ohio State
+id:6813,Wisconsin
+id:6814,Colorado
+id:6819,USC
+id:6820,LSU
+id:6826,Notre Dame
+id:6828,Boston College
+id:6845,Utah
+id:6853,Florida
+id:6869,Dayton
+id:6885,Vanderbilt
+id:6886,Notre Dame
+id:69,Miami
+id:6904,Oklahoma
+id:6938,Florida State
+id:6943,UCF
+id:6945,Memphis
+id:695,Ohio State
+id:6951,Arizona State
+id:6955,Illinois State
+id:6989,Tennessee
+id:7021,South Carolina
+id:7042,Georgia Southern
+id:7049,Tennessee
+id:7062,Georgia
+id:7090,Tulane
+id:717,Tiffin
+id:719,Massachusetts
+id:730,Oregon
+id:735,Chadron State
+id:736,"Wayne State, Mich."
+id:745,California
+id:748,Syracuse
+id:7523,Clemson
+id:7525,Alabama
+id:7526,Alabama
+id:7527,Alabama
+id:7528,Alabama
+id:7543,Clemson
+id:7547,USC
+id:7551,Duke
+id:7553,Florida
+id:7561,Louisiana
+id:7564,LSU
+id:7567,Memphis
+id:7569,Michigan
+id:7571,Minnesota
+id:7588,North Carolina
+id:7591,Ohio State
+id:7593,Ohio State
+id:7594,Oklahoma State
+id:7596,Ole Miss
+id:7600,Penn State
+id:7601,Purdue
+id:7606,Florida
+id:7607,North Carolina
+id:7608,Virginia Tech
+id:7610,North Dakota State
+id:7611,Oklahoma
+id:762,Buffalo
+id:7670,Tennessee
+id:775,North Carolina State
+id:78,Marshall
+id:7839,Florida
+id:788,Pittsburgh
+id:794,Central Florida
+id:806,Kansas State
+id:811,Louisiana State
+id:8110,Wisconsin
+id:8112,USC
+id:8117,South Alabama
+id:8119,Penn State
+id:8121,Nevada
+id:8126,Kentucky
+id:8129,Florida
+id:8130,Colorado State
+id:8131,Coastal Carolina
+id:8132,BYU
+id:8134,Boise State
+id:8135,Arkansas
+id:8136,Arizona State
+id:8137,Georgia
+id:8138,Georgia
+id:8139,Georgia
+id:814,California
+id:8142,Cincinnati
+id:8143,Cincinnati
+id:8144,Ohio State
+id:8146,Ohio State
+id:8148,Alabama
+id:8150,Notre Dame
+id:8151,Michigan State
+id:8153,Texas A&M
+id:8154,Alabama
+id:8155,Iowa State
+id:8160,Pittsburgh
+id:8161,Liberty
+id:8167,North Dakota State
+id:8168,Western Michigan
+id:818,Louisville
+id:8183,Iowa State
+id:82,Southern Illinois
+id:8205,Rutgers
+id:8211,LSU
+id:8228,Oklahoma State
+id:8259,Texas
+id:826,Maryland
+id:827,Virginia Tech
+id:829,TCU
+id:830,Georgia
+id:833,Southern California
+id:835,North Carolina
+id:8408,Georgia Tech
+id:8411,Oregon
+id:866,Mount Union
+id:8676,Weber State
+id:874,Portland State
+id:887,Tennessee
+id:891,San Diego State
+id:899,Oklahoma State
+id:904,Oklahoma
+id:91,Southern California
+id:915,Nebraska
+id:92,Miami
+id:9221,Alabama
+id:9224,Illinois
+id:9225,Auburn
+id:9226,Texas A&M
+id:9228,Alabama
+id:9229,Florida
+id:928,Kentucky
+id:943,Notre Dame
+id:947,Alabama
+id:9480,Penn State
+id:9484,South Dakota State
+id:9487,Penn State
+id:9488,Ohio State
+id:949,Oregon State
+id:9493,BYU
+id:9500,North Carolina
+id:9502,Houston
+id:9505,Kansas State
+id:9508,Tulane
+id:9509,Texas
+id:9511,East Carolina
+id:954,Auburn
+id:956,Alabama
+id:96,California
+id:974,Virginia Tech
+id:9753,UCLA
+id:9754,TCU
+id:9756,USC
+id:9758,Ohio State
+id:98,USC
+id:980,Nevada
+id:988,Stanford
+id:9997,Boston College
+id:9999,Kentucky
+name:adam vinatieri|K,South Dakota State
+name:alex henery|K,Nebraska
+name:andre brown|WR,NC State
+name:bernard scott|RB,Abilene Christian
+name:chad johnson|WR,Georgia Tech
+name:chris wells|RB,Ohio State
+name:d williams|WR,
+name:david akers|K,Louisville
+name:david wilson|RB,Virginia Tech
+name:isaac redman|RB,Bowie State
+name:jermichael finley|TE,Texas
+name:jonathan baldwin|WR,Pittsburgh
+name:jonathan dwyer|RB,Georgia Tech
+name:l taliefero|RB,
+name:laurent robinson|WR,Illinois State
+name:marcel reece|RB,Washington
+name:michael bush|RB,Louisville
+name:michael turner|RB,Northern Illinois
+name:nate burleson|WR,Nevada
+name:nyheim hines|RB,North Carolina State
+name:plaxico burress|WR,Michigan State
+name:randy moss|WR,Marshall
+name:rob bironas|K,Georgia Southern
+name:terrell owens|WR,Chattanooga
+name:titus young|WR,Boise State
+name:tony gonzalez|TE,California

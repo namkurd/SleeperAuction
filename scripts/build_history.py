@@ -15,7 +15,6 @@ What it does
   * resolves messy player names ("cmc", "Gostowski", "Antionio Brown") to a real
     player using Sleeper's public player database (fuzzy match + manual overrides in
     config/aliases.json -> sheet_name_overrides)
-  * keeps each row's lineup slot (QB, RB, FLEX, BE ...) so the Drafts view can rebuild the old boards
   * writes data/history_2012_2020.csv and data/history_name_map.csv (audit trail)
   * writes data/board_order.json: the left-to-right manager order of each season's board on the
     `Auctions` tab (used by the site's Drafts view)
@@ -73,12 +72,6 @@ TEAMS = {
     "Titans": ["titans", "tennessee", "ten"],
     "Commanders": ["commanders", "redskins", "football team", "washington", "was"],
 }
-
-
-def slot_name(raw):
-    """The sheet's lineup slot for a row, spelled the way config/lineups.json does."""
-    raw = str(raw).strip().upper()
-    return "D/ST" if raw in ("DST", "DEF", "D/ST") else raw
 
 
 def strip_accents(s):
@@ -161,6 +154,8 @@ def resolve(raw, pos, year, idx, overrides):
             res = None  # last-name-only + wrong position + several candidates: don't guess
         if res:
             res = (res[0], res[1], res[2] + "+posmismatch", res[3], res[4])
+    if res is None and target:                  # a nickname we fixed by hand, but the real player is not in Sleeper's database
+        return target, "", "override-unmatched", 100, "not in Sleeper's player database"
     return res
 
 
@@ -238,9 +233,8 @@ def main(xlsx):
     ref = full[full.Year > LAST_SHEET_SEASON].copy()
     ref["manager"] = ref.Owner.replace(owner_alias)
     ref = ref.rename(columns={"Year": "season", "Position": "position", "Player": "name_raw", "Price": "price"})
-    ref["slot"] = ref.Roster.map(slot_name)
     (ROOT / "data").mkdir(exist_ok=True)
-    ref[["season", "manager", "position", "name_raw", "price", "slot"]].to_csv(
+    ref[["season", "manager", "position", "name_raw", "price"]].to_csv(
         ROOT / "data" / "sheet_reference_2021_plus.csv", index=False)   # only used by the reconcile report
     df = full[full.Year <= LAST_SHEET_SEASON].reset_index(drop=True)
     df["row_order"] = range(len(df))
@@ -271,7 +265,6 @@ def main(xlsx):
             "season": year, "manager": r.manager, "player": player, "player_id": pid,
             "player_key": key, "position": pos, "price": int(r.Price),
             "pick_no": "", "row_order": r.row_order, "name_raw": raw, "source": "sheet",
-            "slot": slot_name(r.Roster),
         })
         namemap[(raw, pos, year)] = (player, pid, method, score, note)
 

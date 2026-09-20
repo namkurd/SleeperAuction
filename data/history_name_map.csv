@@ -1119,7 +1119,6 @@ Vick Ballard,RB,2013,Vick Ballard,1106,fuzzy,100.0,,4
 Victor Cruz,WR,2014,Victor Cruz,719,fuzzy,100.0,,10
 Victor Cruz,WR,2013,Victor Cruz,719,fuzzy,100.0,,24
 Victor Cruz,WR,2012,Victor Cruz,719,fuzzy,100.0,,21
-Vinatieri,K,2016,Adam Vinatieri,120,fuzzy,100.0,,1
 Vincent Brown,WR,2013,Vincent Brown,891,fuzzy,100.0,,1
 Vincent Brown,WR,2012,Vincent Brown,891,fuzzy,100.0,,1
 Vincent Jackson,WR,2013,Vincent Jackson,128,fuzzy,100.0,,25
@@ -1312,6 +1311,7 @@ V. Jax,WR,2015,Vincent Jackson,128,override,100.0,,8
 VJax,WR,2014,Vincent Jackson,128,override,100.0,,25
 Vernon,TE,2014,Vernon Davis,200,override,100.0,,11
 Vinaterri,K,2015,Adam Vinatieri,120,override,100.0,,2
+Vinatieri,K,2016,Adam Vinatieri,120,override,100.0,,1
 Vinetari,K,2014,Adam Vinatieri,120,override,100.0,,1
 Zeke,RB,2019,Ezekiel Elliott,3164,override,100.0,,59
 Zeke,RB,2018,Ezekiel Elliott,3164,override,100.0,,71
@@ -1322,6 +1322,16 @@ FunJizz,WR,2015,Devin Funchess,2346,override+posmismatch,100.0,,2
 Jordan Mathews,WR,2015,Jordan Matthews,1800,override+posmismatch,100.0,,30
 Shankey,WR,2015,Bishop Sankey,1937,override+posmismatch,100.0,,3
 DWilly,WR,2014,D. Williams,,override-unmatched,100,,1
+Beanie Wells,RB,2012,Chris Wells,,override-unmatched,100,not in Sleeper's player database,11
+Jermichael Finley,TE,2013,Jermichael Finley,,override-unmatched,100,not in Sleeper's player database,2
+Jermichael Finley,TE,2012,Jermichael Finley,,override-unmatched,100,not in Sleeper's player database,7
+Jonathan Dweyer,RB,2012,Jonathan Dwyer,,override-unmatched,100,not in Sleeper's player database,1
+Plax,WR,2012,Plaxico Burress,,override-unmatched,100,not in Sleeper's player database,1
+T.O.,WR,2012,Terrell Owens,,override-unmatched,100,not in Sleeper's player database,2
+Tony Gonzalez,TE,2013,Tony Gonzalez,,override-unmatched,100,not in Sleeper's player database,7
+Tony Gonzalez,TE,2012,Tony Gonzalez,,override-unmatched,100,not in Sleeper's player database,1
+Vinater,K,2018,Adam Vinatieri,,override-unmatched,100,not in Sleeper's player database,1
+Vinatieri,K,2017,Adam Vinatieri,,override-unmatched,100,not in Sleeper's player database,2
 49ers D,DEF,2012,49ers,,team,,,3
 49ers D/ST,DEF,2020,49ers,,team,,,2
 49ers D/ST,DEF,2013,49ers,,team,,,1
@@ -1419,7 +1429,6 @@ Vikings,DEF,2016,Vikings,,team,,,1
 Vikings D,DEF,2017,Vikings,,team,,,2
 Alex Henery,K,2012,Alex Henery,,unresolved,,,2
 Andre Brown,WR,2013,Andre Brown,,unresolved,,,3
-Beanie Wells,RB,2012,Beanie Wells,,unresolved,,,11
 Bernard Scott,RB,2012,Bernard Scott,,unresolved,,,1
 Chad Johnson,WR,2012,Chad Johnson,,unresolved,,,1
 David Akers,K,2012,David Akers,,unresolved,,,2
@@ -1427,10 +1436,7 @@ David Wilson,RB,2013,David Wilson,,unresolved,,,30
 David Wilson,RB,2012,David Wilson,,unresolved,,,2
 Isaac Redman,RB,2013,Isaac Redman,,unresolved,,,1
 Isaac Redman,RB,2012,Isaac Redman,,unresolved,,,2
-Jermichael Finley,TE,2013,Jermichael Finley,,unresolved,,,2
-Jermichael Finley,TE,2012,Jermichael Finley,,unresolved,,,7
 Jonathan Baldwin,WR,2012,Jonathan Baldwin,,unresolved,,,1
-Jonathan Dweyer,RB,2012,Jonathan Dweyer,,unresolved,,,1
 L. Taliefero,RB,2015,L. Taliefero,,unresolved,,,2
 Laurent Robinson,WR,2012,Laurent Robinson,,unresolved,,,2
 Marcel Reece,RB,2014,Marcel Reece,,unresolved,,,1
@@ -1440,12 +1446,6 @@ Michael Turner,RB,2012,Michael Turner,,unresolved,,,29
 Nate Burleson,WR,2012,Nate Burleson,,unresolved,,,1
 Nyheim Hines,RB,2020,Nyheim Hines,,unresolved,,,1
 Nyheim Hines,RB,2019,Nyheim Hines,,unresolved,,,1
-Plax,WR,2012,Plax,,unresolved,,,1
 Randy Moss,WR,2012,Randy Moss,,unresolved,,,3
 Rob Bironas,K,2012,Rob Bironas,,unresolved,,,39
-T.O.,WR,2012,T.O.,,unresolved,,,2
 Titus Young,WR,2012,Titus Young,,unresolved,,,2
-Tony Gonzalez,TE,2013,Tony Gonzalez,,unresolved,,,7
-Tony Gonzalez,TE,2012,Tony Gonzalez,,unresolved,,,1
-Vinater,K,2018,Vinater,,unresolved,,,1
-Vinatieri,K,2017,Vinatieri,,unresolved,,,2

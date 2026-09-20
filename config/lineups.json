@@ -1,13 +1,108 @@
 {
-  "_comment": "Starting lineup of each era, used only to lay out the Drafts view. 'from' is the first season it applies; a season uses the latest entry whose 'from' is not after it. Everyone not in a starting slot goes to the bench (BE). Add a new entry when the league changes its lineup. Slot names: QB RB WR TE K D/ST plus FLEX (RB/WR/TE), W/T (WR/TE) and SFLEX (QB/RB/WR/TE).",
+  "_comment": "Starting lineup of each era, used to lay out the Drafts view and the Excel boards. 'from' is the first season it applies; a season uses the latest entry whose 'from' is not after it. Slots are filled from each team's players by price: fixed slots (QB RB WR TE K D/ST) take the priciest at that position (RB1 then RB2, ...); then the flex slots are filled in 'fill_order', each taking the priciest eligible player left ('prefer' lists positions tried first: SFLEX takes the 2nd QB if there is one). Everyone else sits on the bench (BE), priciest first. Add a new entry when the league changes its lineup. Slot names: QB RB WR TE K D/ST, FLEX (RB/WR), W/T (WR/TE), SFLEX (QB/RB/WR/TE).",
   "eligible": {
-    "QB": ["QB"], "RB": ["RB"], "WR": ["WR"], "TE": ["TE"], "K": ["K"], "D/ST": ["DEF"],
-    "W/T": ["WR", "TE"], "FLEX": ["RB", "WR", "TE"], "SFLEX": ["QB", "RB", "WR", "TE"]
+    "QB": [
+      "QB"
+    ],
+    "RB": [
+      "RB"
+    ],
+    "WR": [
+      "WR"
+    ],
+    "TE": [
+      "TE"
+    ],
+    "K": [
+      "K"
+    ],
+    "D/ST": [
+      "DEF"
+    ],
+    "W/T": [
+      "WR",
+      "TE"
+    ],
+    "FLEX": [
+      "RB",
+      "WR"
+    ],
+    "SFLEX": [
+      "QB",
+      "RB",
+      "WR",
+      "TE"
+    ]
   },
+  "prefer": {
+    "SFLEX": [
+      "QB"
+    ]
+  },
+  "fill_order": [
+    "SFLEX",
+    "FLEX",
+    "W/T"
+  ],
   "lineups": [
-    { "from": 2012, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "D/ST", "K"] },
-    { "from": 2020, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "FLEX", "D/ST", "K"] },
-    { "from": 2022, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "W/T", "D/ST", "K"] },
-    { "from": 2023, "starters": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "SFLEX", "D/ST", "K"] }
+    {
+      "from": 2012,
+      "starters": [
+        "QB",
+        "RB",
+        "RB",
+        "WR",
+        "WR",
+        "TE",
+        "FLEX",
+        "D/ST",
+        "K"
+      ]
+    },
+    {
+      "from": 2020,
+      "starters": [
+        "QB",
+        "RB",
+        "RB",
+        "WR",
+        "WR",
+        "TE",
+        "FLEX",
+        "FLEX",
+        "D/ST",
+        "K"
+      ]
+    },
+    {
+      "from": 2022,
+      "starters": [
+        "QB",
+        "RB",
+        "RB",
+        "WR",
+        "WR",
+        "TE",
+        "FLEX",
+        "W/T",
+        "D/ST",
+        "K"
+      ]
+    },
+    {
+      "from": 2023,
+      "starters": [
+        "QB",
+        "RB",
+        "RB",
+        "WR",
+        "WR",
+        "TE",
+        "FLEX",
+        "SFLEX",
+        "D/ST",
+        "K"
+      ]
+    }
   ]
 }

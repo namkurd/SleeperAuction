@@ -319,7 +319,8 @@ def sync_standings(cfg, leagues, picks_cache, refresh):
 
 
 def build_standings(sleeper_rows):
-    """{season: {manager: [rank, place, wins, losses, points for, rumbles, teams]}}; place 0 = no playoff podium.
+    """{season: {manager: [rank, place, wins, losses, points for, rumbles, teams]}}; place 1/2/3 = champion, runner-up,
+    third place, 9 = Sacko (last place after the losers bracket), 0 = none of those.
 
     2013-2020 come from data/history_standings.csv (the spreadsheet's Lifetime tab), 2021 on from Sleeper.
     The podium through 2025 is in config/playoffs.json; from 2026 it comes from Sleeper's bracket (a
@@ -337,7 +338,7 @@ def build_standings(sleeper_rows):
     for season, podium in manual.items():
         if season.startswith("_") or int(season) not in rows:
             continue
-        for key, code in (("champion", 1), ("second", 2), ("third", 3)):
+        for key, code in (("champion", 1), ("second", 2), ("third", 3), ("sacko", 9)):
             name = podium.get(key)
             if not name:
                 continue

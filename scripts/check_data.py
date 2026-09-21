@@ -51,7 +51,7 @@ for season, block in (site.get("standings") or {}).items():
         problems.append(f"{season} standings name(s) not in that season's draft: {sorted(set(block) - teams_in.get(int(season), set()))}")
     if any(not 1 <= v[0] <= n for v in block.values()):
         problems.append(f"{season} standings: a rank is outside 1..{n}")
-    for spot in (1, 2, 3):
+    for spot in (1, 2, 3, 9):
         if sum(1 for v in block.values() if v[1] == spot) > 1:
             problems.append(f"{season} standings: more than one team in podium spot {spot}")
 

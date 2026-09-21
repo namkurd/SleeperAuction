@@ -25,7 +25,7 @@ Prefer a terminal? `mkdir -p .github/workflows && cp workflow-to-paste.txt .gith
 | Tab | What it shows |
 |---|---|
 | League | Average dollars per team per position per season, average dollars per team per depth slot (QB1-3, RB1-3, WR1-3, TE1-2, K1), and a dot for every pick ever made. Dashed gold lines mark scoring-rule changes. Below the charts, two tables count the players each manager has bought from every NFL team and every college (defenses excluded); hover or tap a number for the players and years. |
-| Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. Hover a chart point to see which players make up that value. Above each year on both charts is the team's regular-season finish in the league standings, with a gold, silver or bronze medal above it for the champion, 2nd place and 3rd place; hover it for the record, PF+ (points for indexed to that season's league average, 100 = average) and the playoff finish. Two tables list the NFL teams and the colleges their drafted players came from (defenses excluded); hover a count to see the players and years. |
+| Managers | Pick any current or former manager: the same two charts for just that person, real year gaps when they sat out, optional league-average overlay. Hover a chart point to see which players make up that value. Above each year on both charts is the team's regular-season finish in the league standings, with a gold, silver or bronze medal above it for the champion, 2nd place and 3rd place (or a 💩 for that year's Sacko, last place after the losers bracket); hover it for the record, PF+ (points for indexed to that season's league average, 100 = average) and the playoff finish. Two tables list the NFL teams and the colleges their drafted players came from (defenses excluded); hover a count to see the players and years. |
 | Drafts | Every draft board, newest first, in the style of the old `Auctions` sheet: a column per manager, a row per lineup slot (QB, RB, RB, WR, WR, TE, FLEX, SFLEX, D/ST, K, bench), player and price in each cell. Every board starts expanded, with each year's top QB, RB, WR and TE bids in its banner. Jump to a season, search a player or manager to highlight every match, or switch to full player names. |
 | Players | Type a name and pick from the drop-down (position, number of auctions and best price are shown for each match) to see what that player cost each year, who bought them, and their depth slot. |
 
@@ -57,7 +57,7 @@ spreadsheet ─┘   (2012-2020 frozen in data/history_2012_2020.csv)
 | `scripts/build_player_meta.py` | One-time: NFL team per season and college for 2012-2020 players (downloads nflverse rosters). Writes `data/history_teams.csv` and `data/player_meta.csv`; `update_data.py` adds new players to the latter itself. |
 | `scripts/build_standings.py` | One-time: imports the 2013-2020 finishes from the `Lifetime` tab of the old workbook into `data/history_standings.csv`. |
 | `scripts/export_excel.py` | Optional: writes `DTF Auction - Updated.xlsx` (Drafting, Auctions, Player origins, Name fixes, Differences tabs) from the current data. Needs `pip install openpyxl`; not part of the Action. |
-| `config/playoffs.json` | Champion, runner-up and third place for every season through 2025 (the league's own record). 2026 on is read from Sleeper's bracket. |
+| `config/playoffs.json` | Champion, runner-up, third place and Sacko for every season through 2025 (the league's own record). From 2026 the podium is read from Sleeper's bracket; the Sacko is not (Sleeper's losers bracket doesn't reliably identify it), so add each new season's `"sacko"` here. |
 | `config/player_extras.json` | Hand-filled colleges and teams for players the data sources lack. |
 | `config/managers.json` | Sleeper `user_id` to manager name, plus roster overrides. |
 | `config/eras.json` | The dashed scoring-era lines. |
@@ -74,7 +74,7 @@ spreadsheet ─┘   (2012-2020 frozen in data/history_2012_2020.csv)
 
 **Scoring rules change.** Add a line to `config/eras.json`, for example `{ "label": "Full PPR", "from": 2027 }`, and push. `from` is the first season the rule applies; the line is drawn between the previous season and that one. Use `<br>` in a label for a line break.
 
-**A playoff result looks wrong or is missing.** Set the champion, runner-up and third place (names as shown on the site) for that year in `config/playoffs.json` and push; the Managers charts show the medals on the next run. Until a season's playoffs finish, 2026 onward shows the regular-season finish only.
+**A playoff result looks wrong or is missing, or a new Sacko needs adding.** Set the champion, runner-up, third place and/or sacko (names as shown on the site) for that year in `config/playoffs.json` and push; the Managers charts show the medals on the next run. Until a season's playoffs finish, 2026 onward shows the regular-season finish only.
 
 **A season came out wrong.** Actions tab, "Update auction data and publish site", "Run workflow", tick "Re-download every Sleeper season".
 

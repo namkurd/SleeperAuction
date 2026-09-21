@@ -309,7 +309,8 @@ const ORD=n=>{ const t=n%100,u=n%10; return n+(t>=11&&t<=13?"th":u===1?"st":u===
 const MEDAL={
   1:{c1:"#ffe28a",c2:"#e2a51c",edge:"#8a6100",ink:"#4a3300",name:"Champion"},
   2:{c1:"#f7f9fb",c2:"#aab2bc",edge:"#6f7883",ink:"#2b3138",name:"2nd Place"},
-  3:{c1:"#f3bf8c",c2:"#b8681f",edge:"#75400f",ink:"#3a1c04",name:"3rd Place"}};
+  3:{c1:"#f3bf8c",c2:"#b8681f",edge:"#75400f",ink:"#3a1c04",name:"3rd Place"},
+  9:{sacko:true,edge:"#8a5a2b",name:"Sacko"}};       // last place after the losers bracket: a 💩 instead of a medal
 const medalCache={};
 function medalSrc(place){                    // a small gold / silver / bronze medal on a ribbon, drawn as SVG
   if(medalCache[place]) return medalCache[place];
@@ -338,7 +339,7 @@ function standingEntries(xs, mgr){
     const tie=Object.values(D.standings[String(x)]).filter(o=>o[0]===rank).length>1;
     const txt=(tie?"T-":"")+ORD(rank), pp=pfPlus(x,v[4]), md=MEDAL[place]||null;
     out.push({x:x,txt:txt,md:md,place:place,
-      hover:"<b>"+x+"</b><br>Finished "+txt+" of "+n+" · "+v[2]+"-"+v[3]+(pp!=null?" · PF+ "+pp:"")+(md?"<br><b>Playoff Finish: "+md.name+"</b>":"")});
+      hover:"<b>"+x+"</b><br>Finished "+txt+" of "+n+" · "+v[2]+"-"+v[3]+(pp!=null?" · PF+ "+pp:"")+(md?"<br><b>"+(md.sacko?md.name:"Playoff Finish: "+md.name)+"</b>":"")});
   });
   return out;
 }
@@ -407,7 +408,11 @@ function baseLayout(xs, opts){
       font:{size:narrow()?9:11,color:INK},bgcolor:SURFACE,bordercolor:"#5a5f68",borderwidth:1,borderpad:2,
       captureevents:true,hovertext:e.hover,
       hoverlabel:{bgcolor:"#17181a",bordercolor:e.md?e.md.edge:"#4a4f57",font:{color:INK,size:12}}});
-    if(e.md){
+    if(e.md&&e.md.sacko){
+      annotations.push({xref:"x",yref:"paper",x:e.x,y:1,xanchor:"center",yanchor:"bottom",yshift:standPx()-1,showarrow:false,
+        text:"\ud83d\udca9",font:{size:narrow()?14:17,color:INK},bgcolor:"rgba(0,0,0,0.01)",borderwidth:0,borderpad:0,
+        captureevents:true,hovertext:e.hover,hoverlabel:{bgcolor:"#17181a",bordercolor:e.md.edge,font:{color:INK,size:12}}});
+    } else if(e.md){
       const mh=medalPx()-2, mw=mh*20/26;
       images.push({source:medalSrc(e.place),xref:"paper",yref:"paper",x:(e.x-lo)/(hi-lo),y:1+(standPx()+1)/plotH,
         sizex:mw/plotW,sizey:mh/plotH,xanchor:"center",yanchor:"bottom",sizing:"contain",layer:"above"});
@@ -684,7 +689,7 @@ function drawManager(name){
   if(ss.length!==span(ss).length) extra.push(m.name+" sat out some seasons; the gaps in the charts are real years without an auction.");
   extra.push("Chart axes start at $0 and stop at $140 (position) and $80 (depth) unless a manager's spending goes higher.");
   if(ss.some(x=>standingFor(x,m.name))){
-    extra.push("The label above each year is that team's regular-season finish by Rumbles (each week: 1 point per team outscored, plus 9 for winning the matchup; the league's official standings since 2022, ranked the same way for earlier seasons). A gold, silver or bronze medal above a label means the team finished the playoffs as champion, 2nd or 3rd. Hover a label for the record, PF+ and playoff finish. Standings start in 2013, and a season appears once its regular season is over.");
+    extra.push("The label above each year is that team's regular-season finish by Rumbles (each week: 1 point per team outscored, plus 9 for winning the matchup; the league's official standings since 2022, ranked the same way for earlier seasons). A gold, silver or bronze medal above a label means the team finished the playoffs as champion, 2nd or 3rd; a 💩 marks that year's Sacko (last place after the losers bracket). Hover a label (or its medal) for the record, PF+ and playoff finish. Standings start in 2013, and a season appears once its regular season is over.");
     extra.push("PF+ (points-for plus) works like baseball's OPS+. Take the average regular-season points total of all teams in that season and call it 100; a manager's PF+ is their own points total measured against it: PF+ = their points ÷ that season's league average × 100. A manager who scored 2,200 in a season when the average team scored 2,000 has a PF+ of 110 (10% more scoring than the average team); 90 would be 10% less. Because each season is measured against its own average, PF+ compares fairly across years even when scoring or the number of games changed.");
     const noMedal=Object.keys(D.standings).filter(y=>!Object.values(D.standings[y]).some(v=>v[1])).map(Number);
     if(noMedal.length) extra.push("Playoff results are not recorded yet for "+noMedal.join(", ")+", so those years show no medals. They can be added in config/playoffs.json.");

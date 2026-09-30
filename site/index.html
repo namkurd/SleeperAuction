@@ -71,6 +71,17 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .combo li.hd{padding:6px 10px 4px;color:var(--ink3);font-size:12px;cursor:default}
 /* Drafts: lineup-card boards, a nod to the old spreadsheet */
 .twocol{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+.plcols{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start}
+.plmain{min-width:0}
+.pltable-card{margin:0;position:sticky;top:12px}
+.pltable{max-height:840px;overflow-y:auto;overflow-x:hidden}
+#pt-table{table-layout:fixed}
+#pt-table th{cursor:pointer;user-select:none;white-space:nowrap}
+#pt-table th:hover{color:var(--ink)}
+#pt-table th.sorted{color:var(--ink)}
+#pt-table td:first-child,#pt-table th:first-child{text-align:left}
+#pt-table .lnk{background:none;border:0;color:#8ec1ff;font:inherit;padding:0;cursor:pointer;text-align:left;white-space:normal}
+#pt-table .lnk:hover{text-decoration:underline}
 .twocol .card{margin:0 0 22px;min-width:0}
 .teamtable{max-height:480px;overflow-x:hidden;overflow-y:auto}
 .mxwrap{max-height:560px;overflow:auto}
@@ -88,8 +99,9 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .tip{position:fixed;z-index:60;max-width:min(340px,calc(100vw - 16px));max-height:min(56vh,420px);overflow-y:auto;background:#17181a;border:1px solid #4a4f57;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 14px 34px rgba(0,0,0,.55);color:var(--ink)}
 .tip b{display:block;margin-bottom:3px}
 .tip div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tip div.wrap{white-space:normal;overflow:visible;text-overflow:clip}
 .tip i{font-style:normal;color:var(--ink3)}
-@media (max-width:900px){ .twocol{grid-template-columns:1fr} }
+@media (max-width:900px){ .twocol{grid-template-columns:1fr} .plcols{grid-template-columns:1fr} .pltable-card{position:static} .pltable{max-height:520px} }
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
 .chip{background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:8px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
 .chip:hover{background:var(--card2);color:var(--ink)}
@@ -126,6 +138,8 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .bgrid.cards .bcol{border-right:1px solid rgba(0,0,0,.45);border-bottom:2px solid #0d0e10}
 .finding .bcol.m .bc:not(.hit){opacity:.3}
 .bc.hit{background:rgba(255,224,138,.45);outline:2px solid #ffe08a;outline-offset:-2px}
+.bc.pk{cursor:help}
+.bc.pk:hover{outline:1px solid #8ec1ff;outline-offset:-1px}
 @media (max-width:700px){ .band .lbl{flex:0 0 100%;text-align:center;margin:0} .board>summary.band{padding:8px 28px} .band .yr{font-size:17px} .band .meta{font-size:11.5px} }
 html,body{max-width:100%}
 .card,.tablewrap{min-width:0}
@@ -179,7 +193,7 @@ html,body{max-width:100%}
     </div>
     <div class="card">
       <h2>Price per pick</h2>
-      <p class="lede">Every player bought at auction, one dot each. Hover a dot for the player, buyer and price.</p>
+      <p class="lede">Every player bought at auction, one dot each. Hover a dot for the player, buyer and price, plus (when known) how that player finished the season and how that manager's team did that year.</p>
       <div class="filters"><label><input type="checkbox" id="show-kdef"> Show kickers and defenses</label></div>
       <div class="chart tall" id="league-scatter"></div>
     </div>
@@ -241,12 +255,39 @@ html,body{max-width:100%}
   </section>
 
   <section class="view" id="view-players">
-    <div class="combo">
-      <label for="pl-search">Search a player</label>
-      <input type="search" id="pl-search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="pl-list" placeholder="e.g. Gronkowski, Kelce, Kamara" autocomplete="off" spellcheck="false">
-      <ul id="pl-list" role="listbox" aria-label="Matching players" hidden></ul>
+    <div class="plcols">
+      <div class="plmain">
+        <div class="combo">
+          <label for="pl-search">Search a player</label>
+          <input type="search" id="pl-search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="pl-list" placeholder="e.g. Gronkowski, Kelce, Kamara" autocomplete="off" spellcheck="false">
+          <ul id="pl-list" role="listbox" aria-label="Matching players" hidden></ul>
+        </div>
+        <div id="pl-detail"></div>
+      </div>
+      <aside class="card pltable-card">
+        <h2>Every player drafted</h2>
+        <p class="lede">All 15 seasons at once. Pick a position, click a column to sort, click a name to look that player up above.</p>
+        <div class="filters">
+          <label>Position <select id="pt-pos" aria-label="Filter by position">
+            <option value="ALL">All positions</option>
+            <option value="QB">QB</option><option value="RB">RB</option><option value="WR">WR</option>
+            <option value="TE">TE</option><option value="K">K</option><option value="DEF">DEF</option>
+          </select></label>
+          <span class="lede" id="pt-count" style="margin:0"></span>
+        </div>
+        <div class="tablewrap pltable" id="pt-wrap">
+          <table id="pt-table">
+            <thead><tr>
+              <th data-col="name" tabindex="0" role="button" aria-label="Sort by player">Player</th>
+              <th data-col="pos" tabindex="0" role="button" aria-label="Sort by position">Pos</th>
+              <th data-col="total" tabindex="0" role="button" aria-label="Sort by total spent">Total</th>
+              <th data-col="max" tabindex="0" role="button" aria-label="Sort by highest year">Max yr</th>
+            </tr></thead>
+            <tbody id="pt-tbody"></tbody>
+          </table>
+        </div>
+      </aside>
     </div>
-    <div id="pl-detail"></div>
     <div class="notes" id="notes-players"></div>
   </section>
 </main>
@@ -330,18 +371,45 @@ function pfPlus(season, pf){
   const all=Object.values(blk).map(v=>v[4]), avg=all.reduce((a,b)=>a+b,0)/all.length;
   return avg>0?Math.round(pf/avg*100):null;
 }
+function standingInfo(season, mgr){    // this manager's regular-season finish + playoff result that year, or null
+  const v=Number.isInteger(season)?standingFor(season,mgr):null; if(!v) return null;
+  const rank=v[0], place=v[1], n=v[6];
+  const tie=Object.values(D.standings[String(season)]).filter(o=>o[0]===rank).length>1;
+  return {rank:rank, place:place, n:n, txt:(tie?"T-":"")+ORD(rank), w:v[2], l:v[3], pp:pfPlus(season,v[4]), md:MEDAL[place]||null};
+}
 function standingEntries(xs, mgr){
   const out=[];
   if(!mgr) return out;
   xs.forEach(x=>{
-    const v=Number.isInteger(x)?standingFor(x,mgr):null; if(!v) return;
-    const rank=v[0], place=v[1], n=v[6];
-    const tie=Object.values(D.standings[String(x)]).filter(o=>o[0]===rank).length>1;
-    const txt=(tie?"T-":"")+ORD(rank), pp=pfPlus(x,v[4]), md=MEDAL[place]||null;
-    out.push({x:x,txt:txt,md:md,place:place,
-      hover:"<b>"+x+"</b><br>Finished "+txt+" of "+n+" · "+v[2]+"-"+v[3]+(pp!=null?" · PF+ "+pp:"")+(md?"<br><b>"+(md.sacko?md.name:"Playoff Finish: "+md.name)+"</b>":"")});
+    const info=standingInfo(x,mgr); if(!info) return;
+    out.push({x:x,txt:info.txt,md:info.md,place:info.place,
+      hover:"<b>"+x+"</b><br>Finished "+info.txt+" of "+info.n+" · "+info.w+"-"+info.l+(info.pp!=null?" · PF+ "+info.pp:"")+(info.md?"<br><b>"+(info.md.sacko?info.md.name:"Playoff Finish: "+info.md.name)+"</b>":"")});
   });
   return out;
+}
+/* ---------- shared pick tooltip: the player's season-finish rank + the buying manager's season result ----------
+   Used everywhere a pick appears: the League price-per-pick chart, the Players page's price-history chart, and
+   the Draft board cells. Both lines quietly omit themselves when the underlying data isn't known yet (rank needs
+   data/season_ranks.csv to have that season; the manager's finish needs data/standings for that year). */
+function pickRankLine(r){    // "RB4 · 218.4 pts" -- this player's rank among every NFL player at his position that year
+  if(r.pos_rank==null) return null;
+  return r.position+r.pos_rank+" · "+r.pts.toFixed(1)+" pts";
+}
+function pickSeasonLine(r){   // the buying manager's regular-season finish (and playoff result) that season
+  const info=standingInfo(r.season,r.manager); if(!info) return null;
+  let s="Finished "+info.txt+" of "+info.n+" · "+info.w+"-"+info.l+(info.pp!=null?" · PF+ "+info.pp:"");
+  if(info.md) s+=" · "+(info.md.sacko?info.md.name:"Playoff Finish: "+info.md.name);
+  return s;
+}
+function pickTipLines(r){    // plain-text lines, for the floating .tip component
+  const lines=[];
+  const rk=pickRankLine(r); if(rk) lines.push("Season finish: "+rk);
+  const sl=pickSeasonLine(r); if(sl) lines.push(sl);
+  return lines;
+}
+function pickTipHtml(r){     // the same, as an HTML fragment appended inside a Plotly hovertemplate
+  const lines=pickTipLines(r);
+  return lines.length ? "<br>"+lines.join("<br>") : "";
 }
 /* Where each scoring-era label goes. On a phone the labels are placed so each one sits directly above its own
    dashed line: it starts at the line (or ends at it, near the right edge), and the labels are stacked on
@@ -605,9 +673,9 @@ function scatterFigure(){
       visible:(p==="K"||p==="DEF")&&!showKD?"legendonly":true,
       x:rows.map((r,i)=>r.season+(((i*37)%100)/100-0.5)*0.5),
       y:rows.map(r=>r.price),
-      customdata:rows.map(r=>[r.player,r.manager,p+r.depth,r.season]),
+      customdata:rows.map(r=>[r.player,r.manager,p+r.depth,r.season,pickTipHtml(r)]),
       marker:{color:COLOR[p],symbol:SYMBOL[p],size:(p==="K"||p==="DEF")?7:8,opacity:.88,line:{color:SURFACE,width:1}},
-      hovertemplate:"<b>%{customdata[0]}</b><br>%{customdata[1]} · %{customdata[3]}<br>%{y:$,.0f} · %{customdata[2]}<extra></extra>"
+      hovertemplate:"<b>%{customdata[0]}</b><br>%{customdata[1]} · %{customdata[3]}<br>%{y:$,.0f} · %{customdata[2]}%{customdata[4]}<extra></extra>"
     };
   });
   const lay=baseLayout(seasons,{hovermode:"closest",bottomLegend:true,host:"league-scatter"});
@@ -657,7 +725,7 @@ function drawLeague(){
   scatterFigure();
   matrixTable($("lg-nfl"),"NFL team",r=>r.team);
   matrixTable($("lg-college"),"College",r=>r.college);
-  footnotes($("notes-league"),[],true);
+  footnotes($("notes-league"),["Hovering a dot in the price-per-pick chart also shows how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules) and how the buying manager's team did that season, when both are known -- not yet available for 2012–2020 picks."],true);
 }
 
 /* ---------- MANAGERS view ---------- */
@@ -706,14 +774,16 @@ function showTip(btn){
   if(tipFor&&tipFor!==btn) tipFor.classList.remove("on");
   tipFor=btn; btn.classList.add("on");
   tipEl.textContent=""; tipEl.appendChild(el("b",{text:d.title}));
-  d.lines.forEach(l=>tipEl.appendChild(el("div",{},[l[0]+" · "+l[1]+" ",el("i",{text:l[2]})])));
+  d.lines.forEach(l=>tipEl.appendChild(Array.isArray(l)
+    ? el("div",{},[l[0]+" · "+l[1]+" ",el("i",{text:l[2]})])
+    : el("div",{class:"wrap",text:l})));
   tipEl.hidden=false;
   const r=btn.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
   const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
   let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
   tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
 }
-document.addEventListener("click",e=>{ if(!e.target.closest(".cnt")&&!e.target.closest(".hv")&&!e.target.closest(".tip")) hideTip(); });
+document.addEventListener("click",e=>{ if(!e.target.closest(".cnt")&&!e.target.closest(".hv")&&!e.target.closest(".pk")&&!e.target.closest(".tip")) hideTip(); });
 window.addEventListener("scroll",hideTip,{passive:true}); window.addEventListener("resize",hideTip);
 function originTable(host, label, groups){
   host.textContent="";
@@ -766,6 +836,45 @@ const players=(function(){
   return list;
 })();
 const playerByKey=new Map(players.map(p=>[p.key,p]));
+
+/* ---------- Players view: sortable/filterable table of every player ever drafted ---------- */
+let ptSort={col:"total",dir:-1};
+function ptVal(p,col){ return col==="name"?p.name.toLowerCase():col==="pos"?p.mainPos:col==="total"?p.total:p.max; }
+function drawPlayerTable(){
+  const pos=$("pt-pos").value;
+  const rows=(pos==="ALL"?players:players.filter(p=>p.mainPos===pos)).slice()
+    .sort((a,b)=>{ const av=ptVal(a,ptSort.col), bv=ptVal(b,ptSort.col);
+      const c=av<bv?-1:av>bv?1:0; return c*ptSort.dir || a.name.localeCompare(b.name); });
+  const tb=$("pt-tbody"); tb.textContent="";
+  rows.forEach(p=>{
+    const tr=el("tr");
+    const btn=el("button",{type:"button",class:"lnk",text:p.name,"aria-label":"Look up "+p.name});
+    btn.addEventListener("click",()=>{ location.hash="#players/"+encodeURIComponent(p.key); window.scrollTo({top:0,behavior:"smooth"}); });
+    tr.appendChild(el("td",{},[btn]));
+    tr.appendChild(el("td",{text:p.mainPos}));
+    tr.appendChild(el("td",{text:fmt$(p.total)}));
+    tr.appendChild(el("td",{text:fmt$(p.max)}));
+    tb.appendChild(tr);
+  });
+  $("pt-count").textContent=rows.length.toLocaleString("en-US")+(rows.length===1?" player":" players");
+  document.querySelectorAll("#pt-table th[data-col]").forEach(th=>{
+    const on=th.dataset.col===ptSort.col;
+    th.classList.toggle("sorted",on);
+    th.setAttribute("aria-sort",on?(ptSort.dir===1?"ascending":"descending"):"none");
+    let a=th.querySelector(".arrow"); if(a) a.remove();
+    if(on) th.appendChild(el("span",{class:"arrow",text:ptSort.dir===1?" \u25b2":" \u25bc"}));
+  });
+}
+document.querySelectorAll("#pt-table th[data-col]").forEach(th=>{
+  const go=()=>{ const col=th.dataset.col;
+    if(ptSort.col===col) ptSort.dir*=-1; else { ptSort.col=col; ptSort.dir=(col==="name"||col==="pos")?1:-1; }
+    drawPlayerTable(); };
+  th.addEventListener("click",go);
+  th.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
+});
+$("pt-pos").addEventListener("change",drawPlayerTable);
+drawPlayerTable();
+
 const normQ=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ.'’-]/g,"").trim();
 
 function playerInfo(p){ return p.mainPos+" · "+p.rows.length+(p.rows.length===1?" auction":" auctions")+" · best price "+fmt$(p.max); }
@@ -856,11 +965,12 @@ function drawPlayer(key){
   const trace={type:"scatter",mode:"lines+markers+text",x:xs,y:xs.map(s=>by.has(s)?by.get(s).price:null),connectgaps:false,
     line:{color:col,width:2.2},marker:{color:col,symbol:SYMBOL[p.mainPos],size:10,line:{color:SURFACE,width:1.5}},
     text:xs.map(s=>by.has(s)?"$"+by.get(s).price:""),textposition:"top center",textfont:{color:INK,size:12},
-    customdata:xs.map(s=>by.has(s)?[by.get(s).manager,by.get(s).position+by.get(s).depth]:["",""]),
-    hovertemplate:"%{x}: <b>%{y:$,.0f}</b><br>%{customdata[0]} · %{customdata[1]}<extra></extra>",cliponaxis:false};
+    customdata:xs.map(s=>by.has(s)?[by.get(s).manager,by.get(s).position+by.get(s).depth,pickTipHtml(by.get(s))]:["","",""]),
+    hovertemplate:"%{x}: <b>%{y:$,.0f}</b><br>%{customdata[0]} · %{customdata[1]}%{customdata[2]}<extra></extra>",cliponaxis:false};
   lay.yaxis.range=[0,Math.max(...p.rows.map(r=>r.price))*1.25+2];
   Plotly.newPlot("pl-chart",[trace],lay,CFG);
-  footnotes($("notes-players"),["Player identity: Sleeper player id for 2021 on. Older spreadsheet names were matched to real players by name and era (misspellings, nicknames and abbreviations included); a small number could not be matched and appear under their spreadsheet name."]);
+  footnotes($("notes-players"),["Player identity: Sleeper player id for 2021 on. Older spreadsheet names were matched to real players by name and era (misspellings, nicknames and abbreviations included); a small number could not be matched and appear under their spreadsheet name.",
+    "Hovering a point also shows how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules) and how the buying manager's team did that season, when both are known. Season finish isn't available yet for 2012–2020 picks, or for the handful of players missing from that year's stat feed (usually because they didn't play)."]);
 }
 
 /* ---------- DRAFTS view ---------- */
@@ -910,7 +1020,11 @@ function buildBoard(season, open){
         cell.appendChild(el("span",{class:"pl",text:full?r.player:shortName(r.player,r.position)}));
         if(FLEXY.has(sl)&&r.position!=="DEF") cell.appendChild(el("b",{class:"pt",text:r.position}));
         cell.appendChild(el("span",{class:"pr",text:fmt$(r.price)}));
-        cell.setAttribute("title",r.player+" · "+r.position+" · "+fmt$(r.price)+" · "+m+" "+season);
+        cell.classList.add("pk");
+        cell._tip={title:r.player+" · "+r.position+" · "+fmt$(r.price)+" · "+m+" "+season, lines:pickTipLines(r)};
+        cell.addEventListener("mouseenter",()=>showTip(cell));
+        cell.addEventListener("mouseleave",hideTip);
+        cell.addEventListener("click",e=>{ e.stopPropagation(); showTip(cell); });
         cell.setAttribute("data-q",normQ(r.player+" "+m));
       } else {
         cell.appendChild(el("span",{class:"pl",text:"—"}));
@@ -963,6 +1077,7 @@ function drawDrafts(arg){
   const notes=$("notes-drafts"); notes.textContent="";
   [ "Names are the validated ones: nicknames, misspellings and initials in the old spreadsheet were matched to real players (see data/history_name_map.csv). Flex and bench rows show each player’s position.",
     "Every team is laid out the same way, by price: its priciest QB in QB, its second QB in SFLEX (2023 on), its two priciest RBs and two priciest WRs in the RB and WR slots, the next-best RB or WR in FLEX, the priciest TE, K and D/ST, and everyone else on the bench, priciest first. (2020 and 2021 had two FLEX slots and 2022 a WR/TE flex; those take the next-best players in the same way.) Ties go to the earlier pick.",
+    "Hover or tap a filled pick for how that player finished the real NFL season (his rank among every NFL player at his position that year) and how the buying manager's team did that season, when both are known -- not yet available for 2012–2020 picks.",
     "Sources: "+D.sources_note+" Where the two disagree, Sleeper wins; see data/reconcile_report.md in the repo."
   ].forEach(t=>notes.appendChild(el("p",{text:t})));
   fitBoards();

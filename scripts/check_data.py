@@ -55,6 +55,14 @@ for season, block in (site.get("standings") or {}).items():
         if sum(1 for v in block.values() if v[1] == spot) > 1:
             problems.append(f"{season} standings: more than one team in podium spot {spot}")
 
+# season point ranks: pos_rank must be within 1..pos_n when set, and pts/pos_rank/pos_n travel together
+for r in rows:
+    pts, rank, n = r["pts"], r["pos_rank"], r["pos_n"]
+    if (pts == "") != (rank == "") or (rank == "") != (n == ""):
+        problems.append(f"{r['season']} {r['player']}: pts/pos_rank/pos_n should be all blank or all set, got {pts!r}/{rank!r}/{n!r}")
+    elif rank != "" and not (1 <= int(rank) <= int(n)):
+        problems.append(f"{r['season']} {r['player']}: pos_rank {rank} is outside 1..{n}")
+
 if problems:
     print("DATA CHECK FAILED:")
     print("\n".join(" - " + p for p in problems))

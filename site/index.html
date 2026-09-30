@@ -76,11 +76,15 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .pltable-card{margin:0;position:sticky;top:12px}
 .pltable{max-height:840px;overflow-y:auto;overflow-x:hidden}
 #pt-table{table-layout:fixed}
+#pt-table th:nth-child(1),#pt-table td:nth-child(1){width:56%}
+#pt-table th:nth-child(2),#pt-table td:nth-child(2){width:14%}
+#pt-table th:nth-child(3),#pt-table td:nth-child(3){width:15%}
+#pt-table th:nth-child(4),#pt-table td:nth-child(4){width:15%}
 #pt-table th{cursor:pointer;user-select:none;white-space:nowrap}
 #pt-table th:hover{color:var(--ink)}
 #pt-table th.sorted{color:var(--ink)}
 #pt-table td:first-child,#pt-table th:first-child{text-align:left}
-#pt-table .lnk{background:none;border:0;color:#8ec1ff;font:inherit;padding:0;cursor:pointer;text-align:left;white-space:normal}
+#pt-table .lnk{background:none;border:0;color:#8ec1ff;font:inherit;padding:0;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;width:100%}
 #pt-table .lnk:hover{text-decoration:underline}
 .twocol .card{margin:0 0 22px;min-width:0}
 .teamtable{max-height:480px;overflow-x:hidden;overflow-y:auto}
@@ -275,6 +279,7 @@ html,body{max-width:100%}
           </select></label>
           <span class="lede" id="pt-count" style="margin:0"></span>
         </div>
+        <div id="pt-align" style="height:0"></div>
         <div class="tablewrap pltable" id="pt-wrap">
           <table id="pt-table">
             <thead><tr>
@@ -831,6 +836,7 @@ const players=(function(){
     p.mainPos=Object.entries(p.pos).sort((a,b)=>b[1]-a[1])[0][0];
     p.total=p.rows.reduce((a,r)=>a+r.price,0);
     p.max=Math.max(...p.rows.map(r=>r.price));
+    p.managers=new Set(p.rows.map(r=>r.manager)).size;
     p.q=(p.name+" "+p.rows.map(r=>r.player).join(" ")).toLowerCase().normalize("NFD").replace(/[̀-ͯ.'’-]/g,"");
   });
   return list;
@@ -849,7 +855,7 @@ function drawPlayerTable(){
   rows.forEach(p=>{
     const tr=el("tr");
     const btn=el("button",{type:"button",class:"lnk",text:p.name,"aria-label":"Look up "+p.name});
-    btn.addEventListener("click",()=>{ location.hash="#players/"+encodeURIComponent(p.key); window.scrollTo({top:0,behavior:"smooth"}); });
+    btn.addEventListener("click",()=>{ location.hash="#players/"+encodeURIComponent(p.key); });
     tr.appendChild(el("td",{},[btn]));
     tr.appendChild(el("td",{text:p.mainPos}));
     tr.appendChild(el("td",{text:fmt$(p.total)}));
@@ -874,6 +880,19 @@ document.querySelectorAll("#pt-table th[data-col]").forEach(th=>{
 });
 $("pt-pos").addEventListener("change",drawPlayerTable);
 drawPlayerTable();
+
+// on wide screens (side-by-side layout) push the table down so its top lines up with the price chart's top.
+// A spacer div (not a margin) does this: margin-top here would collapse with the filters row's margin-bottom
+// below it, so an increase past that CSS margin wouldn't fully take effect -- a real element's height always does.
+function alignPlayerTable(){
+  const gap=$("pt-align"); if(!gap) return;
+  gap.style.height="0px";
+  if(window.innerWidth<=900) return;
+  const chart=$("pl-chart"), wrap=$("pt-wrap");
+  if(!chart || !chart.offsetParent || !wrap) return;
+  const diff=chart.getBoundingClientRect().top - wrap.getBoundingClientRect().top;
+  if(diff>0) gap.style.height=diff+"px";
+}
 
 const normQ=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ.'’-]/g,"").trim();
 
@@ -934,7 +953,8 @@ function drawPlayer(key){
   card.appendChild(el("h2",{},[p.name,el("span",{class:"pill",text:p.mainPos})]));
   const total=p.total, n=p.rows.length;
   const hero=el("div",{class:"hero"});
-  [[String(n),n===1?"auction":"auctions"],[fmt$(p.max),"highest price"],[fmt$(total/n),"average price"],[fmt$(total),"total spent"]]
+  [[String(n),n===1?"auction":"auctions"],[fmt$(p.max),"highest price"],[fmt$(total/n),"average price"],[fmt$(total),"total spent"],
+   [String(p.managers),p.managers===1?"manager drafted by":"managers drafted by"]]
     .forEach(([b,s])=>hero.appendChild(el("div",{},[el("b",{text:b}),el("span",{text:s})])));
   card.appendChild(hero);
   card.appendChild(el("div",{class:"chart",id:"pl-chart",style:"height:340px"}));
@@ -1124,6 +1144,8 @@ function route(){
     else { $("pl-detail").textContent=""; $("pl-detail").appendChild(el("p",{class:"lede",text:"Type a name above and pick a match to see what that player cost each year they were bought."})); footnotes($("notes-players")); }
   }
   document.querySelectorAll('.chart').forEach(c=>{ if(c.offsetParent!==null && c.data) Plotly.Plots.resize(c); });
+  alignPlayerTable();
+  requestAnimationFrame(alignPlayerTable);
 }
 document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{
   const v=b.dataset.view; const cur=(location.hash||"#league").slice(1).split("/")[0];
@@ -1136,7 +1158,7 @@ $("show-kdef").addEventListener("change",scatterFigure);
 $("dr-find").addEventListener("input",findDrafts);
 $("dr-full").addEventListener("change",()=>drawDrafts(lastDraftArg?String(lastDraftArg):""));
 let lastMode=layoutMode(), rt;
-window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ fitBoards(); if(layoutMode()!==lastMode){ lastMode=layoutMode(); route(); } },200); });
+window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ fitBoards(); alignPlayerTable(); if(layoutMode()!==lastMode){ lastMode=layoutMode(); route(); } },200); });
 
 (function leagueName(){
   const lg=D.league||{}, apply=n=>{ if(!n) return; $("league-name").textContent=n; document.title=n+" Auction Archive"; };

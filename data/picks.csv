@@ -361,12 +361,12 @@ season,manager,player,player_id,player_key,position,price,pick_no,depth,slot,row
 2014,Ben,Knile Davis,1463,id:1463,RB,1,,4,BE,12,Kansas City Chiefs,Arkansas,105.0,32,140,sheet
 2014,Ben,Bernard Pierce,1263,id:1263,RB,1,,5,BE,13,Baltimore Ravens,Temple,47.9,73,140,sheet
 2014,Ben,Christine Michael,1596,id:1596,RB,1,,6,BE,14,Seattle Seahawks,Texas A&M,18.7,97,140,sheet
-2014,Ben,Kelvin Benjamin,2182,id:2182,RB,1,,7,BE,15,Carolina Panthers,Florida State,152.8,17,211,sheet
 2014,Ben,Martellus Bennett,40,id:40,TE,1,,1,TE,5,Chicago Bears,Texas A&M,131.6,6,130,sheet
 2014,Ben,Keenan Allen,1479,id:1479,WR,18,,1,WR,3,Los Angeles Chargers,California,98.3,47,211,sheet
 2014,Ben,Torrey Smith,826,id:826,WR,13,,2,WR,4,Baltimore Ravens,Maryland,142.7,19,211,sheet
 2014,Ben,Michael Crabtree,455,id:455,WR,10,,3,BE,9,San Francisco 49ers,Texas Tech,94.2,50,211,sheet
 2014,Ben,Jeremy Maclin,411,id:411,WR,4,,4,BE,10,Philadelphia Eagles,Missouri,191.8,9,211,sheet
+2014,Ben,Kelvin Benjamin,2182,id:2182,WR,1,,5,BE,15,Carolina Panthers,Florida State,152.8,17,211,sheet
 2014,Jake,Bears,,def:Bears,DEF,1,,1,D/ST,7,Chicago Bears,,105.0,22,32,sheet
 2014,Jake,Dan Bailey,899,id:899,K,1,,1,K,8,Dallas Cowboys,Oklahoma State,149.0,7,35,sheet
 2014,Jake,Andrew Luck,1111,id:1111,QB,20,,1,QB,0,Indianapolis Colts,Stanford,351.7,2,89,sheet

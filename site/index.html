@@ -1066,7 +1066,7 @@ function pqGradeCell(manager, grade, stats){
   if(empty){ td.textContent="–"; return td; }
   const n=stats.counts[grade], pct=n/stats.total*100;
   td.appendChild(el("div",{class:"bar",style:"width:"+pct.toFixed(1)+"%;background:"+PQ_BAR_COLOR[grade]}));
-  td.appendChild(el("div",{class:"val"},[Math.round(pct)+"%",el("span",{class:"n",text:n+" pk"+(n===1?"":"s")})]));
+  td.appendChild(el("div",{class:"val"},[String(n),el("span",{class:"n",text:Math.round(pct)+"%"})]));
   const title=manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label+" — "+n+" of "+stats.total+" ("+Math.round(pct)+"%)";
   td.addEventListener("mouseenter",()=>pqShowListTip(td,title,stats.byGrade[grade],false));
   td.addEventListener("mouseleave",hideTip);

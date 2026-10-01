@@ -125,15 +125,32 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 #pq-table th:first-child,#pq-table td:first-child{text-align:left}
 #pq-table td.mgr{font-weight:600}
 #pq-table .sep{border-left:2px solid #4a4f57}
-#pq-table thead th.gico{font-size:16px;cursor:help}
-#pq-table td.sc{cursor:help;font-weight:700;border-radius:6px}
-#pq-table td.sc:hover{outline:1px solid #8ec1ff;outline-offset:-1px}
-#pq-table td.sc .n{display:block;font-weight:400;color:var(--ink3);font-size:10px;margin-top:1px}
+#pq-table thead th.gico{font-size:16px}
+#pq-table thead th[data-col]{cursor:pointer;user-select:none}
+#pq-table thead th[data-col]:hover{color:var(--ink)}
+#pq-table thead th.sorted{color:var(--ink)}
+#pq-table thead th .arrow{font-size:10px;margin-left:1px}
+#pq-table td.sc{position:relative;overflow:hidden;cursor:help;font-weight:700;border-radius:6px}
+#pq-table td.sc:not(.empty):hover,#pq-table td.sc:not(.empty).on{outline:1px solid #8ec1ff;outline-offset:-1px}
+#pq-table td.sc .bar{position:absolute;top:0;bottom:0;left:0;z-index:0}
+#pq-table td.sc .val{position:relative;z-index:1}
+#pq-table td.sc .val .n{display:block;font-weight:400;color:var(--ink3);font-size:10px;margin-top:1px}
 #pq-table td.sc.empty{color:var(--ink3);font-weight:400;cursor:default}
-#pq-table td.tot{color:var(--ink2);font-weight:600}
+#pq-table td.sc.tot{font-weight:700}
+#pq-table td.sc.ov{font-weight:800}
+#pq-table td.sc.ov .zero{position:absolute;left:50%;top:3px;bottom:3px;width:1px;background:var(--line);z-index:0}
 #pq-table tr.grp td{background:#272a2e;color:var(--ink3);font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:5px 12px;position:static}
 .pq-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:10px 2px 0}
 .pq-legend .pq-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+/* ---- pick-list tooltip (a wider variant of the shared .tip, for the per-pick breakdown table) ---- */
+.tip.wide{max-width:min(560px,calc(100vw - 16px))}
+.tip table.pqtip{border-collapse:collapse;width:100%;font-size:11.5px;margin-top:4px}
+.tip table.pqtip th,.tip table.pqtip td{padding:2px 7px 2px 0;text-align:right;white-space:nowrap;border:0}
+.tip table.pqtip th:first-child,.tip table.pqtip td:first-child{text-align:left;padding-left:0}
+.tip table.pqtip td.nm{text-align:left;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.tip table.pqtip thead th{color:var(--ink3);font-weight:600;position:sticky;top:0;background:#17181a}
+.tip table.pqtip tbody tr:nth-child(even) td{background:rgba(255,255,255,.035)}
+.tip table.pqtip td.g{text-align:center;padding-right:3px}
 @media (max-width:900px){ .twocol{grid-template-columns:1fr} .plcols{grid-template-columns:1fr} .pltable-card{position:static} .pltable{max-height:520px} }
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
 .chip{background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:8px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
@@ -233,7 +250,7 @@ html,body{max-width:100%}
     </div>
     <div class="card" id="pq-card">
       <h2>Pick quality by manager</h2>
-      <p class="lede">Each column is a grade — the share of that manager's graded picks that landed there (price paid vs. how the player actually finished the real NFL season). Filter to specific seasons or positions below; hover any cell for the exact counts. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
+      <p class="lede">One row per manager, ranked by <b>Overall</b> — a single score (🔥 Banger +2, ✅ Hit +1, ➖ Meh 0, 📉 Bust −1, 💀 Fail −2, averaged over every graded pick) so the best drafting shows up at the top without having to weigh five columns yourself. Click any column header to sort by it instead. Hover (or tap) any number to see the exact picks behind it. Filter to specific seasons or positions below. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
       <div class="filters">
         <div class="ddwrap" id="pq-ddwrap">
           <button type="button" class="ddbtn" id="pq-ddbtn" aria-haspopup="true" aria-expanded="false">
@@ -262,15 +279,24 @@ html,body{max-width:100%}
       </div>
       <div class="tablewrap">
         <table id="pq-table">
-          <thead><tr id="pq-thead"></tr></thead>
+          <thead><tr id="pq-thead">
+            <th data-col="mgr" tabindex="0" role="button" aria-label="Sort by manager">Manager</th>
+            <th data-col="picks" tabindex="0" role="button" aria-label="Sort by picks graded">Picks</th>
+            <th data-col="overall" tabindex="0" role="button" aria-label="Sort by overall score" class="sep" title="Weighted average across every graded pick (Banger +2, Hit +1, Meh 0, Bust −1, Fail −2) — higher is better">Overall</th>
+            <th data-col="banger" tabindex="0" role="button" aria-label="Sort by Banger share" class="gico" title="Banger">🔥</th>
+            <th data-col="hit" tabindex="0" role="button" aria-label="Sort by Hit share" class="gico" title="Hit">✅</th>
+            <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh share" class="gico" title="Meh">➖</th>
+            <th data-col="bust" tabindex="0" role="button" aria-label="Sort by Bust share" class="gico" title="Bust">📉</th>
+            <th data-col="fail" tabindex="0" role="button" aria-label="Sort by Fail share" class="gico" title="Fail">💀</th>
+          </tr></thead>
           <tbody id="pq-tbody"></tbody>
         </table>
       </div>
       <div class="pq-legend">
-        <span><span class="pq-sw" style="background:rgba(119,230,166,.55)"></span>ahead of the pack in that column (more Bangers/Hits, or fewer Busts/Fails)</span>
-        <span><span class="pq-sw" style="background:var(--card2);border:1px solid var(--line)"></span>middle of the pack</span>
-        <span><span class="pq-sw" style="background:rgba(224,69,79,.5)"></span>behind the pack in that column</span>
-        <span>Meh isn't colored — it's a low-stakes outcome, not clearly good or bad</span>
+        <span><span class="pq-sw" style="background:rgba(119,230,166,.55)"></span>Banger / Hit share (good outcomes) — bar length is the share itself, not a rank</span>
+        <span><span class="pq-sw" style="background:rgba(140,146,156,.45)"></span>Meh share (low-stakes, not judged good or bad)</span>
+        <span><span class="pq-sw" style="background:rgba(224,69,79,.55)"></span>Bust / Fail share (poor outcomes)</span>
+        <span>Overall's bar runs from the center: green to the right is above zero, red to the left is below</span>
       </div>
     </div>
     <div class="card">
@@ -916,100 +942,155 @@ const pqCumulative = () => pqSeasons.size===0 || pqSeasons.size===seasons.length
 const pqAllPos = () => pqPos.size===0 || pqPos.size===PQ_POS.length;
 const pqActivePos = () => pqAllPos() ? PQ_POS : PQ_POS.filter(p=>pqPos.has(p));
 const pqFilteredPicks = () => pqCumulative() ? picks : picks.filter(r=>pqSeasons.has(r.season));
-function pqGradeStats(manager){            // counts + total for this manager under the active season/position filters
+const PQ_SCORE = {banger:2, hit:1, meh:0, bust:-1, fail:-2};
+// A manager's Overall is the mean of PQ_SCORE across every graded pick: one honest, rankable number instead of
+// five columns the reader has to weigh in their head. The five grade columns stay alongside it as the
+// composition behind that number -- bar length is the share itself (an absolute, comparable quantity), not a
+// per-column rank, so there's no "which direction is green here" to puzzle out: green bars are always the two
+// good grades, red bars are always the two bad ones, and Meh (genuinely neither) is always gray.
+function pqGradeStats(manager){            // counts/picks/score for this manager under the active season/position filters
   const counts={banger:0,hit:0,meh:0,bust:0,fail:0};
+  const byGrade={banger:[],hit:[],meh:[],bust:[],fail:[]};
   const positions=pqActivePos();
-  let total=0;
+  let total=0, scoreSum=0;
   pqFilteredPicks().forEach(r=>{
     if(r.manager!==manager) return;
     if(!positions.includes(r.position)) return;
     const k=pickGradeKey(r); if(!k) return;
-    counts[k]++; total++;
+    counts[k]++; total++; scoreSum+=PQ_SCORE[k]; byGrade[k].push(r);
   });
-  return {total, counts};
+  return {total, counts, byGrade, score: total?scoreSum/total:null};
 }
-const PQ_BAND_BG = {
-  2:"rgba(119,230,166,.34)", 1:"rgba(119,230,166,.14)", 0:"transparent",
-  '-1':"rgba(224,69,79,.16)", '-2':"rgba(224,69,79,.32)"
+const PQ_BAR_COLOR = {
+  banger:"rgba(119,230,166,.42)", hit:"rgba(119,230,166,.42)",
+  meh:"rgba(140,146,156,.30)",
+  bust:"rgba(224,69,79,.42)", fail:"rgba(224,69,79,.42)"
 };
-// Color is relative to the other managers *in that same grade column* (ranked into fifths), not a fixed
-// absolute scale. For Banger/Hit, a bigger share is better, so the highest share is greenest. For Bust/Fail,
-// a bigger share is worse, so that direction is flipped (`invert`) and the lowest share is greenest. Meh is
-// intentionally never colored -- see the legend note.
-function pqBandsForColumn(pairs, invert){   // pairs: [[manager, share], ...] (only managers with graded picks)
-  const sorted=[...pairs].sort((a,b)=> invert ? a[1]-b[1] : b[1]-a[1]);
-  const n=sorted.length, out=new Map();
-  sorted.forEach(([key],i)=>{
-    const pct=n>1?i/(n-1):0;                 // 0 = best in column, 1 = worst
-    const b=pct<=0.2?2 : pct<=0.4?1 : pct<0.6?0 : pct<0.8?-1 : -2;
-    out.set(key,b);
-  });
-  return out;
+function pqPickRow(r, showGrade){           // one row of the hover pick-list: Year · Pos · Name · Price · Price rank · Finish
+  const cells=[];
+  if(showGrade){ const g=pickGradeKey(r); cells.push(el("td",{class:"g",text:g?GRADE_META[g].icon:""})); }
+  cells.push(el("td",{text:String(r.season)}));
+  cells.push(el("td",{text:r.position}));
+  cells.push(el("td",{class:"nm",text:r.player}));
+  cells.push(el("td",{text:fmt$(r.price)}));
+  cells.push(el("td",{text:pickPriceRankText(r)||"–"}));
+  cells.push(el("td",{text:r.position+r.pos_rank}));
+  return el("tr",{},cells);
 }
-function pqCell(manager, grade, stats, band){
+function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one cell, as a small sortable-looking table
+  if(tipFor&&tipFor!==cell) tipFor.classList.remove("on");
+  tipFor=cell; cell.classList.add("on");
+  tipEl.classList.add("wide");
+  tipEl.textContent=""; tipEl.appendChild(el("b",{text:title}));
+  if(!rows.length){
+    tipEl.appendChild(el("div",{text:"No graded picks in this range."}));
+  } else {
+    const sorted=[...rows].sort((a,b)=>a.season-b.season||b.price-a.price);
+    const hcells=[]; if(showGrade) hcells.push(el("th",{text:""}));
+    hcells.push(el("th",{text:"Yr"}),el("th",{text:"Pos"}),el("th",{text:"Player"}),el("th",{text:"Price"}),el("th",{text:"Price rank"}),el("th",{text:"Finish"}));
+    const t=el("table",{class:"pqtip"},[el("thead",{},[el("tr",{},hcells)])]);
+    const tb=el("tbody"); sorted.forEach(r=>tb.appendChild(pqPickRow(r,showGrade))); t.appendChild(tb);
+    tipEl.appendChild(t);
+  }
+  tipEl.hidden=false;
+  const r=cell.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
+  const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
+  let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
+  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
+}
+function pqGradeCell(manager, grade, stats){
   const empty=stats.total===0;
   const td=el("td",{class:"sc"+(empty?" empty":"")});
-  if(empty){
-    td.textContent="–";
-  } else {
-    const n=stats.counts[grade], pct=Math.round(n/stats.total*100);
-    if(band!=null) td.style.background=PQ_BAND_BG[band];
-    td.appendChild(document.createTextNode(pct+"%"));
-    td.appendChild(el("span",{class:"n",text:n+" pk"+(n===1?"":"s")}));
-    td._tip={
-      title:manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label,
-      lines:GRADE_ORDER.map(g=>{
-        const c=stats.counts[g], p=stats.total?Math.round(c/stats.total*100):0;
-        return GRADE_META[g].icon+" "+GRADE_META[g].label+" — "+c+" ("+p+"%)";
-      }).concat(["Total graded — "+stats.total])
-    };
-    td.addEventListener("mouseenter",()=>showTip(td));
-    td.addEventListener("mouseleave",hideTip);
-    td.addEventListener("click",e=>{ e.stopPropagation(); showTip(td); });
-  }
+  if(empty){ td.textContent="–"; return td; }
+  const n=stats.counts[grade], pct=n/stats.total*100;
+  td.appendChild(el("div",{class:"bar",style:"width:"+pct.toFixed(1)+"%;background:"+PQ_BAR_COLOR[grade]}));
+  td.appendChild(el("div",{class:"val"},[Math.round(pct)+"%",el("span",{class:"n",text:n+" pk"+(n===1?"":"s")})]));
+  const title=manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label+" — "+n+" of "+stats.total+" ("+Math.round(pct)+"%)";
+  td.addEventListener("mouseenter",()=>pqShowListTip(td,title,stats.byGrade[grade],false));
+  td.addEventListener("mouseleave",hideTip);
+  td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,stats.byGrade[grade],false); });
   return td;
 }
+function pqPicksCell(manager, stats){
+  const empty=stats.total===0;
+  const td=el("td",{class:"sc tot"+(empty?" empty":"")});
+  if(empty){ td.textContent="–"; return td; }
+  td.appendChild(document.createTextNode(String(stats.total)));
+  const all=GRADE_ORDER.flatMap(g=>stats.byGrade[g]);
+  const title=manager+" — "+stats.total+" graded pick"+(stats.total===1?"":"s");
+  td.addEventListener("mouseenter",()=>pqShowListTip(td,title,all,true));
+  td.addEventListener("mouseleave",hideTip);
+  td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,all,true); });
+  return td;
+}
+function pqOverallCell(manager, stats, maxAbsScore){
+  const empty=stats.total===0;
+  const td=el("td",{class:"sc ov"+(empty?" empty":"")});
+  if(empty){ td.textContent="–"; return td; }
+  const s=stats.score, half=Math.min(48,Math.abs(s)/maxAbsScore*48);
+  td.appendChild(el("div",{class:"zero"}));
+  td.appendChild(el("div",{class:"bar",style:s>=0
+    ? "left:50%;width:"+half.toFixed(1)+"%;background:rgba(119,230,166,.5)"
+    : "left:"+(50-half).toFixed(1)+"%;width:"+half.toFixed(1)+"%;background:rgba(224,69,79,.5)"}));
+  td.appendChild(el("div",{class:"val",text:(s>=0?"+":"−")+Math.abs(s).toFixed(2)}));
+  const all=GRADE_ORDER.flatMap(g=>stats.byGrade[g]);
+  const title=manager+" · Overall "+(s>=0?"+":"−")+Math.abs(s).toFixed(2);
+  td.addEventListener("mouseenter",()=>pqShowListTip(td,title,all,true));
+  td.addEventListener("mouseleave",hideTip);
+  td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,all,true); });
+  return td;
+}
+let pqSort={col:"overall", dir:-1};          // default: best Overall first, within each group
+function pqSortVal(stats, col){
+  if(col==="picks") return stats.total>0 ? stats.total : null;
+  if(col==="overall") return stats.total>0 ? stats.score : null;
+  if(GRADE_ORDER.includes(col)) return stats.total>0 ? stats.counts[col]/stats.total : null;
+  return null;
+}
+function pqSortManagers(list, statsByMgr){   // managers with no graded picks always sort last, whichever direction
+  const col=pqSort.col, dir=pqSort.dir;
+  return [...list].sort((a,b)=>{
+    if(col==="mgr") return a.name.localeCompare(b.name)*dir;
+    const av=pqSortVal(statsByMgr[a.name],col), bv=pqSortVal(statsByMgr[b.name],col);
+    if(av==null && bv==null) return a.name.localeCompare(b.name);
+    if(av==null) return 1;
+    if(bv==null) return -1;
+    const c=av<bv?-1:av>bv?1:0;
+    return c*dir || a.name.localeCompare(b.name);
+  });
+}
 function renderPQTable(){
-  const colspan=2+GRADE_ORDER.length;        // Manager + Picks + one per grade
-  const thead=$("pq-thead"); thead.textContent="";
-  thead.appendChild(el("th",{text:"Manager"}));
-  thead.appendChild(el("th",{text:"Picks"}));
-  GRADE_ORDER.forEach((g,i)=>thead.appendChild(el("th",{class:"gico"+(i===0?" sep":""),text:GRADE_META[g].icon,title:GRADE_META[g].label})));
-
   const statsByMgr={};
   D.managers.forEach(m=>{ statsByMgr[m.name]=pqGradeStats(m.name); });
-
-  const bands={};
-  GRADE_ORDER.forEach(g=>{
-    if(g==="meh"){ bands[g]=new Map(); return; }        // never colored, see legend note
-    const pairs=[];
-    D.managers.forEach(m=>{
-      const s=statsByMgr[m.name];
-      if(s.total>0) pairs.push([m.name, s.counts[g]/s.total]);
-    });
-    bands[g]=pqBandsForColumn(pairs, g==="bust"||g==="fail");
-  });
+  const scores=Object.values(statsByMgr).filter(s=>s.total>0).map(s=>Math.abs(s.score));
+  const maxAbsScore=scores.length?Math.max(0.05,...scores):1;
 
   const tbody=$("pq-tbody"); tbody.textContent="";
-  const cur=D.managers.filter(m=>m.current), old=D.managers.filter(m=>!m.current);
+  const cur=pqSortManagers(D.managers.filter(m=>m.current), statsByMgr);
+  const old=pqSortManagers(D.managers.filter(m=>!m.current), statsByMgr);
   const addGroup=(label, list)=>{
     if(!list.length) return;
-    if(label) tbody.appendChild(el("tr",{class:"grp"},[el("td",{colspan:String(colspan),text:label})]));
+    if(label) tbody.appendChild(el("tr",{class:"grp"},[el("td",{colspan:"8",text:label})]));
     list.forEach(m=>{
       const s=statsByMgr[m.name];
       const tr=el("tr");
       tr.appendChild(el("td",{class:"mgr",text:m.name}));
-      tr.appendChild(el("td",{class:"tot",text:s.total?String(s.total):"–"}));
-      GRADE_ORDER.forEach((g,i)=>{
-        const td=pqCell(m.name, g, s, bands[g].get(m.name));
-        if(i===0) td.classList.add("sep");
-        tr.appendChild(td);
-      });
+      tr.appendChild(pqPicksCell(m.name,s));
+      const ov=pqOverallCell(m.name,s,maxAbsScore); ov.classList.add("sep"); tr.appendChild(ov);
+      GRADE_ORDER.forEach(g=>tr.appendChild(pqGradeCell(m.name,g,s)));
       tbody.appendChild(tr);
     });
   };
   addGroup(null, cur);
   addGroup("Former managers", old);
+
+  document.querySelectorAll("#pq-table thead th[data-col]").forEach(th=>{
+    const on=th.dataset.col===pqSort.col;
+    th.classList.toggle("sorted",on);
+    th.setAttribute("aria-sort",on?(pqSort.dir===1?"ascending":"descending"):"none");
+    let a=th.querySelector(".arrow"); if(a) a.remove();
+    if(on) th.appendChild(el("span",{class:"arrow",text:pqSort.dir===1?" ▲":" ▼"}));
+  });
 }
 function pqSeasonLabel(){
   if(pqCumulative()) return "All (cumulative)";
@@ -1069,6 +1150,13 @@ function initPickQuality(){
   $("pq-selnone").addEventListener("click",()=>{ pqSeasons=new Set(); renderPQSeasonDropdown(); pqUpdate(); });
   $("pq-possel-all").addEventListener("click",()=>{ pqPos=new Set(PQ_POS); renderPQPosDropdown(); pqUpdate(); });
   $("pq-possel-none").addEventListener("click",()=>{ pqPos=new Set(); renderPQPosDropdown(); pqUpdate(); });
+  document.querySelectorAll("#pq-table thead th[data-col]").forEach(th=>{
+    const go=()=>{ const col=th.dataset.col;
+      if(pqSort.col===col) pqSort.dir*=-1; else { pqSort.col=col; pqSort.dir=col==="mgr"?1:-1; }
+      renderPQTable(); };
+    th.addEventListener("click",go);
+    th.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
+  });
   renderPQSeasonDropdown();
   renderPQPosDropdown();
   renderPQTable();
@@ -1115,7 +1203,7 @@ function drawManager(name){
 /* ---------- team / college tables (Managers view) ---------- */
 const tipEl=el("div",{class:"tip",role:"tooltip",hidden:""}); document.body.appendChild(tipEl);
 let tipFor=null;
-function hideTip(){ tipEl.hidden=true; if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
+function hideTip(){ tipEl.hidden=true; tipEl.classList.remove("wide"); if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
 function showTip(btn){
   const d=btn._tip; if(!d) return;
   if(tipFor&&tipFor!==btn) tipFor.classList.remove("on");

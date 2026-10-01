@@ -250,7 +250,7 @@ html,body{max-width:100%}
     </div>
     <div class="card" id="pq-card">
       <h2>Pick quality by manager</h2>
-      <p class="lede">One row per manager, ranked by <b>Overall</b> — a single score (🔥 Banger +2, ✅ Hit +1, ➖ Meh 0, 📉 Bust −1, 💀 Fail −2, averaged over every graded pick) so the best drafting shows up at the top without having to weigh five columns yourself. Click any column header to sort by it instead. Hover (or tap) any number to see the exact picks behind it. Filter to specific seasons or positions below. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
+      <p class="lede">One row per manager, ranked by <b>Overall</b> — a single score (🔥 Banger +2, ✅ Hit +1, 😐 Meh 0, 📉 Bust −1, 💀 Fail −2, averaged over every graded pick) so the best drafting shows up at the top without having to weigh five columns yourself. Click any column header to sort by it instead. Hover (or tap) any number to see the exact picks behind it. Filter to specific seasons or positions below. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
       <div class="filters">
         <div class="ddwrap" id="pq-ddwrap">
           <button type="button" class="ddbtn" id="pq-ddbtn" aria-haspopup="true" aria-expanded="false">
@@ -285,7 +285,7 @@ html,body{max-width:100%}
             <th data-col="overall" tabindex="0" role="button" aria-label="Sort by overall score" class="sep" title="Weighted average across every graded pick (Banger +2, Hit +1, Meh 0, Bust −1, Fail −2) — higher is better">Overall</th>
             <th data-col="banger" tabindex="0" role="button" aria-label="Sort by Banger share" class="gico" title="Banger">🔥</th>
             <th data-col="hit" tabindex="0" role="button" aria-label="Sort by Hit share" class="gico" title="Hit">✅</th>
-            <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh share" class="gico" title="Meh">➖</th>
+            <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh share" class="gico" title="Meh">😐</th>
             <th data-col="bust" tabindex="0" role="button" aria-label="Sort by Bust share" class="gico" title="Bust">📉</th>
             <th data-col="fail" tabindex="0" role="button" aria-label="Sort by Fail share" class="gico" title="Fail">💀</th>
           </tr></thead>
@@ -479,28 +479,32 @@ function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:nul
 /* ---------- pick-quality grade: banger / hit / meh / bust / fail ----------
    Compares the investment (this pick's price rank at the position, as a tier of that draft's pool) against
    the result (the player's real-NFL season-finish rank at the position, in fixed bands anchored on this
-   being a 10-team league -- top 10 is elite). The further a result beats or misses what the price implied,
-   the more it swings toward banger/fail; a cheap, late pick can never grade worse than "meh" -- there's
-   little invested to disappoint. Finishing as the single best player at the position (rank 1) is always a
-   banger, no matter the price, since there's nothing left to outperform. Kickers and defenses aren't graded
-   (too much week-to-week noise for price-vs-result to mean much). Picks without a season-finish rank yet
-   (part of 2012–2020, or a season still in progress) aren't graded either. */
+   being a 10-team league -- top 10 is elite, and within that, top 5 is a tier above merely top 10: finishing
+   6th-10th is one tier short of a true top-5 result, so it never scores as well as top 5 does for the same
+   price -- a tier-A price expecting top-5 and landing top-10 instead is a Meh, not a Hit; a cheaper tier
+   that would've banged on a top-5 finish settles for a Hit on a top-10 one). The further a result beats or
+   misses what the price implied, the more it swings toward banger/fail; a cheap, late pick can never grade
+   worse than "meh" -- there's little invested to disappoint. Finishing as the single best player at the
+   position (rank 1) is always a banger, no matter the price, since there's nothing left to outperform.
+   Kickers and defenses aren't graded (too much week-to-week noise for price-vs-result to mean much). Picks
+   without a season-finish rank yet (part of 2012–2020, or a season still in progress) aren't graded either. */
 const GRADE_META = {
   banger:{icon:"🔥", label:"Banger"},
   hit:{icon:"✅", label:"Hit"},
-  meh:{icon:"➖", label:"Meh"},
+  meh:{icon:"😐", label:"Meh"},
   bust:{icon:"📉", label:"Bust"},
   fail:{icon:"💀", label:"Fail"},
 };
 const GRADE_GRID = {              // price tier -> outcome band -> grade key
-  A:{elite:"hit",    great:"meh",  good:"bust", replacement:"fail", deep:"fail"},
-  B:{elite:"banger", great:"hit",  good:"meh",  replacement:"bust", deep:"fail"},
-  C:{elite:"banger", great:"hit",  good:"hit",  replacement:"bust", deep:"fail"},
-  D:{elite:"banger", great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
-  E:{elite:"banger", great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
+  A:{top5:"hit",    top10:"meh",  great:"meh",  good:"bust", replacement:"fail", deep:"fail"},
+  B:{top5:"banger", top10:"hit",  great:"hit",  good:"meh",  replacement:"bust", deep:"fail"},
+  C:{top5:"banger", top10:"hit",  great:"hit",  good:"hit",  replacement:"bust", deep:"fail"},
+  D:{top5:"banger", top10:"hit",  great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
+  E:{top5:"banger", top10:"hit",  great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
 };
 function outcomeBand(rank){            // real-NFL season-finish rank -> band
-  if(rank<=10) return "elite";
+  if(rank<=5) return "top5";
+  if(rank<=10) return "top10";
   if(rank<=20) return "great";
   if(rank<=30) return "good";
   if(rank<=50) return "replacement";
@@ -966,6 +970,10 @@ const PQ_BAR_COLOR = {
   meh:"rgba(140,146,156,.30)",
   bust:"rgba(224,69,79,.42)", fail:"rgba(224,69,79,.42)"
 };
+function pqPriceRankShort(r){               // "13th RB" instead of "13th RB Drafted" -- the column header already says Price rank
+  const t=pickPriceRankText(r);
+  return t ? t.replace(/ Drafted$/,"") : "–";
+}
 function pqPickRow(r, showGrade){           // one row of the hover pick-list: Year · Pos · Name · Price · Price rank · Finish
   const cells=[];
   if(showGrade){ const g=pickGradeKey(r); cells.push(el("td",{class:"g",text:g?GRADE_META[g].icon:""})); }
@@ -973,7 +981,7 @@ function pqPickRow(r, showGrade){           // one row of the hover pick-list: Y
   cells.push(el("td",{text:r.position}));
   cells.push(el("td",{class:"nm",text:r.player}));
   cells.push(el("td",{text:fmt$(r.price)}));
-  cells.push(el("td",{text:pickPriceRankText(r)||"–"}));
+  cells.push(el("td",{text:pqPriceRankShort(r)}));
   cells.push(el("td",{text:r.position+r.pos_rank}));
   return el("tr",{},cells);
 }

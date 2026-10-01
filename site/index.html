@@ -100,7 +100,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .teamtable td:last-child,.teamtable th:last-child{text-align:right;width:84px}
 .cnt{background:#25272b;color:var(--ink);border:1px solid var(--line);border-radius:8px;min-width:44px;padding:1px 10px;font:inherit;font-variant-numeric:tabular-nums;cursor:help}
 .cnt:hover,.cnt:focus-visible,.cnt.on{background:var(--card2);border-color:#8ec1ff}
-.tip{position:fixed;z-index:60;max-width:min(340px,calc(100vw - 16px));max-height:min(56vh,420px);overflow-y:auto;background:#17181a;border:1px solid #4a4f57;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 14px 34px rgba(0,0,0,.55);color:var(--ink)}
+.tip{position:fixed;z-index:60;pointer-events:none;max-width:min(340px,calc(100vw - 16px));max-height:min(56vh,420px);overflow-y:auto;background:#17181a;border:1px solid #4a4f57;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 14px 34px rgba(0,0,0,.55);color:var(--ink)}
 .tip b{display:block;margin-bottom:3px}
 .tip div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tip div.wrap{white-space:normal;overflow:visible;text-overflow:clip}
@@ -142,6 +142,8 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 #pq-table tr.grp td{background:#272a2e;color:var(--ink3);font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:5px 12px;position:static}
 .pq-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:10px 2px 0}
 .pq-legend .pq-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+.pq-icon-key{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:12px 2px 0}
+.pq-icon-key b{color:var(--ink);font-weight:600}
 /* ---- pick-list tooltip (a wider variant of the shared .tip, for the per-pick breakdown table) ---- */
 .tip.wide{max-width:min(560px,calc(100vw - 16px))}
 .tip table.pqtip{border-collapse:collapse;width:100%;font-size:11.5px;margin-top:4px}
@@ -291,6 +293,13 @@ html,body{max-width:100%}
           </tr></thead>
           <tbody id="pq-tbody"></tbody>
         </table>
+      </div>
+      <div class="pq-icon-key">
+        <span><b>🔥 Banger</b> — crushed what the price demanded</span>
+        <span><b>✅ Hit</b> — delivered roughly what the price demanded</span>
+        <span><b>😐 Meh</b> — low-stakes result, or one tier short of a top price's target</span>
+        <span><b>📉 Bust</b> — underperformed what the price demanded</span>
+        <span><b>💀 Fail</b> — badly missed what the price demanded</span>
       </div>
       <div class="pq-legend">
         <span><span class="pq-sw" style="background:rgba(119,230,166,.55)"></span>Banger / Hit share (good outcomes) — bar length is the share itself, not a rank</span>
@@ -989,11 +998,12 @@ function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one
   if(tipFor&&tipFor!==cell) tipFor.classList.remove("on");
   tipFor=cell; cell.classList.add("on");
   tipEl.classList.add("wide");
+  tipEl.style.maxHeight="";          // clear before measuring natural content height below
   tipEl.textContent=""; tipEl.appendChild(el("b",{text:title}));
   if(!rows.length){
     tipEl.appendChild(el("div",{text:"No graded picks in this range."}));
   } else {
-    const sorted=[...rows].sort((a,b)=>a.season-b.season||b.price-a.price);
+    const sorted=[...rows].sort((a,b)=>b.season-a.season||b.price-a.price);   // most recent season first
     const hcells=[]; if(showGrade) hcells.push(el("th",{text:""}));
     hcells.push(el("th",{text:"Yr"}),el("th",{text:"Pos"}),el("th",{text:"Player"}),el("th",{text:"Price"}),el("th",{text:"Price rank"}),el("th",{text:"Finish"}));
     const t=el("table",{class:"pqtip"},[el("thead",{},[el("tr",{},hcells)])]);
@@ -1001,10 +1011,7 @@ function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one
     tipEl.appendChild(t);
   }
   tipEl.hidden=false;
-  const r=cell.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
-  const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
-  let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
-  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
+  positionWideTip(cell);             // grows to fit every pick when there's room; only the overflow (if any) scrolls
 }
 function pqGradeCell(manager, grade, stats){
   const empty=stats.total===0;
@@ -1211,7 +1218,33 @@ function drawManager(name){
 /* ---------- team / college tables (Managers view) ---------- */
 const tipEl=el("div",{class:"tip",role:"tooltip",hidden:""}); document.body.appendChild(tipEl);
 let tipFor=null;
-function hideTip(){ tipEl.hidden=true; tipEl.classList.remove("wide"); if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
+function hideTip(){ tipEl.hidden=true; tipEl.classList.remove("wide"); tipEl.style.maxHeight=""; if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
+function positionTip(target){        // generic (non-wide) tooltip: fixed-size box tucked near its target
+  const r=target.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
+  const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
+  let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
+  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
+}
+function positionWideTip(target){    // pick-list tooltip: also grows/shrinks to use whichever side (above/below) has more room
+  const r=target.getBoundingClientRect(), w=tipEl.offsetWidth, m=8;
+  const naturalH=tipEl.scrollHeight;             // full content height, unaffected by any max-height clamp already applied
+  const spaceBelow=window.innerHeight-r.bottom-6-m, spaceAbove=r.top-6-m;
+  let top, h;
+  if(naturalH<=spaceBelow || spaceBelow>=spaceAbove){
+    h=Math.max(60,Math.min(naturalH,Math.max(spaceBelow,60))); top=r.bottom+6;
+  } else {
+    h=Math.max(60,Math.min(naturalH,Math.max(spaceAbove,60))); top=Math.max(m,r.top-6-h);
+  }
+  tipEl.style.maxHeight=h+"px";
+  const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
+  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
+}
+function repositionTip(){            // keep an open tooltip aligned with its target on scroll/resize, instead of closing it --
+  if(tipEl.hidden||!tipFor) return;  // closing on every scroll tick made it flaky (a trailing/inertial scroll right as the
+  const r=tipFor.getBoundingClientRect();         // mouse arrived could close a tooltip the instant it opened)
+  if(r.width===0&&r.height===0){ hideTip(); return; }   // target no longer rendered (filtered out, tab switched) -- just close
+  if(tipEl.classList.contains("wide")) positionWideTip(tipFor); else positionTip(tipFor);
+}
 function showTip(btn){
   const d=btn._tip; if(!d) return;
   if(tipFor&&tipFor!==btn) tipFor.classList.remove("on");
@@ -1221,13 +1254,10 @@ function showTip(btn){
     ? el("div",{},[l[0]+" · "+l[1]+" ",el("i",{text:l[2]})])
     : el("div",{class:"wrap",text:l})));
   tipEl.hidden=false;
-  const r=btn.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
-  const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
-  let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
-  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
+  positionTip(btn);
 }
 document.addEventListener("click",e=>{ if(!e.target.closest(".cnt")&&!e.target.closest(".hv")&&!e.target.closest(".pk")&&!e.target.closest(".tip")) hideTip(); });
-window.addEventListener("scroll",hideTip,{passive:true}); window.addEventListener("resize",hideTip);
+window.addEventListener("scroll",repositionTip,{passive:true}); window.addEventListener("resize",repositionTip);
 function originTable(host, label, groups){
   host.textContent="";
   if(!groups.length){ host.appendChild(el("p",{class:"lede",style:"padding:10px 12px",text:"Nothing to show."})); return; }

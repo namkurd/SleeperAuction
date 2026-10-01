@@ -130,19 +130,15 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 #pq-table thead th[data-col]:hover{color:var(--ink)}
 #pq-table thead th.sorted{color:var(--ink)}
 #pq-table thead th .arrow{font-size:10px;margin-left:1px}
-#pq-table td.sc{position:relative;overflow:hidden;cursor:help;font-weight:700;border-radius:6px}
+#pq-table td.sc{position:relative;cursor:help;font-weight:700;border-radius:6px;font-variant-numeric:tabular-nums}
 #pq-table td.sc:not(.empty):not(.notip):hover,#pq-table td.sc:not(.empty):not(.notip).on{outline:1px solid #8ec1ff;outline-offset:-1px}
-#pq-table td.sc .bar{position:absolute;top:0;bottom:0;left:0;z-index:0}
-#pq-table td.sc .val{position:relative;z-index:1}
-#pq-table td.sc .val .n{display:block;font-weight:400;color:var(--ink3);font-size:10px;margin-top:1px}
+#pq-table td.sc .val .n{display:block;font-weight:400;color:var(--ink3);font-size:10px;margin-top:1px;font-variant-numeric:tabular-nums}
 #pq-table td.sc.empty{color:var(--ink3);font-weight:400;cursor:default}
 #pq-table td.sc.notip{cursor:default}
 #pq-table td.sc.tot{font-weight:700}
 #pq-table td.sc.ov{font-weight:800}
-#pq-table td.sc.ov .zero{position:absolute;left:50%;top:3px;bottom:3px;width:1px;background:var(--line);z-index:0}
 #pq-table tr.grp td{background:#272a2e;color:var(--ink3);font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:5px 12px;position:static}
 .pq-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:10px 2px 0}
-.pq-legend .pq-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
 .pq-icon-key{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:12px 2px 0}
 .pq-icon-key b{color:var(--ink);font-weight:600}
 .pq-criteria{margin:8px 2px 0}
@@ -326,10 +322,8 @@ html,body{max-width:100%}
         <p class="lede">Finishing as the #1 player at the position that season is always 🔥 Banger, whatever the price was — there's nothing left to outperform. Kickers and defenses aren't graded (too noisy week to week), and neither are picks without a season-finish rank yet.</p>
       </details>
       <div class="pq-legend">
-        <span><span class="pq-sw" style="background:rgba(119,230,166,.55)"></span>Banger / Hit share (good outcomes) — bar length is the share itself, not a rank</span>
-        <span><span class="pq-sw" style="background:rgba(140,146,156,.45)"></span>Meh share (low-stakes, not judged good or bad)</span>
-        <span><span class="pq-sw" style="background:rgba(224,69,79,.55)"></span>Bust / Fail share (poor outcomes)</span>
-        <span>Overall's bar runs from the center: green to the right is above zero, red to the left is below</span>
+        <span>Each grade column: pick count first, then its share of that manager's graded picks below</span>
+        <span><b style="color:#77e6a6">Overall</b> is a weighted average of grades (Banger highest, Fail lowest) — green above zero, red below</span>
       </div>
     </div>
     <div class="card">
@@ -1001,11 +995,6 @@ function pqGradeStats(manager){            // counts/picks/score for this manage
   });
   return {total, counts, byGrade, score: total?scoreSum/total:null};
 }
-const PQ_BAR_COLOR = {
-  banger:"rgba(119,230,166,.42)", hit:"rgba(119,230,166,.42)",
-  meh:"rgba(140,146,156,.30)",
-  bust:"rgba(224,69,79,.42)", fail:"rgba(224,69,79,.42)"
-};
 function pqPriceRankShort(r){               // compact price rank: "RB4" (single rank) or "WR 16-18" (tied range) -- no ordinal, no "Drafted"
   const pr=PRICE_RANK.get(r); if(!pr) return "–";
   return pr.rank===pr.end ? r.position+pr.rank : r.position+" "+pr.rank+"-"+pr.end;
@@ -1065,7 +1054,6 @@ function pqGradeCell(manager, grade, stats){
   const td=el("td",{class:"sc"+(empty?" empty":"")});
   if(empty){ td.textContent="–"; return td; }
   const n=stats.counts[grade], pct=n/stats.total*100;
-  td.appendChild(el("div",{class:"bar",style:"width:"+pct.toFixed(1)+"%;background:"+PQ_BAR_COLOR[grade]}));
   td.appendChild(el("div",{class:"val"},[String(n),el("span",{class:"n",text:Math.round(pct)+"%"})]));
   const title=manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label+" — "+n+" of "+stats.total+" ("+Math.round(pct)+"%)";
   td.addEventListener("mouseenter",()=>pqShowListTip(td,title,stats.byGrade[grade],false));
@@ -1089,16 +1077,12 @@ function pqPicksCell(manager, stats){
   td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,all,true); });
   return td;
 }
-function pqOverallCell(manager, stats, maxAbsScore){
+function pqOverallCell(manager, stats){
   const empty=stats.total===0;
   const td=el("td",{class:"sc ov"+(empty?" empty":"")});
   if(empty){ td.textContent="–"; return td; }
-  const s=stats.score, half=Math.min(48,Math.abs(s)/maxAbsScore*48);
-  td.appendChild(el("div",{class:"zero"}));
-  td.appendChild(el("div",{class:"bar",style:s>=0
-    ? "left:50%;width:"+half.toFixed(1)+"%;background:rgba(119,230,166,.5)"
-    : "left:"+(50-half).toFixed(1)+"%;width:"+half.toFixed(1)+"%;background:rgba(224,69,79,.5)"}));
-  td.appendChild(el("div",{class:"val",text:(s>=0?"+":"−")+Math.abs(s).toFixed(2)}));
+  const s=stats.score;
+  td.appendChild(el("div",{class:"val",style:"color:"+(s>=0?"#77e6a6":"#ee7e87"),text:(s>=0?"+":"−")+Math.abs(s).toFixed(2)}));
   // same cap as the Picks column: a full cumulative pick list is too long to be a useful tooltip here
   if(stats.total>PQ_ROWS_PER_COL){ td.classList.add("notip"); return td; }
   const all=GRADE_ORDER.flatMap(g=>stats.byGrade[g]);
@@ -1146,8 +1130,6 @@ function pqMgrCell(name){    // the Manager cell -- when exactly one season is s
 function renderPQTable(){
   const statsByMgr={};
   D.managers.forEach(m=>{ statsByMgr[m.name]=pqGradeStats(m.name); });
-  const scores=Object.values(statsByMgr).filter(s=>s.total>0).map(s=>Math.abs(s.score));
-  const maxAbsScore=scores.length?Math.max(0.05,...scores):1;
 
   const tbody=$("pq-tbody"); tbody.textContent="";
   const cur=pqSortManagers(D.managers.filter(m=>m.current), statsByMgr);
@@ -1160,7 +1142,7 @@ function renderPQTable(){
       const tr=el("tr");
       tr.appendChild(pqMgrCell(m.name));
       tr.appendChild(pqPicksCell(m.name,s));
-      const ov=pqOverallCell(m.name,s,maxAbsScore); ov.classList.add("sep"); tr.appendChild(ov);
+      const ov=pqOverallCell(m.name,s); ov.classList.add("sep"); tr.appendChild(ov);
       GRADE_ORDER.forEach(g=>tr.appendChild(pqGradeCell(m.name,g,s)));
       tbody.appendChild(tr);
     });

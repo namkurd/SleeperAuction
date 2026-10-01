@@ -144,6 +144,11 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .pq-legend .pq-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
 .pq-icon-key{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:12px 2px 0}
 .pq-icon-key b{color:var(--ink);font-weight:600}
+.pq-criteria{margin:8px 2px 0}
+.pq-criteria .lede{padding:0;margin:8px 0}
+.pq-criteria .tablewrap{max-width:620px}
+.pqgridtbl th,.pqgridtbl td{text-align:center}
+.pqgridtbl thead th{font-weight:600}
 /* ---- pick-list tooltip (a wider variant of the shared .tip, for the per-pick breakdown table) ---- */
 .tip.wide{max-width:min(560px,calc(100vw - 16px))}
 .tip table.pqtip{border-collapse:collapse;width:100%;font-size:11.5px;margin-top:4px}
@@ -301,6 +306,23 @@ html,body{max-width:100%}
         <span><b>📉 Bust</b> — underperformed what the price demanded</span>
         <span><b>💀 Fail</b> — badly missed what the price demanded</span>
       </div>
+      <details class="pq-criteria">
+        <summary>Exactly how a grade is decided</summary>
+        <p class="lede">Every graded pick is priced into a <b>tier</b> (A–E: where its price ranked among every pick at that position in that draft, by percentile) and its result is sorted into a <b>band</b> (where the player finished, among all NFL players at that position, that season). The grade is just that tier crossed with that band — the pricier the tier, the higher the bar for a good grade, and the more a mediocre finish counts against it. A moderate-or-higher price needs a top-10 finish to be anything better than Meh; a bargain price gets full Banger credit much further down the outcome ladder, since a cheap pick returning a top-10 (or even just a top-20, at the cheapest tier) finish is a real steal:</p>
+        <div class="tablewrap">
+          <table class="pqgridtbl">
+            <thead><tr><th style="text-align:left">Price tier</th><th>Top 5</th><th>6th–10th</th><th>11th–20th</th><th>21st–30th</th><th>31st–50th</th><th>51st+</th></tr></thead>
+            <tbody>
+              <tr><td style="text-align:left">A — priciest ~10%</td><td>✅</td><td>😐</td><td>😐</td><td>📉</td><td>💀</td><td>💀</td></tr>
+              <tr><td style="text-align:left">B — next to the 25th percentile</td><td>🔥</td><td>✅</td><td>😐</td><td>😐</td><td>📉</td><td>💀</td></tr>
+              <tr><td style="text-align:left">C — next to the median</td><td>🔥</td><td>🔥</td><td>😐</td><td>😐</td><td>📉</td><td>💀</td></tr>
+              <tr><td style="text-align:left">D — next to the 75th percentile</td><td>🔥</td><td>🔥</td><td>✅</td><td>✅</td><td>😐</td><td>😐</td></tr>
+              <tr><td style="text-align:left">E — cheapest quarter</td><td>🔥</td><td>🔥</td><td>🔥</td><td>✅</td><td>😐</td><td>😐</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="lede">Finishing as the #1 player at the position that season is always 🔥 Banger, whatever the price was — there's nothing left to outperform. Kickers and defenses aren't graded (too noisy week to week), and neither are picks without a season-finish rank yet.</p>
+      </details>
       <div class="pq-legend">
         <span><span class="pq-sw" style="background:rgba(119,230,166,.55)"></span>Banger / Hit share (good outcomes) — bar length is the share itself, not a rank</span>
         <span><span class="pq-sw" style="background:rgba(140,146,156,.45)"></span>Meh share (low-stakes, not judged good or bad)</span>
@@ -478,7 +500,7 @@ const PRICE_RANK = new Map();   // pick row object -> {rank, pool, text}
     while(i<sorted.length){
       let j=i; while(j<sorted.length && sorted[j].price===sorted[i].price) j++;
       const start=i+1, end=j, txt=(start===end?ORD(start):start+"-"+ORD(end));
-      for(let k=i;k<j;k++) PRICE_RANK.set(sorted[k], {rank:start, pool:pool, text:txt+" "+sorted[k].position+" Drafted"});
+      for(let k=i;k<j;k++) PRICE_RANK.set(sorted[k], {rank:start, end:end, pool:pool, text:txt+" "+sorted[k].position+" Drafted"});
       i=j;
     }
   });
@@ -486,17 +508,19 @@ const PRICE_RANK = new Map();   // pick row object -> {rank, pool, text}
 function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:null; }
 
 /* ---------- pick-quality grade: banger / hit / meh / bust / fail ----------
-   Compares the investment (this pick's price rank at the position, as a tier of that draft's pool) against
-   the result (the player's real-NFL season-finish rank at the position, in fixed bands anchored on this
-   being a 10-team league -- top 10 is elite, and within that, top 5 is a tier above merely top 10: finishing
-   6th-10th is one tier short of a true top-5 result, so it never scores as well as top 5 does for the same
-   price -- a tier-A price expecting top-5 and landing top-10 instead is a Meh, not a Hit; a cheaper tier
-   that would've banged on a top-5 finish settles for a Hit on a top-10 one). The further a result beats or
-   misses what the price implied, the more it swings toward banger/fail; a cheap, late pick can never grade
-   worse than "meh" -- there's little invested to disappoint. Finishing as the single best player at the
-   position (rank 1) is always a banger, no matter the price, since there's nothing left to outperform.
-   Kickers and defenses aren't graded (too much week-to-week noise for price-vs-result to mean much). Picks
-   without a season-finish rank yet (part of 2012–2020, or a season still in progress) aren't graded either. */
+   Compares the investment (this pick's price rank at the position, as a tier of that draft's pool, A
+   priciest .. E cheapest) against the result (the player's real-NFL season-finish rank at the position,
+   in fixed bands anchored on this being a 10-team league). The pricier the tier, the higher the bar for a
+   good grade: a moderate-or-higher price (tiers A-C) needs a top-10 finish to be anything better than Meh
+   -- 11th-30th is "met expectations, nothing special" at that price, not a Hit -- while a bargain price
+   (tiers D-E) gets full Banger credit much further down the outcome ladder, since a cheap pick returning a
+   top-10 (or, at the very cheapest tier, even just a top-20) finish is a real steal, not merely a hit. For
+   any given finish, a cheaper pick never grades worse than a pricier one that got the same result. A cheap,
+   late pick can also never grade worse than "meh" -- there's little invested to disappoint. Finishing as
+   the single best player at the position (rank 1) is always a banger, no matter the price, since there's
+   nothing left to outperform. Kickers and defenses aren't graded (too much week-to-week noise for
+   price-vs-result to mean much). Picks without a season-finish rank yet (part of 2012–2020, or a season
+   still in progress) aren't graded either. */
 const GRADE_META = {
   banger:{icon:"🔥", label:"Banger"},
   hit:{icon:"✅", label:"Hit"},
@@ -505,11 +529,11 @@ const GRADE_META = {
   fail:{icon:"💀", label:"Fail"},
 };
 const GRADE_GRID = {              // price tier -> outcome band -> grade key
-  A:{top5:"hit",    top10:"meh",  great:"meh",  good:"bust", replacement:"fail", deep:"fail"},
-  B:{top5:"banger", top10:"hit",  great:"hit",  good:"meh",  replacement:"bust", deep:"fail"},
-  C:{top5:"banger", top10:"hit",  great:"hit",  good:"hit",  replacement:"bust", deep:"fail"},
-  D:{top5:"banger", top10:"hit",  great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
-  E:{top5:"banger", top10:"hit",  great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
+  A:{top5:"hit",    top10:"meh",    great:"meh",    good:"bust", replacement:"fail", deep:"fail"},
+  B:{top5:"banger", top10:"hit",    great:"meh",    good:"meh",  replacement:"bust", deep:"fail"},
+  C:{top5:"banger", top10:"banger", great:"meh",    good:"meh",  replacement:"bust", deep:"fail"},
+  D:{top5:"banger", top10:"banger", great:"hit",    good:"hit",  replacement:"meh",  deep:"meh"},
+  E:{top5:"banger", top10:"banger", great:"banger", good:"hit",  replacement:"meh",  deep:"meh"},
 };
 function outcomeBand(rank){            // real-NFL season-finish rank -> band
   if(rank<=5) return "top5";
@@ -955,6 +979,7 @@ const pqCumulative = () => pqSeasons.size===0 || pqSeasons.size===seasons.length
 const pqAllPos = () => pqPos.size===0 || pqPos.size===PQ_POS.length;
 const pqActivePos = () => pqAllPos() ? PQ_POS : PQ_POS.filter(p=>pqPos.has(p));
 const pqFilteredPicks = () => pqCumulative() ? picks : picks.filter(r=>pqSeasons.has(r.season));
+const pqSingleSeason = () => (!pqCumulative() && pqSeasons.size===1) ? [...pqSeasons][0] : null;   // the one selected year, or null
 const PQ_SCORE = {banger:2, hit:1, meh:0, bust:-1, fail:-2};
 // A manager's Overall is the mean of PQ_SCORE across every graded pick: one honest, rankable number instead of
 // five columns the reader has to weigh in their head. The five grade columns stay alongside it as the
@@ -979,9 +1004,9 @@ const PQ_BAR_COLOR = {
   meh:"rgba(140,146,156,.30)",
   bust:"rgba(224,69,79,.42)", fail:"rgba(224,69,79,.42)"
 };
-function pqPriceRankShort(r){               // "13th RB" instead of "13th RB Drafted" -- the column header already says Price rank
-  const t=pickPriceRankText(r);
-  return t ? t.replace(/ Drafted$/,"") : "–";
+function pqPriceRankShort(r){               // compact price rank: "RB4" (single rank) or "WR 16-18" (tied range) -- no ordinal, no "Drafted"
+  const pr=PRICE_RANK.get(r); if(!pr) return "–";
+  return pr.rank===pr.end ? r.position+pr.rank : r.position+" "+pr.rank+"-"+pr.end;
 }
 function pqPickRow(r, showGrade){           // one row of the hover pick-list: Year · Pos · Name · Price · Price rank · Finish
   const cells=[];
@@ -1074,6 +1099,22 @@ function pqSortManagers(list, statsByMgr){   // managers with no graded picks al
     return c*dir || a.name.localeCompare(b.name);
   });
 }
+function pqMgrCell(name){    // the Manager cell -- when exactly one season is selected, hover shows that year's finish/PF+/playoff result
+  const td=el("td",{class:"mgr",text:name});
+  const ssn=pqSingleSeason();
+  if(ssn!=null){
+    const info=standingInfo(ssn,name);
+    if(info){
+      const lines=["Finished "+info.txt+" of "+info.n+" · "+info.w+"-"+info.l];
+      if(info.pp!=null) lines.push("PF+ "+info.pp);
+      lines.push(info.md ? (info.md.sacko?info.md.name:"Playoff Finish: "+info.md.name) : "No playoff result recorded");
+      td._tip={title:name+" · "+ssn, lines:lines};
+      td.style.cursor="help";
+      td.addEventListener("mouseenter",()=>showTip(td)); td.addEventListener("mouseleave",hideTip);
+    }
+  }
+  return td;
+}
 function renderPQTable(){
   const statsByMgr={};
   D.managers.forEach(m=>{ statsByMgr[m.name]=pqGradeStats(m.name); });
@@ -1089,7 +1130,7 @@ function renderPQTable(){
     list.forEach(m=>{
       const s=statsByMgr[m.name];
       const tr=el("tr");
-      tr.appendChild(el("td",{class:"mgr",text:m.name}));
+      tr.appendChild(pqMgrCell(m.name));
       tr.appendChild(pqPicksCell(m.name,s));
       const ov=pqOverallCell(m.name,s,maxAbsScore); ov.classList.add("sep"); tr.appendChild(ov);
       GRADE_ORDER.forEach(g=>tr.appendChild(pqGradeCell(m.name,g,s)));
@@ -1218,26 +1259,27 @@ function drawManager(name){
 /* ---------- team / college tables (Managers view) ---------- */
 const tipEl=el("div",{class:"tip",role:"tooltip",hidden:""}); document.body.appendChild(tipEl);
 let tipFor=null;
-function hideTip(){ tipEl.hidden=true; tipEl.classList.remove("wide"); tipEl.style.maxHeight=""; if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
+function hideTip(){ tipEl.hidden=true; tipEl.classList.remove("wide"); tipEl.style.maxHeight=""; tipEl.style.zoom=""; if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
 function positionTip(target){        // generic (non-wide) tooltip: fixed-size box tucked near its target
   const r=target.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
   const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
   let top=r.bottom+6; if(top+h>window.innerHeight-m) top=Math.max(m,r.top-h-6);
   tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
 }
-function positionWideTip(target){    // pick-list tooltip: also grows/shrinks to use whichever side (above/below) has more room
-  const r=target.getBoundingClientRect(), w=tipEl.offsetWidth, m=8;
-  const naturalH=tipEl.scrollHeight;             // full content height, unaffected by any max-height clamp already applied
+function positionWideTip(target){    // pick-list tooltip: shrinks (never scrolls) to show every pick, however many there are
+  tipEl.style.zoom="";               // measure at natural (1x) size first
+  const r=target.getBoundingClientRect(), m=8;
+  const naturalH=tipEl.scrollHeight;
   const spaceBelow=window.innerHeight-r.bottom-6-m, spaceAbove=r.top-6-m;
-  let top, h;
-  if(naturalH<=spaceBelow || spaceBelow>=spaceAbove){
-    h=Math.max(60,Math.min(naturalH,Math.max(spaceBelow,60))); top=r.bottom+6;
-  } else {
-    h=Math.max(60,Math.min(naturalH,Math.max(spaceAbove,60))); top=Math.max(m,r.top-6-h);
-  }
-  tipEl.style.maxHeight=h+"px";
+  const avail=Math.max(spaceBelow, spaceAbove, 60);
+  const scale=naturalH>avail ? Math.max(0.08, avail/naturalH) : 1;    // shrink the whole tooltip (text, padding, rows) to fit
+  tipEl.style.zoom=scale;
+  tipEl.style.maxHeight="none";      // no clipping/scrolling -- the zoom above is what makes it fit
+  const w=tipEl.offsetWidth, h=tipEl.offsetHeight;     // re-measure: zoom changes the rendered box size
+  const top=(spaceBelow>=spaceAbove || h<=spaceBelow) ? r.bottom+6 : r.top-6-h;
+  const clampedTop=Math.max(m, Math.min(top, window.innerHeight-h-m));
   const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
-  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
+  tipEl.style.left=left+"px"; tipEl.style.top=clampedTop+"px";
 }
 function repositionTip(){            // keep an open tooltip aligned with its target on scroll/resize, instead of closing it --
   if(tipEl.hidden||!tipFor) return;  // closing on every scroll tick made it flaky (a trailing/inertial scroll right as the
@@ -1427,14 +1469,17 @@ function drawPlayer(key){
   card.appendChild(hero);
   card.appendChild(el("div",{class:"chart",id:"pl-chart",style:"height:340px"}));
   const tw=el("div",{class:"tablewrap plt"}), t=el("table"), hr=el("tr");
-  ["Season","Paid by","Position","Depth slot","Price"].forEach((h,i)=>hr.appendChild(el("th",{text:h,style:i<2?"text-align:left":""})));
+  ["Season","Paid by","Position","Pick quality","Depth slot","Price"].forEach((h,i)=>hr.appendChild(el("th",{text:h,style:i<2?"text-align:left":""})));
   t.appendChild(el("thead",{},[hr]));
   const tb=el("tbody");
   p.rows.forEach(r=>{
     const tr=el("tr");
     tr.appendChild(el("td",{text:String(r.season)}));
     tr.appendChild(el("td",{text:r.manager,style:"text-align:left"}));
-    tr.appendChild(el("td",{text:r.position})); tr.appendChild(el("td",{text:r.position+r.depth}));
+    tr.appendChild(el("td",{text:r.position}));
+    const g=pickGrade(r);
+    tr.appendChild(el("td",{text:g?g.icon:"–",title:g?g.label:"Not graded",style:"font-size:15px"}));
+    tr.appendChild(el("td",{text:r.position+r.depth}));
     tr.appendChild(el("td",{text:fmt$(r.price)})); tb.appendChild(tr);
   });
   t.appendChild(tb); tw.appendChild(t); card.appendChild(el("details",{open:""},[el("summary",{text:"Every auction"}),tw]));

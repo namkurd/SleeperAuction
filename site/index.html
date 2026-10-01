@@ -105,6 +105,35 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .tip div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tip div.wrap{white-space:normal;overflow:visible;text-overflow:clip}
 .tip i{font-style:normal;color:var(--ink3)}
+/* ---- pick quality by manager: season / position dropdown filters ---- */
+.ddwrap{position:relative;display:inline-block}
+.ddbtn{background:#25272b;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.ddbtn:hover{background:var(--card2)}
+.ddbtn:focus-visible{outline:2px solid #8ec1ff;outline-offset:2px}
+.ddbtn .car{color:var(--ink3);font-size:11px;transition:transform .15s}
+.ddwrap.open .ddbtn .car{transform:rotate(180deg)}
+.ddbtn b{font-weight:600}
+.ddpanel{position:absolute;z-index:30;left:0;top:100%;margin-top:6px;padding:10px;background:#25272b;border:1px solid var(--line);border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.55);min-width:300px}
+.ddrow{display:flex;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #3a3e45}
+.ddgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px 8px;max-height:230px;overflow-y:auto}
+.ddgrid.posgrid{grid-template-columns:repeat(2,1fr);min-width:120px}
+.ddgrid label{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:13.5px;padding:4px 4px;border-radius:6px;cursor:pointer}
+.ddgrid label:hover{background:var(--card2);color:var(--ink)}
+.ddgrid input{accent-color:#8ec1ff;width:14px;height:14px}
+/* ---- pick quality table ---- */
+#pq-table th,#pq-table td{text-align:center}
+#pq-table th:first-child,#pq-table td:first-child{text-align:left}
+#pq-table td.mgr{font-weight:600}
+#pq-table .sep{border-left:2px solid #4a4f57}
+#pq-table thead th.gico{font-size:16px;cursor:help}
+#pq-table td.sc{cursor:help;font-weight:700;border-radius:6px}
+#pq-table td.sc:hover{outline:1px solid #8ec1ff;outline-offset:-1px}
+#pq-table td.sc .n{display:block;font-weight:400;color:var(--ink3);font-size:10px;margin-top:1px}
+#pq-table td.sc.empty{color:var(--ink3);font-weight:400;cursor:default}
+#pq-table td.tot{color:var(--ink2);font-weight:600}
+#pq-table tr.grp td{background:#272a2e;color:var(--ink3);font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:5px 12px;position:static}
+.pq-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:10px 2px 0}
+.pq-legend .pq-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
 @media (max-width:900px){ .twocol{grid-template-columns:1fr} .plcols{grid-template-columns:1fr} .pltable-card{position:static} .pltable{max-height:520px} }
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
 .chip{background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:8px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
@@ -132,6 +161,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .bc{height:23px;display:flex;align-items:center;gap:4px;padding:0 5px;font-size:11.5px;border-bottom:1px solid rgba(0,0,0,.2);font-variant-numeric:tabular-nums;white-space:nowrap}
 .bc .sl{display:none;font-style:normal;font-weight:700;font-size:9.5px;opacity:.7;width:36px;flex:none}
 .bc .pt{font-size:8px;font-weight:700;opacity:.62;letter-spacing:0;flex:none;width:14px;text-align:right}
+.bc .gr{flex:none;font-size:10.5px;line-height:1;width:13px;text-align:center}
 .bc .pl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .bc .pr{flex:none;font-weight:800;min-width:22px;text-align:right}
 .bc.empty .pl{opacity:.45;font-weight:400}
@@ -200,6 +230,48 @@ html,body{max-width:100%}
       <p class="lede">Every player bought at auction, one dot each. Hover a dot for the player, buyer and price, plus (when known) how that player finished the season and how that manager's team did that year.</p>
       <div class="filters"><label><input type="checkbox" id="show-kdef"> Show kickers and defenses</label></div>
       <div class="chart tall" id="league-scatter"></div>
+    </div>
+    <div class="card" id="pq-card">
+      <h2>Pick quality by manager</h2>
+      <p class="lede">Each column is a grade — the share of that manager's graded picks that landed there (price paid vs. how the player actually finished the real NFL season). Filter to specific seasons or positions below; hover any cell for the exact counts. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
+      <div class="filters">
+        <div class="ddwrap" id="pq-ddwrap">
+          <button type="button" class="ddbtn" id="pq-ddbtn" aria-haspopup="true" aria-expanded="false">
+            Seasons: <b id="pq-ddlabel">All (cumulative)</b> <span class="car">▾</span>
+          </button>
+          <div class="ddpanel" id="pq-ddpanel" hidden>
+            <div class="ddrow">
+              <button type="button" class="chip" id="pq-selall">Select all</button>
+              <button type="button" class="chip" id="pq-selnone">Clear (cumulative)</button>
+            </div>
+            <div class="ddgrid" id="pq-ddgrid"></div>
+          </div>
+        </div>
+        <div class="ddwrap" id="pq-posddwrap">
+          <button type="button" class="ddbtn" id="pq-posddbtn" aria-haspopup="true" aria-expanded="false">
+            Positions: <b id="pq-posddlabel">All</b> <span class="car">▾</span>
+          </button>
+          <div class="ddpanel" id="pq-posddpanel" hidden>
+            <div class="ddrow">
+              <button type="button" class="chip" id="pq-possel-all">Select all</button>
+              <button type="button" class="chip" id="pq-possel-none">Clear (all)</button>
+            </div>
+            <div class="ddgrid posgrid" id="pq-posddgrid"></div>
+          </div>
+        </div>
+      </div>
+      <div class="tablewrap">
+        <table id="pq-table">
+          <thead><tr id="pq-thead"></tr></thead>
+          <tbody id="pq-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pq-legend">
+        <span><span class="pq-sw" style="background:rgba(119,230,166,.55)"></span>ahead of the pack in that column (more Bangers/Hits, or fewer Busts/Fails)</span>
+        <span><span class="pq-sw" style="background:var(--card2);border:1px solid var(--line)"></span>middle of the pack</span>
+        <span><span class="pq-sw" style="background:rgba(224,69,79,.5)"></span>behind the pack in that column</span>
+        <span>Meh isn't colored — it's a low-stakes outcome, not clearly good or bad</span>
+      </div>
     </div>
     <div class="card">
       <h2>Players drafted from each NFL team, by manager</h2>
@@ -357,25 +429,72 @@ const MEDAL={
   2:{c1:"#f7f9fb",c2:"#aab2bc",edge:"#6f7883",ink:"#2b3138",name:"2nd Place"},
   3:{c1:"#f3bf8c",c2:"#b8681f",edge:"#75400f",ink:"#3a1c04",name:"3rd Place"},
   9:{sacko:true,edge:"#8a5a2b",name:"Sacko"}};       // last place after the losers bracket: a 💩 instead of a medal
-/* this pick's rank by price among every pick at the same position in the same draft -- "1st RB Drafted",
-   or "30-32nd WR Drafted" when tied with others at the exact same price (competition ranking: ties share
+/* this pick's rank by price among every pick at the same position in the same draft -- stored as
+   {rank, pool, text}: rank/pool feed the pick-quality grade below, text is "1st RB Drafted", or
+   "30-32nd WR Drafted" when tied with others at the exact same price (competition ranking: ties share
    the same rank-range, and the next distinct price resumes counting after the whole tied group). */
-const PRICE_RANK = new Map();   // pick row object -> "1st RB Drafted" text
+const PRICE_RANK = new Map();   // pick row object -> {rank, pool, text}
 (function(){
   const groups=new Map();
   picks.forEach(r=>{ const k=r.season+"|"+r.position; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(r); });
   groups.forEach(rows=>{
-    const sorted=[...rows].sort((a,b)=>b.price-a.price);
+    const sorted=[...rows].sort((a,b)=>b.price-a.price), pool=sorted.length;
     let i=0;
     while(i<sorted.length){
       let j=i; while(j<sorted.length && sorted[j].price===sorted[i].price) j++;
       const start=i+1, end=j, txt=(start===end?ORD(start):start+"-"+ORD(end));
-      for(let k=i;k<j;k++) PRICE_RANK.set(sorted[k], txt+" "+sorted[k].position+" Drafted");
+      for(let k=i;k<j;k++) PRICE_RANK.set(sorted[k], {rank:start, pool:pool, text:txt+" "+sorted[k].position+" Drafted"});
       i=j;
     }
   });
 })();
-function pickPriceRankText(r){ return PRICE_RANK.get(r)||null; }
+function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:null; }
+
+/* ---------- pick-quality grade: banger / hit / meh / bust / fail ----------
+   Compares the investment (this pick's price rank at the position, as a tier of that draft's pool) against
+   the result (the player's real-NFL season-finish rank at the position, in fixed bands anchored on this
+   being a 10-team league -- top 10 is elite). The further a result beats or misses what the price implied,
+   the more it swings toward banger/fail; a cheap, late pick can never grade worse than "meh" -- there's
+   little invested to disappoint. Finishing as the single best player at the position (rank 1) is always a
+   banger, no matter the price, since there's nothing left to outperform. Kickers and defenses aren't graded
+   (too much week-to-week noise for price-vs-result to mean much). Picks without a season-finish rank yet
+   (part of 2012–2020, or a season still in progress) aren't graded either. */
+const GRADE_META = {
+  banger:{icon:"🔥", label:"Banger"},
+  hit:{icon:"✅", label:"Hit"},
+  meh:{icon:"➖", label:"Meh"},
+  bust:{icon:"📉", label:"Bust"},
+  fail:{icon:"💀", label:"Fail"},
+};
+const GRADE_GRID = {              // price tier -> outcome band -> grade key
+  A:{elite:"hit",    great:"meh",  good:"bust", replacement:"fail", deep:"fail"},
+  B:{elite:"banger", great:"hit",  good:"meh",  replacement:"bust", deep:"fail"},
+  C:{elite:"banger", great:"hit",  good:"hit",  replacement:"bust", deep:"fail"},
+  D:{elite:"banger", great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
+  E:{elite:"banger", great:"hit",  good:"hit",  replacement:"meh",  deep:"meh"},
+};
+function outcomeBand(rank){            // real-NFL season-finish rank -> band
+  if(rank<=10) return "elite";
+  if(rank<=20) return "great";
+  if(rank<=30) return "good";
+  if(rank<=50) return "replacement";
+  return "deep";
+}
+function priceTier(rank, pool){        // price rank among this draft's pool at the position -> tier A (priciest) .. E (cheapest)
+  if(rank<=Math.max(5,Math.round(pool*.10))) return "A";
+  if(rank<=Math.round(pool*.25)) return "B";
+  if(rank<=Math.round(pool*.50)) return "C";
+  if(rank<=Math.round(pool*.75)) return "D";
+  return "E";
+}
+function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail", or null when ungraded
+  if(r.position==="K"||r.position==="DEF"||r.pos_rank==null) return null;
+  if(r.pos_rank===1) return "banger";                 // the single best at the position that year: always a banger
+  const pr=PRICE_RANK.get(r); if(!pr) return null;
+  const tier=priceTier(pr.rank,pr.pool), band=outcomeBand(r.pos_rank);
+  return GRADE_GRID[tier][band];
+}
+function pickGrade(r){ const k=pickGradeKey(r); return k?GRADE_META[k]:null; }   // {icon, label} or null when ungraded
 const medalCache={};
 function medalSrc(place){                    // a small gold / silver / bronze medal on a ribbon, drawn as SVG
   if(medalCache[place]) return medalCache[place];
@@ -411,29 +530,38 @@ function standingEntries(xs, mgr){
   });
   return out;
 }
-/* ---------- shared pick tooltip: the player's season-finish rank + the buying manager's season result ----------
-   Used everywhere a pick appears: the League price-per-pick chart, the Players page's price-history chart, and
-   the Draft board cells. Both lines quietly omit themselves when the underlying data isn't known yet (rank needs
-   data/season_ranks.csv to have that season; the manager's finish needs data/standings for that year). */
+/* ---------- shared pick tooltip: one standard layout used everywhere a pick appears (League price-per-pick
+   chart, the Players page's price-history chart, the Managers depth chart + its data table, and the Draft
+   board). Every line quietly omits itself when the underlying data isn't known yet (the position-rank line
+   needs data/season_ranks.csv to have that season; the manager-finish/playoff lines need data/standings for
+   that year). The standard layout:
+     Player Name
+     Manager · Season
+     $price · POSdepth, Nth POS Drafted
+     Season finish: RB20 · 160.0 pts
+     Manager Finish: 1st of 10 · 14-0 · PF+ 123
+     Playoff Finish: 3rd Place                      */
 function pickRankLine(r){    // "RB4 · 218.4 pts" -- this player's rank among every NFL player at his position that year
   if(r.pos_rank==null) return null;
   return r.position+r.pos_rank+" · "+r.pts.toFixed(1)+" pts";
 }
-function pickSeasonLine(r){   // the buying manager's regular-season finish (and playoff result) that season
+function pickSeasonFinishLine(r){     // "Season finish: RB20 · 160.0 pts"
+  const rk=pickRankLine(r); return rk ? "Season finish: "+rk : null;
+}
+function pickManagerFinishLine(r){    // "Manager Finish: 1st of 10 · 14-0 · PF+ 123"
   const info=standingInfo(r.season,r.manager); if(!info) return null;
-  let s="Finished "+info.txt+" of "+info.n+" · "+info.w+"-"+info.l+(info.pp!=null?" · PF+ "+info.pp:"");
-  if(info.md) s+=" · "+(info.md.sacko?info.md.name:"Playoff Finish: "+info.md.name);
-  return s;
+  return "Manager Finish: "+info.txt+" of "+info.n+" · "+info.w+"-"+info.l+(info.pp!=null?" · PF+ "+info.pp:"");
 }
-function pickTipLines(r){    // plain-text lines, for the floating .tip component
+function pickPlayoffLine(r){          // "Playoff Finish: 3rd Place", or just "Sacko" for last place
+  const info=standingInfo(r.season,r.manager); if(!info||!info.md) return null;
+  return info.md.sacko ? info.md.name : "Playoff Finish: "+info.md.name;
+}
+function pickTipLines(r){    // the three result lines, each omitted when unknown
   const lines=[];
-  const rk=pickRankLine(r); if(rk) lines.push("Season finish: "+rk);
-  const sl=pickSeasonLine(r); if(sl) lines.push(sl);
+  const sf=pickSeasonFinishLine(r); if(sf) lines.push(sf);
+  const mf=pickManagerFinishLine(r); if(mf) lines.push(mf);
+  const pf=pickPlayoffLine(r); if(pf) lines.push(pf);
   return lines;
-}
-function pickTipHtml(r){     // the same, as an HTML fragment appended inside a Plotly hovertemplate
-  const lines=pickTipLines(r);
-  return lines.length ? "<br>"+lines.join("<br>") : "";
 }
 function posDepthRankText(r){   // "RB1, 1st RB Drafted" -- or "WR2, 30-32nd WR Drafted" when tied on price
   const rk=pickPriceRankText(r);
@@ -441,6 +569,14 @@ function posDepthRankText(r){   // "RB1, 1st RB Drafted" -- or "WR2, 30-32nd WR 
 }
 function pickPriceLine(r){      // "$83 · RB1, 1st RB Drafted"
   return fmt$(r.price)+" · "+posDepthRankText(r);
+}
+function pickTipFull(r){        // {title, lines} -- the complete standard tooltip for a single pick, for the floating .tip component
+  const g=pickGrade(r);
+  return {title:(g?g.icon+" ":"")+r.player, lines:[r.manager+" · "+r.season, pickPriceLine(r), ...pickTipLines(r)]};
+}
+function pickTipFullHtml(r){    // the same, as one HTML fragment for a Plotly hovertemplate
+  const f=pickTipFull(r);
+  return "<b>"+esc(f.title)+"</b><br>"+f.lines.map(esc).join("<br>");
 }
 /* Where each scoring-era label goes. On a phone the labels are placed so each one sits directly above its own
    dashed line: it starts at the line (or ends at it, near the right edge), and the labels are stacked on
@@ -571,7 +707,7 @@ function renderTable(host, xs, rows, dec){
     const p=r.pick&&v!=null&&r.pick(x);
     if(!p) return el("td",{text:txt});
     const td=el("td",{class:"pk",text:txt});
-    td._tip={title:p.player+" · "+pickPriceLine(p)+" · "+p.manager+" "+p.season, lines:pickTipLines(p)};
+    td._tip=pickTipFull(p);
     td.addEventListener("mouseenter",()=>showTip(td));
     td.addEventListener("mouseleave",hideTip);
     td.addEventListener("click",e=>{ e.stopPropagation(); showTip(td); });
@@ -676,12 +812,8 @@ function depthFigure(chartId, tableId, rows, ss, opts){
       if(y.every(v=>v==null)) continue;
       const ex={hovertemplate:hov};
       if(opts.contrib){
-        ex.customdata=xs.map(s=>{
-          const r=rows.find(r=>r.season===s&&r.position===p&&r.depth===d); if(!r) return ["",""];
-          const rk=pickPriceRankText(r);
-          return [esc(r.player)+" · "+fmt$(r.price)+(rk?", "+rk:""), pickTipHtml(r)];
-        });
-        ex.hovertemplate="<b>%{x} · "+p+d+" %{y:$,.0f}</b><br>%{customdata[0]}%{customdata[1]}<extra></extra>";
+        ex.customdata=xs.map(s=>{ const r=rows.find(r=>r.season===s&&r.position===p&&r.depth===d); return r?pickTipFullHtml(r):""; });
+        ex.hovertemplate="%{customdata}<extra></extra>";
       }
       const t=lineTrace(p+d,xs,y,p,d,ex);
       if(d===1 && wideLegend()) t.legendgrouptitle={text:p,font:{color:INK2,size:11}};
@@ -721,9 +853,9 @@ function scatterFigure(){
       visible:(p==="K"||p==="DEF")&&!showKD?"legendonly":true,
       x:rows.map((r,i)=>r.season+(((i*37)%100)/100-0.5)*0.5),
       y:rows.map(r=>r.price),
-      customdata:rows.map(r=>[r.player,r.manager,posDepthRankText(r),r.season,pickTipHtml(r)]),
+      customdata:rows.map(r=>pickTipFullHtml(r)),
       marker:{color:COLOR[p],symbol:SYMBOL[p],size:(p==="K"||p==="DEF")?7:8,opacity:.88,line:{color:SURFACE,width:1}},
-      hovertemplate:"<b>%{customdata[0]}</b><br>%{customdata[1]} · %{customdata[3]}<br>%{y:$,.0f} · %{customdata[2]}%{customdata[4]}<extra></extra>"
+      hovertemplate:"%{customdata}<extra></extra>"
     };
   });
   const lay=baseLayout(seasons,{hovermode:"closest",bottomLegend:true,host:"league-scatter"});
@@ -773,7 +905,173 @@ function drawLeague(){
   scatterFigure();
   matrixTable($("lg-nfl"),"NFL team",r=>r.team);
   matrixTable($("lg-college"),"College",r=>r.college);
-  footnotes($("notes-league"),["Hovering a dot in the price-per-pick chart shows where that price ranked among every pick at the same position in that same draft (ties share a rank range, e.g. \"30-32nd WR Drafted\"), plus how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules) and how the buying manager's team did that season, when both are known -- the NFL-season rank isn't yet available for 2012–2020 picks."],true);
+  footnotes($("notes-league"),["Hovering a dot in the price-per-pick chart shows where that price ranked among every pick at the same position in that same draft (ties share a rank range, e.g. \"30-32nd WR Drafted\"), plus how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules) and how the buying manager's team did that season, when both are known -- the NFL-season rank isn't yet available for 2012–2020 picks. The icon next to the player's name in the tooltip grades the pick (price vs. how he actually finished); see the Drafts tab for what each icon means."],true);
+}
+
+/* ---------- LEAGUE: pick quality by manager (columns are the grades; seasons/positions are filters) ---------- */
+const PQ_POS = ["QB","RB","WR","TE"];                 // K/DEF are never graded, so they're left out of the filter too
+const GRADE_ORDER = ["banger","hit","meh","bust","fail"];
+let pqSeasons = new Set(), pqPos = new Set();
+const pqCumulative = () => pqSeasons.size===0 || pqSeasons.size===seasons.length;
+const pqAllPos = () => pqPos.size===0 || pqPos.size===PQ_POS.length;
+const pqActivePos = () => pqAllPos() ? PQ_POS : PQ_POS.filter(p=>pqPos.has(p));
+const pqFilteredPicks = () => pqCumulative() ? picks : picks.filter(r=>pqSeasons.has(r.season));
+function pqGradeStats(manager){            // counts + total for this manager under the active season/position filters
+  const counts={banger:0,hit:0,meh:0,bust:0,fail:0};
+  const positions=pqActivePos();
+  let total=0;
+  pqFilteredPicks().forEach(r=>{
+    if(r.manager!==manager) return;
+    if(!positions.includes(r.position)) return;
+    const k=pickGradeKey(r); if(!k) return;
+    counts[k]++; total++;
+  });
+  return {total, counts};
+}
+const PQ_BAND_BG = {
+  2:"rgba(119,230,166,.34)", 1:"rgba(119,230,166,.14)", 0:"transparent",
+  '-1':"rgba(224,69,79,.16)", '-2':"rgba(224,69,79,.32)"
+};
+// Color is relative to the other managers *in that same grade column* (ranked into fifths), not a fixed
+// absolute scale. For Banger/Hit, a bigger share is better, so the highest share is greenest. For Bust/Fail,
+// a bigger share is worse, so that direction is flipped (`invert`) and the lowest share is greenest. Meh is
+// intentionally never colored -- see the legend note.
+function pqBandsForColumn(pairs, invert){   // pairs: [[manager, share], ...] (only managers with graded picks)
+  const sorted=[...pairs].sort((a,b)=> invert ? a[1]-b[1] : b[1]-a[1]);
+  const n=sorted.length, out=new Map();
+  sorted.forEach(([key],i)=>{
+    const pct=n>1?i/(n-1):0;                 // 0 = best in column, 1 = worst
+    const b=pct<=0.2?2 : pct<=0.4?1 : pct<0.6?0 : pct<0.8?-1 : -2;
+    out.set(key,b);
+  });
+  return out;
+}
+function pqCell(manager, grade, stats, band){
+  const empty=stats.total===0;
+  const td=el("td",{class:"sc"+(empty?" empty":"")});
+  if(empty){
+    td.textContent="–";
+  } else {
+    const n=stats.counts[grade], pct=Math.round(n/stats.total*100);
+    if(band!=null) td.style.background=PQ_BAND_BG[band];
+    td.appendChild(document.createTextNode(pct+"%"));
+    td.appendChild(el("span",{class:"n",text:n+" pk"+(n===1?"":"s")}));
+    td._tip={
+      title:manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label,
+      lines:GRADE_ORDER.map(g=>{
+        const c=stats.counts[g], p=stats.total?Math.round(c/stats.total*100):0;
+        return GRADE_META[g].icon+" "+GRADE_META[g].label+" — "+c+" ("+p+"%)";
+      }).concat(["Total graded — "+stats.total])
+    };
+    td.addEventListener("mouseenter",()=>showTip(td));
+    td.addEventListener("mouseleave",hideTip);
+    td.addEventListener("click",e=>{ e.stopPropagation(); showTip(td); });
+  }
+  return td;
+}
+function renderPQTable(){
+  const colspan=2+GRADE_ORDER.length;        // Manager + Picks + one per grade
+  const thead=$("pq-thead"); thead.textContent="";
+  thead.appendChild(el("th",{text:"Manager"}));
+  thead.appendChild(el("th",{text:"Picks"}));
+  GRADE_ORDER.forEach((g,i)=>thead.appendChild(el("th",{class:"gico"+(i===0?" sep":""),text:GRADE_META[g].icon,title:GRADE_META[g].label})));
+
+  const statsByMgr={};
+  D.managers.forEach(m=>{ statsByMgr[m.name]=pqGradeStats(m.name); });
+
+  const bands={};
+  GRADE_ORDER.forEach(g=>{
+    if(g==="meh"){ bands[g]=new Map(); return; }        // never colored, see legend note
+    const pairs=[];
+    D.managers.forEach(m=>{
+      const s=statsByMgr[m.name];
+      if(s.total>0) pairs.push([m.name, s.counts[g]/s.total]);
+    });
+    bands[g]=pqBandsForColumn(pairs, g==="bust"||g==="fail");
+  });
+
+  const tbody=$("pq-tbody"); tbody.textContent="";
+  const cur=D.managers.filter(m=>m.current), old=D.managers.filter(m=>!m.current);
+  const addGroup=(label, list)=>{
+    if(!list.length) return;
+    if(label) tbody.appendChild(el("tr",{class:"grp"},[el("td",{colspan:String(colspan),text:label})]));
+    list.forEach(m=>{
+      const s=statsByMgr[m.name];
+      const tr=el("tr");
+      tr.appendChild(el("td",{class:"mgr",text:m.name}));
+      tr.appendChild(el("td",{class:"tot",text:s.total?String(s.total):"–"}));
+      GRADE_ORDER.forEach((g,i)=>{
+        const td=pqCell(m.name, g, s, bands[g].get(m.name));
+        if(i===0) td.classList.add("sep");
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  };
+  addGroup(null, cur);
+  addGroup("Former managers", old);
+}
+function pqSeasonLabel(){
+  if(pqCumulative()) return "All (cumulative)";
+  const list=[...pqSeasons].sort((a,b)=>b-a);
+  if(list.length<=4) return list.join(", ");
+  return list.slice(0,4).join(", ")+" +"+(list.length-4)+" more";
+}
+function renderPQSeasonDropdown(){
+  const grid=$("pq-ddgrid"); grid.textContent="";
+  [...seasons].sort((a,b)=>b-a).forEach(s=>{
+    const cb=el("input",{type:"checkbox",value:String(s)});
+    if(pqSeasons.has(s)) cb.checked=true;
+    cb.addEventListener("change",()=>{
+      if(cb.checked) pqSeasons.add(s); else pqSeasons.delete(s);
+      pqUpdate();
+    });
+    grid.appendChild(el("label",{},[cb,String(s)]));
+  });
+}
+function pqPosLabel(){
+  if(pqAllPos()) return "All";
+  return PQ_POS.filter(p=>pqPos.has(p)).join(", ");
+}
+function renderPQPosDropdown(){
+  const grid=$("pq-posddgrid"); grid.textContent="";
+  PQ_POS.forEach(p=>{
+    const cb=el("input",{type:"checkbox",value:p});
+    if(pqPos.has(p)) cb.checked=true;
+    cb.addEventListener("change",()=>{
+      if(cb.checked) pqPos.add(p); else pqPos.delete(p);
+      pqUpdate();
+    });
+    grid.appendChild(el("label",{},[cb,p]));
+  });
+}
+function pqUpdate(){
+  $("pq-ddlabel").textContent=pqSeasonLabel();
+  $("pq-posddlabel").textContent=pqPosLabel();
+  renderPQTable();
+}
+function closePQDd(wrapId, panelId){ $(panelId).hidden=true; $(wrapId).classList.remove("open"); }
+function togglePQDd(wrapId, panelId, btnId){
+  const open=$(panelId).hidden;
+  closePQDd("pq-ddwrap","pq-ddpanel"); closePQDd("pq-posddwrap","pq-posddpanel");
+  $(panelId).hidden=!open;
+  $(wrapId).classList.toggle("open",open);
+  $(btnId).setAttribute("aria-expanded",String(open));
+}
+function initPickQuality(){
+  $("pq-ddbtn").addEventListener("click",e=>{ e.stopPropagation(); togglePQDd("pq-ddwrap","pq-ddpanel","pq-ddbtn"); });
+  $("pq-posddbtn").addEventListener("click",e=>{ e.stopPropagation(); togglePQDd("pq-posddwrap","pq-posddpanel","pq-posddbtn"); });
+  document.addEventListener("click",e=>{
+    if(!e.target.closest("#pq-ddwrap")) closePQDd("pq-ddwrap","pq-ddpanel");
+    if(!e.target.closest("#pq-posddwrap")) closePQDd("pq-posddwrap","pq-posddpanel");
+  });
+  $("pq-selall").addEventListener("click",()=>{ pqSeasons=new Set(seasons); renderPQSeasonDropdown(); pqUpdate(); });
+  $("pq-selnone").addEventListener("click",()=>{ pqSeasons=new Set(); renderPQSeasonDropdown(); pqUpdate(); });
+  $("pq-possel-all").addEventListener("click",()=>{ pqPos=new Set(PQ_POS); renderPQPosDropdown(); pqUpdate(); });
+  $("pq-possel-none").addEventListener("click",()=>{ pqPos=new Set(); renderPQPosDropdown(); pqUpdate(); });
+  renderPQSeasonDropdown();
+  renderPQPosDropdown();
+  renderPQTable();
 }
 
 /* ---------- MANAGERS view ---------- */
@@ -804,7 +1102,7 @@ function drawManager(name){
   const extra=[];
   if(ss.length!==span(ss).length) extra.push(m.name+" sat out some seasons; the gaps in the charts are real years without an auction.");
   extra.push("Chart axes start at $0 and stop at $140 (position) and $80 (depth) unless a manager's spending goes higher.");
-  extra.push("Hovering a point on the depth chart, or a cell in its table below, shows the same tooltip as everywhere else on this site: where that price ranked among every pick at the position that draft, how the player finished the real NFL season, and how this manager's team did that year.");
+  extra.push("Hovering a point on the depth chart, or a cell in its table below, shows the same tooltip as everywhere else on this site: where that price ranked among every pick at the position that draft, how the player finished the real NFL season, and how this manager's team did that year. The icon next to the player's name grades the pick; see the Drafts tab for what each icon means.");
   if(ss.some(x=>standingFor(x,m.name))){
     extra.push("The label above each year is that team's regular-season finish by Rumbles (each week: 1 point per team outscored, plus 9 for winning the matchup; the league's official standings since 2022, ranked the same way for earlier seasons). A gold, silver or bronze medal above a label means the team finished the playoffs as champion, 2nd or 3rd; a 💩 marks that year's Sacko (last place after the losers bracket). Hover a label (or its medal) for the record, PF+ and playoff finish. Standings start in 2013, and a season appears once its regular season is over.");
     extra.push("PF+ (points-for plus) works like baseball's OPS+. Take the average regular-season points total of all teams in that season and call it 100; a manager's PF+ is their own points total measured against it: PF+ = their points ÷ that season's league average × 100. A manager who scored 2,200 in a season when the average team scored 2,000 has a PF+ of 110 (10% more scoring than the average team); 90 would be 10% less. Because each season is measured against its own average, PF+ compares fairly across years even when scoring or the number of games changed.");
@@ -1029,12 +1327,12 @@ function drawPlayer(key){
   const trace={type:"scatter",mode:"lines+markers+text",x:xs,y:xs.map(s=>by.has(s)?by.get(s).price:null),connectgaps:false,
     line:{color:col,width:2.2},marker:{color:col,symbol:SYMBOL[p.mainPos],size:10,line:{color:SURFACE,width:1.5}},
     text:xs.map(s=>by.has(s)?"$"+by.get(s).price:""),textposition:"top center",textfont:{color:INK,size:12},
-    customdata:xs.map(s=>by.has(s)?[by.get(s).manager,posDepthRankText(by.get(s)),pickTipHtml(by.get(s))]:["","",""]),
-    hovertemplate:"%{x}: <b>%{y:$,.0f}</b><br>%{customdata[0]} · %{customdata[1]}%{customdata[2]}<extra></extra>",cliponaxis:false};
+    customdata:xs.map(s=>by.has(s)?pickTipFullHtml(by.get(s)):""),
+    hovertemplate:"%{customdata}<extra></extra>",cliponaxis:false};
   lay.yaxis.range=[0,Math.max(...p.rows.map(r=>r.price))*1.25+2];
   Plotly.newPlot("pl-chart",[trace],lay,CFG);
   footnotes($("notes-players"),["Player identity: Sleeper player id for 2021 on. Older spreadsheet names were matched to real players by name and era (misspellings, nicknames and abbreviations included); a small number could not be matched and appear under their spreadsheet name.",
-    "Hovering a point also shows where that price ranked among every pick at the position in that draft, how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules), and how the buying manager's team did that season, when both are known. The NFL-season rank isn't available yet for 2012–2020 picks, or for the handful of players missing from that year's stat feed (usually because they didn't play)."]);
+    "Hovering a point also shows where that price ranked among every pick at the position in that draft, how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules), and how the buying manager's team did that season, when both are known. The NFL-season rank isn't available yet for 2012–2020 picks, or for the handful of players missing from that year's stat feed (usually because they didn't play). The icon next to the player's name grades the pick; see the Drafts tab for what each icon means."]);
 }
 
 /* ---------- DRAFTS view ---------- */
@@ -1081,11 +1379,13 @@ function buildBoard(season, open){
       const r=(by[m]||[])[k];
       const cell=el("div",{class:"bc"+(r?"":" empty")+""},[el("i",{class:"sl",text:sl})]);
       if(r){
+        const grade=pickGrade(r);
+        if(grade) cell.appendChild(el("span",{class:"gr",title:grade.label,text:grade.icon}));
         cell.appendChild(el("span",{class:"pl",text:full?r.player:shortName(r.player,r.position)}));
         if(FLEXY.has(sl)&&r.position!=="DEF") cell.appendChild(el("b",{class:"pt",text:r.position}));
         cell.appendChild(el("span",{class:"pr",text:fmt$(r.price)}));
         cell.classList.add("pk");
-        cell._tip={title:r.player+" · "+pickPriceLine(r)+" · "+m+" "+season, lines:pickTipLines(r)};
+        cell._tip=pickTipFull(r);
         cell.addEventListener("mouseenter",()=>showTip(cell));
         cell.addEventListener("mouseleave",hideTip);
         cell.addEventListener("click",e=>{ e.stopPropagation(); showTip(cell); });
@@ -1142,6 +1442,7 @@ function drawDrafts(arg){
   [ "Names are the validated ones: nicknames, misspellings and initials in the old spreadsheet were matched to real players (see data/history_name_map.csv). Flex and bench rows show each player’s position.",
     "Every team is laid out the same way, by price: its priciest QB in QB, its second QB in SFLEX (2023 on), its two priciest RBs and two priciest WRs in the RB and WR slots, the next-best RB or WR in FLEX, the priciest TE, K and D/ST, and everyone else on the bench, priciest first. (2020 and 2021 had two FLEX slots and 2022 a WR/TE flex; those take the next-best players in the same way.) Ties go to the earlier pick.",
     "Hover or tap a filled pick for where that price ranked among every pick at the position in that draft (ties share a rank range, e.g. \"30-32nd WR Drafted\"), how that player finished the real NFL season (his rank among every NFL player at his position that year), and how the buying manager's team did that season, when both are known -- the NFL-season rank isn't yet available for 2012–2020 picks.",
+    "The icon before a player's name grades the pick -- price paid vs. how he actually finished the real NFL season, for a 10-team league: "+Object.values(GRADE_META).map(g=>g.icon+" "+g.label).join("   ")+". A cheap, late pick can only grade as low as Meh (there's little invested to disappoint), and finishing as the single best player at the position is always a Banger, however it was priced. Kickers and defenses aren't graded, and neither are picks without a season-finish rank yet.",
     "Sources: "+D.sources_note+" Where the two disagree, Sleeper wins; see data/reconcile_report.md in the repo."
   ].forEach(t=>notes.appendChild(el("p",{text:t})));
   fitBoards();
@@ -1217,6 +1518,7 @@ window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ fit
 $("subtitle").textContent=`Every auction draft since ${seasons[0]} · ${seasons.length} seasons · ${picks.length.toLocaleString("en-US")} picks · ${D.managers.length} managers`;
 $("footer").appendChild(el("span",{text:"Data last changed "+D.generated+". Updates itself when a new Sleeper auction draft completes. "}));
 $("footer").appendChild(el("a",{href:"https://github.com/namkurd/SleeperAuction",text:"Source on GitHub"}));
+initPickQuality();
 route();
 })();
 </script>

@@ -150,11 +150,12 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .pqgridtbl th,.pqgridtbl td{text-align:center}
 .pqgridtbl thead th{font-weight:600}
 /* ---- pick-list tooltip (a wider variant of the shared .tip, for the per-pick breakdown table) ---- */
-.tip.wide{max-width:min(560px,calc(100vw - 16px))}
-.tip table.pqtip{border-collapse:collapse;width:100%;font-size:11.5px;margin-top:4px}
-.tip table.pqtip th,.tip table.pqtip td{padding:2px 7px 2px 0;text-align:right;white-space:nowrap;border:0}
+.tip.wide{max-width:calc(100vw - 16px)}
+.tip .pqtip-cols{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px}
+.tip table.pqtip{border-collapse:collapse;width:auto;flex:0 0 auto;font-size:11.5px}
+.tip table.pqtip th,.tip table.pqtip td{padding:2px 5px 2px 0;text-align:right;white-space:nowrap;border:0}
 .tip table.pqtip th:first-child,.tip table.pqtip td:first-child{text-align:left;padding-left:0}
-.tip table.pqtip td.nm{text-align:left;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.tip table.pqtip td.nm{text-align:left;max-width:128px;overflow:hidden;text-overflow:ellipsis}
 .tip table.pqtip thead th{color:var(--ink3);font-weight:600;position:sticky;top:0;background:#17181a}
 .tip table.pqtip tbody tr:nth-child(even) td{background:rgba(255,255,255,.035)}
 .tip table.pqtip td.g{text-align:center;padding-right:3px}
@@ -1008,6 +1009,10 @@ function pqPriceRankShort(r){               // compact price rank: "RB4" (single
   const pr=PRICE_RANK.get(r); if(!pr) return "–";
   return pr.rank===pr.end ? r.position+pr.rank : r.position+" "+pr.rank+"-"+pr.end;
 }
+function pqPriceRankTight(r){               // same, but no space before a tied range: "RB4" or "WR34-37" -- used in the player-detail table
+  const pr=PRICE_RANK.get(r); if(!pr) return "–";
+  return pr.rank===pr.end ? r.position+pr.rank : r.position+pr.rank+"-"+pr.end;
+}
 function pqPickRow(r, showGrade){           // one row of the hover pick-list: Year · Pos · Name · Price · Price rank · Finish
   const cells=[];
   if(showGrade){ const g=pickGradeKey(r); cells.push(el("td",{class:"g",text:g?GRADE_META[g].icon:""})); }
@@ -1019,7 +1024,15 @@ function pqPickRow(r, showGrade){           // one row of the hover pick-list: Y
   cells.push(el("td",{text:r.position+r.pos_rank}));
   return el("tr",{},cells);
 }
-function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one cell, as a small sortable-looking table
+const PQ_ROWS_PER_COL = 50;    // a pick-list tooltip splits into side-by-side columns of this many rows, instead of one tall list
+function pqTipColumn(chunk, showGrade){    // one column's worth: its own header + up to PQ_ROWS_PER_COL rows
+  const hcells=[]; if(showGrade) hcells.push(el("th",{text:""}));
+  hcells.push(el("th",{text:"Yr"}),el("th",{text:"Pos"}),el("th",{text:"Player"}),el("th",{text:"Price"}),el("th",{text:"Price rank"}),el("th",{text:"Finish"}));
+  const t=el("table",{class:"pqtip"},[el("thead",{},[el("tr",{},hcells)])]);
+  const tb=el("tbody"); chunk.forEach(r=>tb.appendChild(pqPickRow(r,showGrade))); t.appendChild(tb);
+  return t;
+}
+function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one cell, as small sortable-looking tables side by side
   if(tipFor&&tipFor!==cell) tipFor.classList.remove("on");
   tipFor=cell; cell.classList.add("on");
   tipEl.classList.add("wide");
@@ -1029,14 +1042,12 @@ function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one
     tipEl.appendChild(el("div",{text:"No graded picks in this range."}));
   } else {
     const sorted=[...rows].sort((a,b)=>b.season-a.season||b.price-a.price);   // most recent season first
-    const hcells=[]; if(showGrade) hcells.push(el("th",{text:""}));
-    hcells.push(el("th",{text:"Yr"}),el("th",{text:"Pos"}),el("th",{text:"Player"}),el("th",{text:"Price"}),el("th",{text:"Price rank"}),el("th",{text:"Finish"}));
-    const t=el("table",{class:"pqtip"},[el("thead",{},[el("tr",{},hcells)])]);
-    const tb=el("tbody"); sorted.forEach(r=>tb.appendChild(pqPickRow(r,showGrade))); t.appendChild(tb);
-    tipEl.appendChild(t);
+    const cols=el("div",{class:"pqtip-cols"});
+    for(let i=0;i<sorted.length;i+=PQ_ROWS_PER_COL) cols.appendChild(pqTipColumn(sorted.slice(i,i+PQ_ROWS_PER_COL),showGrade));
+    tipEl.appendChild(cols);
   }
   tipEl.hidden=false;
-  positionWideTip(cell);             // grows to fit every pick when there's room; only the overflow (if any) scrolls
+  positionWideTip(cell);             // columns wrap to use the available width; any remainder shrinks (fonts and all) to fit
 }
 function pqGradeCell(manager, grade, stats){
   const empty=stats.total===0;
@@ -1259,7 +1270,7 @@ function drawManager(name){
 /* ---------- team / college tables (Managers view) ---------- */
 const tipEl=el("div",{class:"tip",role:"tooltip",hidden:""}); document.body.appendChild(tipEl);
 let tipFor=null;
-function hideTip(){ tipEl.hidden=true; tipEl.classList.remove("wide"); tipEl.style.maxHeight=""; tipEl.style.zoom=""; if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
+function hideTip(){ tipEl.hidden=true; tipEl.classList.remove("wide"); tipEl.style.maxHeight=""; tipEl.style.zoom=""; tipEl.style.width=""; const cols=tipEl.querySelector(".pqtip-cols"); if(cols) cols.style.width=""; if(tipFor){ tipFor.classList.remove("on"); tipFor=null; } }
 function positionTip(target){        // generic (non-wide) tooltip: fixed-size box tucked near its target
   const r=target.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight, m=8;
   const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
@@ -1268,18 +1279,52 @@ function positionTip(target){        // generic (non-wide) tooltip: fixed-size b
 }
 function positionWideTip(target){    // pick-list tooltip: shrinks (never scrolls) to show every pick, however many there are
   tipEl.style.zoom="";               // measure at natural (1x) size first
+  tipEl.style.width="";
   const r=target.getBoundingClientRect(), m=8;
-  const naturalH=tipEl.scrollHeight;
+  const availW=window.innerWidth-2*m, availH=window.innerHeight-2*m;
+  tipEl.style.maxHeight="none";      // no clipping/scrolling -- zoom is what makes it fit, measured (and re-measured) below
+  // decide how many of the (up to 50-row) columns sit side by side before any shrinking: CSS zoom scales the whole
+  // rendered box uniformly, but flex-wrap's own wrap decision and offsetWidth/offsetHeight are measured in *local*
+  // (pre-zoom) pixels while window.innerWidth/innerHeight and getBoundingClientRect are real (post-zoom) screen pixels --
+  // relying on a viewport-relative CSS max-width to drive the wrap mixes those two spaces and wraps unpredictably.
+  // So the column count is fixed explicitly here, in one consistent (pre-zoom, local) pixel space, before any zoom is applied.
+  const colsBox=tipEl.querySelector(".pqtip-cols");
+  if(colsBox){
+    const colEls=[...colsBox.children];
+    colsBox.style.width="";
+    if(colEls.length>1){
+      // columns aren't all the same natural width (player names differ), so sum each one actually placed in the
+      // first row rather than assuming they match the first column -- an underestimate here is what let the row
+      // overflow by a few px and silently wrap one column early.
+      const gap=parseFloat(getComputedStyle(colsBox).columnGap)||0;
+      let used=0, perRow=0;
+      for(const c of colEls){
+        const cw=c.getBoundingClientRect().width;
+        const next=used+(perRow>0?gap:0)+cw;
+        if(perRow>0 && next>availW) break;
+        used=next; perRow++;
+      }
+      colsBox.style.width=Math.ceil(used)+2+"px";   // +2px rounding safety margin
+    }
+  }
+  // now shrink (zoom) to fit the available box, re-measuring with getBoundingClientRect (real, post-zoom pixels) each
+  // pass -- offsetWidth/offsetHeight don't reflect zoom at all, which is what caused the box to render far larger than
+  // its predicted size.
+  let scale=1, rect=tipEl.getBoundingClientRect();
+  for(let i=0;i<6;i++){
+    if((rect.height<=availH+1 && rect.width<=availW+1) || scale<=0.08) break;
+    scale=Math.max(0.08, scale*Math.min(availH/rect.height, availW/rect.width));
+    tipEl.style.zoom=scale;
+    rect=tipEl.getBoundingClientRect();
+  }
+  const w=rect.width, h=rect.height;
   const spaceBelow=window.innerHeight-r.bottom-6-m, spaceAbove=r.top-6-m;
-  const avail=Math.max(spaceBelow, spaceAbove, 60);
-  const scale=naturalH>avail ? Math.max(0.08, avail/naturalH) : 1;    // shrink the whole tooltip (text, padding, rows) to fit
-  tipEl.style.zoom=scale;
-  tipEl.style.maxHeight="none";      // no clipping/scrolling -- the zoom above is what makes it fit
-  const w=tipEl.offsetWidth, h=tipEl.offsetHeight;     // re-measure: zoom changes the rendered box size
-  const top=(spaceBelow>=spaceAbove || h<=spaceBelow) ? r.bottom+6 : r.top-6-h;
-  const clampedTop=Math.max(m, Math.min(top, window.innerHeight-h-m));
+  let top;
+  if(h<=spaceBelow) top=r.bottom+6;                          // fits neatly below the cell -- the common case
+  else if(h<=spaceAbove) top=r.top-6-h;                       // or neatly above it
+  else top=Math.max(m,(window.innerHeight-h)/2);              // too tall for either side cleanly -- center it on screen instead
   const left=Math.min(Math.max(m,r.right-w),window.innerWidth-w-m);
-  tipEl.style.left=left+"px"; tipEl.style.top=clampedTop+"px";
+  tipEl.style.left=left+"px"; tipEl.style.top=top+"px";
 }
 function repositionTip(){            // keep an open tooltip aligned with its target on scroll/resize, instead of closing it --
   if(tipEl.hidden||!tipFor) return;  // closing on every scroll tick made it flaky (a trailing/inertial scroll right as the
@@ -1469,14 +1514,16 @@ function drawPlayer(key){
   card.appendChild(hero);
   card.appendChild(el("div",{class:"chart",id:"pl-chart",style:"height:340px"}));
   const tw=el("div",{class:"tablewrap plt"}), t=el("table"), hr=el("tr");
-  ["Season","Paid by","Position","Pick quality","Depth slot","Price"].forEach((h,i)=>hr.appendChild(el("th",{text:h,style:i<2?"text-align:left":""})));
+  ["Season","Paid by","Price Rank","Season Rank","Pick quality","Depth slot","Price"].forEach((h,i)=>hr.appendChild(el("th",{text:h,style:i<2?"text-align:left":""})));
   t.appendChild(el("thead",{},[hr]));
   const tb=el("tbody");
-  p.rows.forEach(r=>{
+  const rowsDesc=[...p.rows].sort((a,b)=>b.season-a.season);   // most recent season first -- a sorted copy, p.rows itself still feeds the chart below in natural order
+  rowsDesc.forEach(r=>{
     const tr=el("tr");
     tr.appendChild(el("td",{text:String(r.season)}));
     tr.appendChild(el("td",{text:r.manager,style:"text-align:left"}));
-    tr.appendChild(el("td",{text:r.position}));
+    tr.appendChild(el("td",{text:pqPriceRankTight(r)}));
+    tr.appendChild(el("td",{text:r.pos_rank==null?"–":r.position+r.pos_rank}));
     const g=pickGrade(r);
     tr.appendChild(el("td",{text:g?g.icon:"–",title:g?g.label:"Not graded",style:"font-size:15px"}));
     tr.appendChild(el("td",{text:r.position+r.depth}));

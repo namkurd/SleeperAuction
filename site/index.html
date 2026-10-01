@@ -1044,7 +1044,17 @@ function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one
   } else {
     const sorted=[...rows].sort((a,b)=>b.season-a.season||b.price-a.price);   // most recent season first
     const cols=el("div",{class:"pqtip-cols"});
-    for(let i=0;i<sorted.length;i+=PQ_ROWS_PER_COL) cols.appendChild(pqTipColumn(sorted.slice(i,i+PQ_ROWS_PER_COL),showGrade));
+    // split into as many PQ_ROWS_PER_COL-capped columns as the count needs, but then spread the rows evenly across
+    // that many columns rather than filling each to the cap before starting the next -- 104 rows as 35/35/34 reads
+    // far better than 50/50/4, which leaves a mostly-empty, oddly-stretched last column.
+    const numCols=Math.max(1,Math.ceil(sorted.length/PQ_ROWS_PER_COL));
+    const base=Math.floor(sorted.length/numCols), extra=sorted.length%numCols;
+    let idx=0;
+    for(let c=0;c<numCols;c++){
+      const size=base+(c<extra?1:0);
+      cols.appendChild(pqTipColumn(sorted.slice(idx,idx+size),showGrade));
+      idx+=size;
+    }
     tipEl.appendChild(cols);
   }
   tipEl.hidden=false;

@@ -120,6 +120,21 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .ddgrid label{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:13.5px;padding:4px 4px;border-radius:6px;cursor:pointer}
 .ddgrid label:hover{background:var(--card2);color:var(--ink)}
 .ddgrid input{accent-color:#8ec1ff;width:14px;height:14px}
+/* ---- pick quality by manager: season range timeline ---- */
+.pq-rangewrap{display:flex;flex-direction:column;gap:5px;flex:1 1 300px;min-width:240px;max-width:460px}
+.pq-rangehead{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;color:var(--ink2)}
+.pq-rangehead b{color:var(--ink);font-weight:600}
+.pq-slider{position:relative;height:26px}
+.pq-slider-track{position:absolute;top:50%;left:8px;right:8px;height:4px;margin-top:-2px;background:var(--line);border-radius:2px}
+.pq-slider-fill{position:absolute;top:50%;height:4px;margin-top:-2px;background:#8ec1ff;border-radius:2px}
+.pq-slider input[type=range]{position:absolute;top:0;left:0;width:100%;height:26px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;pointer-events:none}
+.pq-slider input[type=range]::-webkit-slider-runnable-track{background:transparent;height:26px}
+.pq-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#8ec1ff;border:2px solid #16171a;margin-top:5px;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.pq-slider input[type=range]:active::-webkit-slider-thumb{cursor:grabbing}
+.pq-slider input[type=range]::-moz-range-track{background:transparent;height:26px;border:none}
+.pq-slider input[type=range]::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#8ec1ff;border:2px solid #16171a;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.pq-slider input[type=range]:focus-visible::-webkit-slider-thumb,.pq-slider input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid #8ec1ff;outline-offset:2px}
+.pq-slider-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);padding:0 4px}
 /* ---- pick quality table ---- */
 #pq-table th,#pq-table td{text-align:center}
 #pq-table th:first-child,#pq-table td:first-child{text-align:left}
@@ -130,13 +145,14 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 #pq-table thead th[data-col]:hover{color:var(--ink)}
 #pq-table thead th.sorted{color:var(--ink)}
 #pq-table thead th .arrow{font-size:10px;margin-left:1px}
-#pq-table td.sc{position:relative;cursor:help;font-weight:700;border-radius:6px;font-variant-numeric:tabular-nums}
+#pq-table td.sc{position:relative;cursor:help;font-weight:700;border-radius:6px;font-variant-numeric:tabular-nums;background-clip:padding-box;transition:background-color .15s}
 #pq-table td.sc:not(.empty):not(.notip):hover,#pq-table td.sc:not(.empty):not(.notip).on{outline:1px solid #8ec1ff;outline-offset:-1px}
-#pq-table td.sc .val .n{display:block;font-weight:400;color:var(--ink3);font-size:10px;margin-top:1px;font-variant-numeric:tabular-nums}
+#pq-table td.sc .val .n{display:inline-block;font-weight:400;color:var(--ink2);font-size:10.5px;margin-left:6px;font-variant-numeric:tabular-nums}
 #pq-table td.sc.empty{color:var(--ink3);font-weight:400;cursor:default}
 #pq-table td.sc.notip{cursor:default}
 #pq-table td.sc.tot{font-weight:700}
 #pq-table td.sc.ov{font-weight:800}
+#pq-table td.sc.rate{font-weight:800}
 #pq-table tr.grp td{background:#272a2e;color:var(--ink3);font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:5px 12px;position:static}
 .pq-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:10px 2px 0}
 .pq-icon-key{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:12px;margin:12px 2px 0}
@@ -161,6 +177,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .chip{background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:8px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
 .chip:hover{background:var(--card2);color:var(--ink)}
 .chip.alt{border-style:dashed}
+.chip:disabled{opacity:.4;cursor:default;pointer-events:none}
 .board{margin:0 0 20px;border-radius:10px;overflow:hidden;border:1px solid #0d0e10;background:#0d0e10;scroll-margin-top:12px}
 .board.nohit{display:none}
 .board>summary.band{list-style:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#f7c99a;color:#2a1808;padding:8px 40px;cursor:pointer;text-align:center;font-size:inherit}
@@ -214,6 +231,7 @@ html,body{max-width:100%}
   header{padding:20px 16px 4px} nav,main,footer{padding-left:16px;padding-right:16px}
   .chart{height:400px} .chart.tall{height:640px} h1{font-size:22px} select,input[type=search]{min-width:0;width:100%}
   .filters label{width:100%}
+  .pq-rangewrap{width:100%;max-width:none}
 }
 /* phone held sideways: short screen, so keep charts a sensible height */
 @media (max-height:520px) and (max-width:1000px){
@@ -255,19 +273,20 @@ html,body{max-width:100%}
     </div>
     <div class="card" id="pq-card">
       <h2>Pick quality by manager</h2>
-      <p class="lede">One row per manager, ranked by <b>Overall</b> — a single score (🔥 Banger +2, ✅ Hit +1, 😐 Meh 0, 📉 Bust −1, 💀 Fail −2, averaged over every graded pick) so the best drafting shows up at the top without having to weigh five columns yourself. Click any column header to sort by it instead. Hover (or tap) any number to see the exact picks behind it. Filter to specific seasons or positions below. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
+      <p class="lede">One row per manager, ranked by <b>Overall</b> — a single score (🔥 Banger +2, ✅ Hit +1, 😐 Meh 0, 📉 Bust −1, 💀 Fail −2, averaged over every graded pick) so the best drafting shows up at the top without having to weigh five columns yourself. <b>Hit Rate</b> is the Banger+Hit share and <b>Miss Rate</b> the Bust+Fail share; the five grade columns are each pick count, with the share beside it, and are colored by how that count compares across managers. Click any column header to sort by it instead. Hover (or tap) any number to see the exact picks behind it. Drag the season timeline or filter by position below. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
       <div class="filters">
-        <div class="ddwrap" id="pq-ddwrap">
-          <button type="button" class="ddbtn" id="pq-ddbtn" aria-haspopup="true" aria-expanded="false">
-            Seasons: <b id="pq-ddlabel">All (cumulative)</b> <span class="car">▾</span>
-          </button>
-          <div class="ddpanel" id="pq-ddpanel" hidden>
-            <div class="ddrow">
-              <button type="button" class="chip" id="pq-selall">Select all</button>
-              <button type="button" class="chip" id="pq-selnone">Clear (cumulative)</button>
-            </div>
-            <div class="ddgrid" id="pq-ddgrid"></div>
+        <div class="pq-rangewrap" id="pq-rangewrap">
+          <div class="pq-rangehead">
+            <span>Seasons: <b id="pq-rangelabel">All</b></span>
+            <button type="button" class="chip" id="pq-rangereset">Reset to all years</button>
           </div>
+          <div class="pq-slider" id="pq-slider">
+            <div class="pq-slider-track"></div>
+            <div class="pq-slider-fill" id="pq-slider-fill"></div>
+            <input type="range" id="pq-range-start" step="1">
+            <input type="range" id="pq-range-end" step="1">
+          </div>
+          <div class="pq-slider-ends"><span id="pq-slider-min"></span><span id="pq-slider-max"></span></div>
         </div>
         <div class="ddwrap" id="pq-posddwrap">
           <button type="button" class="ddbtn" id="pq-posddbtn" aria-haspopup="true" aria-expanded="false">
@@ -288,11 +307,13 @@ html,body{max-width:100%}
             <th data-col="mgr" tabindex="0" role="button" aria-label="Sort by manager">Manager</th>
             <th data-col="picks" tabindex="0" role="button" aria-label="Sort by picks graded">Picks</th>
             <th data-col="overall" tabindex="0" role="button" aria-label="Sort by overall score" class="sep" title="Weighted average across every graded pick (Banger +2, Hit +1, Meh 0, Bust −1, Fail −2) — higher is better">Overall</th>
-            <th data-col="banger" tabindex="0" role="button" aria-label="Sort by Banger share" class="gico" title="Banger">🔥</th>
-            <th data-col="hit" tabindex="0" role="button" aria-label="Sort by Hit share" class="gico" title="Hit">✅</th>
-            <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh share" class="gico" title="Meh">😐</th>
-            <th data-col="bust" tabindex="0" role="button" aria-label="Sort by Bust share" class="gico" title="Bust">📉</th>
-            <th data-col="fail" tabindex="0" role="button" aria-label="Sort by Fail share" class="gico" title="Fail">💀</th>
+            <th data-col="hitrate" tabindex="0" role="button" aria-label="Sort by Hit Rate" title="Share of graded picks that were a Banger or Hit">Hit Rate</th>
+            <th data-col="missrate" tabindex="0" role="button" aria-label="Sort by Miss Rate" title="Share of graded picks that were a Bust or Fail">Miss Rate</th>
+            <th data-col="banger" tabindex="0" role="button" aria-label="Sort by Banger count" class="gico sep" title="Banger">🔥</th>
+            <th data-col="hit" tabindex="0" role="button" aria-label="Sort by Hit count" class="gico" title="Hit">✅</th>
+            <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh count" class="gico" title="Meh">😐</th>
+            <th data-col="bust" tabindex="0" role="button" aria-label="Sort by Bust count" class="gico" title="Bust">📉</th>
+            <th data-col="fail" tabindex="0" role="button" aria-label="Sort by Fail count" class="gico" title="Fail">💀</th>
           </tr></thead>
           <tbody id="pq-tbody"></tbody>
         </table>
@@ -970,18 +991,57 @@ function drawLeague(){
 /* ---------- LEAGUE: pick quality by manager (columns are the grades; seasons/positions are filters) ---------- */
 const PQ_POS = ["QB","RB","WR","TE"];                 // K/DEF are never graded, so they're left out of the filter too
 const GRADE_ORDER = ["banger","hit","meh","bust","fail"];
-let pqSeasons = new Set(), pqPos = new Set();
-const pqCumulative = () => pqSeasons.size===0 || pqSeasons.size===seasons.length;
+const pqSeasonMin = seasons[0], pqSeasonMax = seasons[seasons.length-1];
+let pqRangeStart = pqSeasonMin, pqRangeEnd = pqSeasonMax, pqPos = new Set();
+const pqCumulative = () => pqRangeStart===pqSeasonMin && pqRangeEnd===pqSeasonMax;
 const pqAllPos = () => pqPos.size===0 || pqPos.size===PQ_POS.length;
 const pqActivePos = () => pqAllPos() ? PQ_POS : PQ_POS.filter(p=>pqPos.has(p));
-const pqFilteredPicks = () => pqCumulative() ? picks : picks.filter(r=>pqSeasons.has(r.season));
-const pqSingleSeason = () => (!pqCumulative() && pqSeasons.size===1) ? [...pqSeasons][0] : null;   // the one selected year, or null
+const pqFilteredPicks = () => pqCumulative() ? picks : picks.filter(r=>r.season>=pqRangeStart && r.season<=pqRangeEnd);
+const pqSingleSeason = () => pqRangeStart===pqRangeEnd ? pqRangeStart : null;   // the one selected year, or null
 const PQ_SCORE = {banger:2, hit:1, meh:0, bust:-1, fail:-2};
 // A manager's Overall is the mean of PQ_SCORE across every graded pick: one honest, rankable number instead of
 // five columns the reader has to weigh in their head. The five grade columns stay alongside it as the
-// composition behind that number -- bar length is the share itself (an absolute, comparable quantity), not a
-// per-column rank, so there's no "which direction is green here" to puzzle out: green bars are always the two
-// good grades, red bars are always the two bad ones, and Meh (genuinely neither) is always gray.
+// composition behind that number -- each cell is the pick count itself (an absolute, comparable quantity), with
+// its share of that manager's graded picks beside it, and the cell's background is a sequential/diverging tint
+// of how that count compares to the other managers in the same column (good-direction columns run white->green,
+// bad-direction columns run green->white->red), so there's no "which direction is green here" to puzzle out.
+const PQ_RATE_GRADES = {hitrate:["banger","hit"], missrate:["bust","fail"]};   // Hit Rate / Miss Rate are just Overall's two good/bad grades, rolled into one share
+const PQ_RATE_KIND = {hitrate:"seq", missrate:"div"};
+const PQ_RATE_LABEL = {hitrate:"Hit Rate", missrate:"Miss Rate"};
+const PQ_GRADE_KIND = {banger:"seq", hit:"seq", meh:null, bust:"div", fail:"div"};   // Meh is neither good nor bad, so it never tints
+function pqRateVal(stats, kind){           // {n, pct} -- n picks in Banger+Hit (or Bust+Fail), pct of this manager's graded total
+  const grades=PQ_RATE_GRADES[kind];
+  const n=grades.reduce((sum,g)=>sum+stats.counts[g],0);
+  return {n, pct: stats.total ? n/stats.total*100 : 0};
+}
+// Column color: "seq" columns (more is simply better) run a single hue, white (low) -> green (high) -- a
+// standard sequential magnitude ramp. "div" columns (more is worse) run green (low) -> white -> red (high), the
+// two outcomes read as literally opposite. Both reuse the page's existing good/bad colors (--rb / --qb) rather
+// than inventing new ones, and both are computed against the range actually on screen, not a fixed scale, so the
+// tint always reflects how managers compare to each other under the current season/position filter.
+const PQ_GOOD_RGB=[119,230,166], PQ_BAD_RGB=[224,69,79], PQ_GRADIENT_MAXA=0.38;   // capped so white cell text keeps WCAG AA contrast (4.5:1) even at the most-saturated green tile
+function pqColumnRange(statsByMgr, managers, valueFn){
+  let min=Infinity, max=-Infinity;
+  managers.forEach(m=>{
+    const s=statsByMgr[m.name]; if(!s||s.total===0) return;
+    const v=valueFn(s); if(v<min) min=v; if(v>max) max=v;
+  });
+  return min===Infinity ? {min:0,max:0} : {min,max};
+}
+function pqGradientBg(kind, value, range){
+  if(!kind || range.max<=range.min) return null;          // nothing to compare against (or a non-graded column) -- leave it plain
+  const t=(value-range.min)/(range.max-range.min);
+  if(kind==="seq"){
+    const a=t*PQ_GRADIENT_MAXA;
+    return a<0.03 ? null : "rgba("+PQ_GOOD_RGB.join(",")+","+a.toFixed(3)+")";
+  }
+  if(t<=0.5){
+    const a=(0.5-t)*2*PQ_GRADIENT_MAXA;
+    return a<0.03 ? null : "rgba("+PQ_GOOD_RGB.join(",")+","+a.toFixed(3)+")";
+  }
+  const a=(t-0.5)*2*PQ_GRADIENT_MAXA;
+  return a<0.03 ? null : "rgba("+PQ_BAD_RGB.join(",")+","+a.toFixed(3)+")";
+}
 function pqGradeStats(manager){            // counts/picks/score for this manager under the active season/position filters
   const counts={banger:0,hit:0,meh:0,bust:0,fail:0};
   const byGrade={banger:[],hit:[],meh:[],bust:[],fail:[]};
@@ -1049,16 +1109,34 @@ function pqShowListTip(cell, title, rows, showGrade){    // the picks behind one
   tipEl.hidden=false;
   positionWideTip(cell);             // columns wrap to use the available width; any remainder shrinks (fonts and all) to fit
 }
-function pqGradeCell(manager, grade, stats){
+function pqGradeCell(manager, grade, stats, range){
   const empty=stats.total===0;
   const td=el("td",{class:"sc"+(empty?" empty":"")});
   if(empty){ td.textContent="–"; return td; }
   const n=stats.counts[grade], pct=n/stats.total*100;
+  const bg=pqGradientBg(PQ_GRADE_KIND[grade], n, range);
+  if(bg) td.style.background=bg;
   td.appendChild(el("div",{class:"val"},[String(n),el("span",{class:"n",text:Math.round(pct)+"%"})]));
   const title=manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label+" — "+n+" of "+stats.total+" ("+Math.round(pct)+"%)";
   td.addEventListener("mouseenter",()=>pqShowListTip(td,title,stats.byGrade[grade],false));
   td.addEventListener("mouseleave",hideTip);
   td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,stats.byGrade[grade],false); });
+  return td;
+}
+function pqRateCell(manager, stats, kind, range){
+  const empty=stats.total===0;
+  const td=el("td",{class:"sc rate"+(empty?" empty":"")});
+  if(empty){ td.textContent="–"; return td; }
+  const {n,pct}=pqRateVal(stats,kind);
+  const bg=pqGradientBg(PQ_RATE_KIND[kind], pct, range);
+  if(bg) td.style.background=bg;
+  td.appendChild(el("div",{class:"val",text:Math.round(pct)+"%"}));
+  if(stats.total>PQ_ROWS_PER_COL){ td.classList.add("notip"); return td; }
+  const rows=PQ_RATE_GRADES[kind].flatMap(g=>stats.byGrade[g]);
+  const title=manager+" · "+PQ_RATE_LABEL[kind]+" "+Math.round(pct)+"% ("+n+" of "+stats.total+")";
+  td.addEventListener("mouseenter",()=>pqShowListTip(td,title,rows,true));
+  td.addEventListener("mouseleave",hideTip);
+  td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,rows,true); });
   return td;
 }
 function pqPicksCell(manager, stats){
@@ -1096,7 +1174,8 @@ let pqSort={col:"overall", dir:-1};          // default: best Overall first, wit
 function pqSortVal(stats, col){
   if(col==="picks") return stats.total>0 ? stats.total : null;
   if(col==="overall") return stats.total>0 ? stats.score : null;
-  if(GRADE_ORDER.includes(col)) return stats.total>0 ? stats.counts[col]/stats.total : null;
+  if(col==="hitrate" || col==="missrate") return stats.total>0 ? pqRateVal(stats,col).pct : null;
+  if(GRADE_ORDER.includes(col)) return stats.total>0 ? stats.counts[col] : null;   // sort by the gross count, not its share
   return null;
 }
 function pqSortManagers(list, statsByMgr){   // managers with no graded picks always sort last, whichever direction
@@ -1131,19 +1210,31 @@ function renderPQTable(){
   const statsByMgr={};
   D.managers.forEach(m=>{ statsByMgr[m.name]=pqGradeStats(m.name); });
 
+  // every column's gradient is scaled to the managers actually on screen under the current filters, not a fixed scale
+  const ranges={};
+  GRADE_ORDER.forEach(g=>{ ranges[g]=pqColumnRange(statsByMgr, D.managers, s=>s.counts[g]); });
+  ranges.hitrate=pqColumnRange(statsByMgr, D.managers, s=>pqRateVal(s,"hitrate").pct);
+  ranges.missrate=pqColumnRange(statsByMgr, D.managers, s=>pqRateVal(s,"missrate").pct);
+
   const tbody=$("pq-tbody"); tbody.textContent="";
   const cur=pqSortManagers(D.managers.filter(m=>m.current), statsByMgr);
   const old=pqSortManagers(D.managers.filter(m=>!m.current), statsByMgr);
   const addGroup=(label, list)=>{
     if(!list.length) return;
-    if(label) tbody.appendChild(el("tr",{class:"grp"},[el("td",{colspan:"8",text:label})]));
+    if(label) tbody.appendChild(el("tr",{class:"grp"},[el("td",{colspan:"10",text:label})]));
     list.forEach(m=>{
       const s=statsByMgr[m.name];
       const tr=el("tr");
       tr.appendChild(pqMgrCell(m.name));
       tr.appendChild(pqPicksCell(m.name,s));
       const ov=pqOverallCell(m.name,s); ov.classList.add("sep"); tr.appendChild(ov);
-      GRADE_ORDER.forEach(g=>tr.appendChild(pqGradeCell(m.name,g,s)));
+      tr.appendChild(pqRateCell(m.name,s,"hitrate",ranges.hitrate));
+      tr.appendChild(pqRateCell(m.name,s,"missrate",ranges.missrate));
+      GRADE_ORDER.forEach((g,i)=>{
+        const c=pqGradeCell(m.name,g,s,ranges[g]);
+        if(i===0) c.classList.add("sep");
+        tr.appendChild(c);
+      });
       tbody.appendChild(tr);
     });
   };
@@ -1158,23 +1249,34 @@ function renderPQTable(){
     if(on) th.appendChild(el("span",{class:"arrow",text:pqSort.dir===1?" ▲":" ▼"}));
   });
 }
-function pqSeasonLabel(){
-  if(pqCumulative()) return "All (cumulative)";
-  const list=[...pqSeasons].sort((a,b)=>b-a);
-  if(list.length<=4) return list.join(", ");
-  return list.slice(0,4).join(", ")+" +"+(list.length-4)+" more";
+function pqRangeLabel(){
+  if(pqCumulative()) return "All";
+  return pqRangeStart===pqRangeEnd ? String(pqRangeStart) : pqRangeStart+"–"+pqRangeEnd;
 }
-function renderPQSeasonDropdown(){
-  const grid=$("pq-ddgrid"); grid.textContent="";
-  [...seasons].sort((a,b)=>b-a).forEach(s=>{
-    const cb=el("input",{type:"checkbox",value:String(s)});
-    if(pqSeasons.has(s)) cb.checked=true;
-    cb.addEventListener("change",()=>{
-      if(cb.checked) pqSeasons.add(s); else pqSeasons.delete(s);
-      pqUpdate();
-    });
-    grid.appendChild(el("label",{},[cb,String(s)]));
+function pqSyncRangeUI(){
+  $("pq-rangelabel").textContent=pqRangeLabel();
+  const span=(pqSeasonMax-pqSeasonMin)||1;
+  const leftT=(pqRangeStart-pqSeasonMin)/span, rightT=(pqRangeEnd-pqSeasonMin)/span;
+  const fill=$("pq-slider-fill");
+  fill.style.left="calc(8px + (100% - 16px) * "+leftT.toFixed(4)+")";
+  fill.style.width="calc((100% - 16px) * "+(rightT-leftT).toFixed(4)+")";
+  $("pq-rangereset").disabled=pqCumulative();
+}
+function initPQRangeSlider(){
+  const s=$("pq-range-start"), e=$("pq-range-end");
+  s.min=e.min=pqSeasonMin; s.max=e.max=pqSeasonMax;
+  s.value=pqRangeStart; e.value=pqRangeEnd;
+  $("pq-slider-min").textContent=pqSeasonMin;
+  $("pq-slider-max").textContent=pqSeasonMax;
+  const apply=()=>{ pqRangeStart=+s.value; pqRangeEnd=+e.value; pqSyncRangeUI(); renderPQTable(); };
+  s.addEventListener("input",()=>{ if(+s.value>+e.value) s.value=e.value; apply(); });
+  e.addEventListener("input",()=>{ if(+e.value<+s.value) e.value=s.value; apply(); });
+  s.addEventListener("pointerdown",()=>{ s.style.zIndex="3"; e.style.zIndex="2"; });
+  e.addEventListener("pointerdown",()=>{ e.style.zIndex="3"; s.style.zIndex="2"; });
+  $("pq-rangereset").addEventListener("click",()=>{
+    s.value=pqSeasonMin; e.value=pqSeasonMax; apply();
   });
+  pqSyncRangeUI();
 }
 function pqPosLabel(){
   if(pqAllPos()) return "All";
@@ -1193,29 +1295,25 @@ function renderPQPosDropdown(){
   });
 }
 function pqUpdate(){
-  $("pq-ddlabel").textContent=pqSeasonLabel();
   $("pq-posddlabel").textContent=pqPosLabel();
   renderPQTable();
 }
 function closePQDd(wrapId, panelId){ $(panelId).hidden=true; $(wrapId).classList.remove("open"); }
 function togglePQDd(wrapId, panelId, btnId){
   const open=$(panelId).hidden;
-  closePQDd("pq-ddwrap","pq-ddpanel"); closePQDd("pq-posddwrap","pq-posddpanel");
+  closePQDd("pq-posddwrap","pq-posddpanel");
   $(panelId).hidden=!open;
   $(wrapId).classList.toggle("open",open);
   $(btnId).setAttribute("aria-expanded",String(open));
 }
 function initPickQuality(){
-  $("pq-ddbtn").addEventListener("click",e=>{ e.stopPropagation(); togglePQDd("pq-ddwrap","pq-ddpanel","pq-ddbtn"); });
   $("pq-posddbtn").addEventListener("click",e=>{ e.stopPropagation(); togglePQDd("pq-posddwrap","pq-posddpanel","pq-posddbtn"); });
   document.addEventListener("click",e=>{
-    if(!e.target.closest("#pq-ddwrap")) closePQDd("pq-ddwrap","pq-ddpanel");
     if(!e.target.closest("#pq-posddwrap")) closePQDd("pq-posddwrap","pq-posddpanel");
   });
-  $("pq-selall").addEventListener("click",()=>{ pqSeasons=new Set(seasons); renderPQSeasonDropdown(); pqUpdate(); });
-  $("pq-selnone").addEventListener("click",()=>{ pqSeasons=new Set(); renderPQSeasonDropdown(); pqUpdate(); });
   $("pq-possel-all").addEventListener("click",()=>{ pqPos=new Set(PQ_POS); renderPQPosDropdown(); pqUpdate(); });
   $("pq-possel-none").addEventListener("click",()=>{ pqPos=new Set(); renderPQPosDropdown(); pqUpdate(); });
+  initPQRangeSlider();
   document.querySelectorAll("#pq-table thead th[data-col]").forEach(th=>{
     const go=()=>{ const col=th.dataset.col;
       if(pqSort.col===col) pqSort.dir*=-1; else { pqSort.col=col; pqSort.dir=col==="mgr"?1:-1; }
@@ -1223,7 +1321,6 @@ function initPickQuality(){
     th.addEventListener("click",go);
     th.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
   });
-  renderPQSeasonDropdown();
   renderPQPosDropdown();
   renderPQTable();
 }

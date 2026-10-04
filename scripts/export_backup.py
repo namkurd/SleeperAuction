@@ -52,12 +52,20 @@ GRADE_GRID = {
 }
 
 
-def outcome_band(rank):
+PQ_BASELINE_SLOTS = 30   # the classic 2-dedicated-+-1-FLEX, 10-team RB/WR number the original bands were tuned on
+
+
+def outcome_band(rank, pos, season, pos_slots):
+    """Same scarcity-scaled bands as the live site's outcomeBand (site/index.html): Top 5/Top 10 are fixed,
+    everything past that scales to how many of this position were actually startable league-wide that
+    season (pos_slots, baked into site/data.json by scripts/update_data.py from config/lineups.json)."""
     if rank <= 5: return "top5"
     if rank <= 10: return "top10"
-    if rank <= 20: return "great"
-    if rank <= 30: return "good"
-    if rank <= 50: return "replacement"
+    slots = (pos_slots.get(str(season)) or {}).get(pos) or PQ_BASELINE_SLOTS
+    scale = slots / PQ_BASELINE_SLOTS
+    if rank <= round(20 * scale): return "great"
+    if rank <= slots: return "good"
+    if rank <= round(50 * scale): return "replacement"
     return "deep"
 
 
@@ -116,9 +124,9 @@ PQ_NEAR_FLOOR_MARGIN = 1    # a tier C/D "banger" needs a price within this many
 PQ_NEVER_FAIL_MAX = 5       # a pick priced at or under this never grades worse than Bust
 
 
-def pick_grade(r, pr):
+def pick_grade(r, pr, pos_slots):
     """Same grading as the live site's pickGradeKey (site/index.html) -- see the comment there for the
-    reasoning behind the two guardrails on top of the tier/band grid."""
+    reasoning behind the scarcity-scaled bands and the two guardrails on top of the tier/band grid."""
     if r["position"] in ("K", "DEF") or r["pos_rank"] is None:
         return ""
     if r["pos_rank"] == 1:
@@ -126,7 +134,7 @@ def pick_grade(r, pr):
     if pr is None:
         return ""
     rank, end, pool, pool_min = pr
-    tier, band = price_tier(rank, pool), outcome_band(r["pos_rank"])
+    tier, band = price_tier(rank, pool), outcome_band(r["pos_rank"], r["position"], r["season"], pos_slots)
     grade = GRADE_GRID[tier][band]
     if grade == "banger" and tier in ("C", "D") and band in ("top5", "top10") and r["price"] > pool_min + PQ_NEAR_FLOOR_MARGIN:
         grade = "hit"
@@ -167,6 +175,7 @@ def main(out_path):
     pr = price_ranks(picks)
     site = json.loads((ROOT / "site" / "data.json").read_text(encoding="utf-8"))
     standings, managers = site["standings"], site["managers"]
+    pos_slots = site.get("pos_slots", {})
     generated = site.get("generated", "")
 
     wb = Workbook()
@@ -239,7 +248,7 @@ def main(out_path):
             r["season"], r["manager"], r["player"], r["position"], r["team"] or "",
             "" if r["position"] == "DEF" else (r["college"] or ""), r["price"],
             f"{r['position']}{r['depth']}", roster_label(r["slot"]), price_rank,
-            r["pts"] if r["pts"] is not None else "", season_finish, pick_grade(r, rk),
+            r["pts"] if r["pts"] is not None else "", season_finish, pick_grade(r, rk, pos_slots),
             r["pick_no"] if r["pick_no"] is not None else "", r["source"],
         ])
     style_header(ws, len(cols))

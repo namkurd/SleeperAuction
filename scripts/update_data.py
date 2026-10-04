@@ -574,6 +574,41 @@ def reconcile(canon, reference):
 
 
 # ----------------------------------------------------------------------------- site data
+# Which position(s) a shared flex-type slot realistically credits with an extra startable spot, for
+# compute_pos_slots below. FLEX (RB/WR) and W/T (WR/TE) genuinely go to whichever eligible position is
+# best that week, so both eligible positions get full credit for it; SFLEX (QB/RB/WR/TE) is technically
+# open to all four, but in practice a second quarterback wins a superflex spot over a third-tier
+# RB/WR/TE almost every time, so only QB gets credit for it.
+FLEX_CREDIT = {"FLEX": ["RB", "WR"], "W/T": ["WR", "TE"], "SFLEX": ["QB"]}
+
+
+def compute_pos_slots(seasons, teams):
+    """season -> {QB, RB, WR, TE: startable slots league-wide that year}, i.e. how many finishes at
+    that position would actually have started somewhere in a {teams}-team league that season's lineup
+    (config/lineups.json): each team's dedicated slots at the position, plus one more for every shared
+    flex-type slot that position realistically claims (FLEX_CREDIT above), times the team count. A
+    1-QB league has only `teams` startable quarterbacks; superflex (SFLEX) roughly doubles that. This
+    is what lets the pick-quality grading (see pickGradeKey in site/index.html) judge a QB or TE finish
+    against its own, much smaller, startable pool instead of a flex position's much larger one."""
+    cfg = load_json("lineups.json")
+    lineups = sorted(cfg["lineups"], key=lambda e: e["from"])
+    out = {}
+    for s in seasons:
+        starters = next((e["starters"] for e in reversed(lineups) if e["from"] <= s), lineups[0]["starters"])
+        dedicated = {"QB": 0, "RB": 0, "WR": 0, "TE": 0}
+        for slot in starters:
+            if slot in dedicated:
+                dedicated[slot] += 1
+        for flex_slot, positions in FLEX_CREDIT.items():
+            count = starters.count(flex_slot)
+            if count:
+                for p in positions:
+                    dedicated[p] += count
+        t = teams[str(s)]
+        out[str(s)] = {p: n * t for p, n in dedicated.items()}
+    return out
+
+
 def build_site_json(canon, sources_note, boards, league, standings):
     eras = load_json("eras.json")["eras"]
     seasons = sorted({r["season"] for r in canon})
@@ -592,7 +627,7 @@ def build_site_json(canon, sources_note, boards, league, standings):
         "generated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "latest_season": latest, "seasons": seasons, "teams": teams, "spent": spent,
         "source": source, "league": league, "eras": eras, "managers": managers, "sources_note": sources_note,
-        "boards": boards, "columns": cols,
+        "boards": boards, "columns": cols, "pos_slots": compute_pos_slots(seasons, teams),
         "standings": standings,
         "standings_columns": ["rank", "place", "wins", "losses", "points_for", "rumbles", "teams"],
         "picks": [[r["season"], r["manager"], r["player"], r["player_key"], r["position"],

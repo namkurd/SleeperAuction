@@ -273,7 +273,7 @@ html,body{max-width:100%}
     </div>
     <div class="card" id="pq-card">
       <h2>Pick quality by manager</h2>
-      <p class="lede">One row per manager, ranked by <b>Overall</b> — a single score (🔥 Banger +2, ✅ Hit +1, 😐 Meh 0, 📉 Bust −1, 💀 Fail −2, averaged over every graded pick) so the best drafting shows up at the top without having to weigh five columns yourself. <b>Hit Rate</b> is the Banger+Hit share and <b>Miss Rate</b> the Bust+Fail share; the five grade columns are each pick count, with the share beside it, and are colored by how that count compares across managers. Click any column header to sort by it instead. Hover (or tap) any number to see the exact picks behind it. Drag the season timeline or filter by position below. Kickers, defenses, and picks without a season-finish rank yet aren't counted.</p>
+      <p class="lede">One row per manager, ranked by <b>Overall</b>. Each grade column shows <b>picks per season drafted</b>, with that grade's share of all picks beside it — so a manager with 4 seasons and a manager with 15 compare fairly. Kickers, defenses, and ungraded picks don't count. Exactly how a grade (and the position-scarcity adjustment below) is decided is explained under the table.</p>
       <div class="filters">
         <div class="pq-rangewrap" id="pq-rangewrap">
           <div class="pq-rangehead">
@@ -305,15 +305,15 @@ html,body{max-width:100%}
         <table id="pq-table">
           <thead><tr id="pq-thead">
             <th data-col="mgr" tabindex="0" role="button" aria-label="Sort by manager">Manager</th>
-            <th data-col="picks" tabindex="0" role="button" aria-label="Sort by picks graded">Picks</th>
+            <th data-col="picks" tabindex="0" role="button" aria-label="Sort by picks graded" title="Total graded picks (seasons drafted below)">Picks</th>
             <th data-col="overall" tabindex="0" role="button" aria-label="Sort by overall score" class="sep" title="Weighted average across every graded pick (Banger +2, Hit +1, Meh 0, Bust −1, Fail −2) — higher is better">Overall</th>
             <th data-col="hitrate" tabindex="0" role="button" aria-label="Sort by Hit Rate" title="Share of graded picks that were a Banger or Hit">Hit Rate</th>
             <th data-col="missrate" tabindex="0" role="button" aria-label="Sort by Miss Rate" title="Share of graded picks that were a Bust or Fail">Miss Rate</th>
-            <th data-col="banger" tabindex="0" role="button" aria-label="Sort by Banger count" class="gico sep" title="Banger">🔥</th>
-            <th data-col="hit" tabindex="0" role="button" aria-label="Sort by Hit count" class="gico" title="Hit">✅</th>
-            <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh count" class="gico" title="Meh">😐</th>
-            <th data-col="bust" tabindex="0" role="button" aria-label="Sort by Bust count" class="gico" title="Bust">📉</th>
-            <th data-col="fail" tabindex="0" role="button" aria-label="Sort by Fail count" class="gico" title="Fail">💀</th>
+            <th data-col="banger" tabindex="0" role="button" aria-label="Sort by Banger picks per season" class="gico sep" title="Banger — picks per season drafted (share of all picks below)">🔥</th>
+            <th data-col="hit" tabindex="0" role="button" aria-label="Sort by Hit picks per season" class="gico" title="Hit — picks per season drafted (share of all picks below)">✅</th>
+            <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh picks per season" class="gico" title="Meh — picks per season drafted (share of all picks below)">😐</th>
+            <th data-col="bust" tabindex="0" role="button" aria-label="Sort by Bust picks per season" class="gico" title="Bust — picks per season drafted (share of all picks below)">📉</th>
+            <th data-col="fail" tabindex="0" role="button" aria-label="Sort by Fail picks per season" class="gico" title="Fail — picks per season drafted (share of all picks below)">💀</th>
           </tr></thead>
           <tbody id="pq-tbody"></tbody>
         </table>
@@ -325,12 +325,20 @@ html,body{max-width:100%}
         <span><b>📉 Bust</b> — underperformed what the price demanded</span>
         <span><b>💀 Fail</b> — badly missed what the price demanded</span>
       </div>
-      <details class="pq-criteria">
+      <details class="pq-criteria" open>
         <summary>Exactly how a grade is decided</summary>
-        <p class="lede">Every graded pick is priced into a <b>tier</b> (A–E: where its price ranked among every pick at that position in that draft, by percentile) and its result is sorted into a <b>band</b> (where the player finished, among all NFL players at that position, that season). The grade is just that tier crossed with that band — the pricier the tier, the higher the bar for a good grade, and the more a mediocre finish counts against it. A moderate-or-higher price needs a top-10 finish to be anything better than Meh; a bargain price gets full Banger credit much further down the outcome ladder, since a cheap pick returning a top-10 (or even just a top-20, at the cheapest tier) finish is a real steal:</p>
+        <p class="lede">Every graded pick is priced into a <b>tier</b> (A–E: where its price ranked among every pick at that position in that draft) and its result lands in a <b>band</b> (where it finished among every NFL player at that position that season). The grade is just that tier crossed with that band — the pricier the tier, the higher the bar for a good grade.</p>
+        <p class="lede"><b>The bands scale to each position's real scarcity.</b> Top 5 and Top 10 always mean the same thing, but past that, "good enough to start" depends on how many roster spots the position actually fills league-wide — a league with one starting QB slot has only as many startable QBs as it has teams, while two starting RB/WR slots plus a shared flex make far more RB/WR finishes startable. A QB or TE is judged against its own, usually much smaller, startable pool — not a flex position's bigger one — and superflex or extra flex slots widen the pool they apply to:</p>
+        <div class="tablewrap">
+          <table class="pqgridtbl" id="pq-slotstbl">
+            <thead><tr><th style="text-align:left">Seasons</th><th>Teams</th><th>QB startable</th><th>RB startable</th><th>WR startable</th><th>TE startable</th></tr></thead>
+            <tbody id="pq-slotstbl-body"></tbody>
+          </table>
+        </div>
+        <p class="lede">Example: Jay Cutler, QB14 for $1 in a 10-team, one-QB season — 14th is past that year's 10 startable quarterbacks, so no price makes it better than 😐 Meh. The same $1 and finish at WR, with 30 startable that year, would be a different story. Here's the full tier × band grid (band cutoffs are the "startable" column above, scaled the same way for Great/Replacement):</p>
         <div class="tablewrap">
           <table class="pqgridtbl">
-            <thead><tr><th style="text-align:left">Price tier</th><th>Top 5</th><th>6th–10th</th><th>11th–20th</th><th>21st–30th</th><th>31st–50th</th><th>51st+</th></tr></thead>
+            <thead><tr><th style="text-align:left">Price tier</th><th>Top 5</th><th>Top 10</th><th>Great</th><th>Good<br>(startable)</th><th>Replacement</th><th>Deep</th></tr></thead>
             <tbody>
               <tr><td style="text-align:left">A — priciest ~10%</td><td>✅</td><td>😐</td><td>😐</td><td>📉</td><td>💀</td><td>💀</td></tr>
               <tr><td style="text-align:left">B — next to the 25th percentile</td><td>🔥</td><td>✅</td><td>😐</td><td>😐</td><td>📉</td><td>💀</td></tr>
@@ -340,10 +348,10 @@ html,body{max-width:100%}
             </tbody>
           </table>
         </div>
-        <p class="lede">Finishing as the #1 player at the position that season is always 🔥 Banger, whatever the price was — there's nothing left to outperform. Kickers and defenses aren't graded (too noisy week to week), and neither are picks without a season-finish rank yet.</p>
+        <p class="lede">Two guardrails on top of the grid: a middling price that merely reaches Top 5/Top 10 without actually being close to that position's cheapest price that year earns a Hit, not a Banger (barely-a-bargain shouldn't outrank a true steal), and a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
       </details>
       <div class="pq-legend">
-        <span>Each grade column: pick count first, then its share of that manager's graded picks below</span>
+        <span>Each grade column: picks per season first, then that grade's share of all picks</span>
         <span><b style="color:#77e6a6">Overall</b> is a weighted average of grades (Banger highest, Fail lowest) — green above zero, red below</span>
       </div>
     </div>
@@ -530,17 +538,20 @@ function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:nul
 /* ---------- pick-quality grade: banger / hit / meh / bust / fail ----------
    Compares the investment (this pick's price rank at the position, as a tier of that draft's pool, A
    priciest .. E cheapest) against the result (the player's real-NFL season-finish rank at the position,
-   in fixed bands anchored on this being a 10-team league). The pricier the tier, the higher the bar for a
-   good grade: a moderate-or-higher price (tiers A-C) needs a top-10 finish to be anything better than Meh
-   -- 11th-30th is "met expectations, nothing special" at that price, not a Hit -- while a bargain price
-   (tiers D-E) gets full Banger credit much further down the outcome ladder, since a cheap pick returning a
-   top-10 (or, at the very cheapest tier, even just a top-20) finish is a real steal, not merely a hit. For
-   any given finish, a cheaper pick never grades worse than a pricier one that got the same result. A cheap,
-   late pick can also never grade worse than "meh" -- there's little invested to disappoint. Finishing as
-   the single best player at the position (rank 1) is always a banger, no matter the price, since there's
-   nothing left to outperform. Kickers and defenses aren't graded (too much week-to-week noise for
-   price-vs-result to mean much). Picks without a season-finish rank yet (part of 2012–2020, or a season
-   still in progress) aren't graded either.
+   in bands scaled to how scarce a good finish at that position actually was that year -- see "scarcity"
+   below). The pricier the tier, the higher the bar for a good grade: a moderate-or-higher price (tiers
+   A-C) needs a top-10 finish to be anything better than Meh, while a bargain price (tiers D-E) gets full
+   Banger credit much further down the outcome ladder, since a cheap pick returning a top-10 (or, at the
+   very cheapest tier, even just a "great" finish) is a real steal, not merely a hit. For any given finish,
+   a cheaper pick never grades worse than a pricier one that got the same result. A cheap, late pick can
+   also never grade worse than "meh" -- there's little invested to disappoint. Finishing as the single best
+   player at the position (rank 1) is always a banger, no matter the price, since there's nothing left to
+   outperform. Kickers and defenses aren't graded (too much week-to-week noise for price-vs-result to mean
+   much). Picks without a season-finish rank yet (part of 2012–2020, or a season still in progress) aren't
+   graded either.
+
+   Scarcity: a QB or TE finish is judged against a much smaller startable pool than an RB or WR finish, so
+   the same raw rank means something different at each position -- see outcomeBand/posSlots below.
 
    Two guardrails sit on top of the tier/band grid:
    - A middling price (tier C or D) landing in the top5/top10 outcome bands only earns Banger when the price
@@ -567,12 +578,27 @@ const GRADE_GRID = {              // price tier -> outcome band -> grade key
   D:{top5:"banger", top10:"banger", great:"hit",    good:"hit",  replacement:"meh",  deep:"meh"},
   E:{top5:"banger", top10:"banger", great:"banger", good:"hit",  replacement:"meh",  deep:"meh"},
 };
-function outcomeBand(rank){            // real-NFL season-finish rank -> band
+/* posSlots[season][pos] (baked in by scripts/update_data.py from config/lineups.json) is how many
+   startable slots that position actually had league-wide that year -- 1 dedicated QB slot x 10 teams
+   is only 10 startable QBs, while 2 dedicated RB slots plus a shared FLEX is 30. outcomeBand uses it to
+   scale the "great"/"good"/"replacement" cutoffs to that number, so a QB or TE (a small, mostly
+   non-flexable pool) is judged on a tighter ladder than an RB or WR (a large, flex-padded one). top5 and
+   top10 stay fixed at every position -- being the 5th- or 10th-best at anything is impressive regardless
+   of the position's pool size -- but everything past that is relative to what was actually startable:
+   "good" lands exactly on the startable number itself (PQ_BASELINE_SLOTS is what 30 scales from), so a
+   finish just outside the startable pool can be no better than replacement-level, never a Hit or Banger.
+   Example: a 10-team league with 1 starting QB has 10 startable QBs; QB14 falls past even the scaled
+   "replacement" cutoff into "deep" -- a cheap, late QB14 pick is a Meh at best, never the Banger a flat
+   top-20 cutoff would have called it. */
+const PQ_BASELINE_SLOTS = 30;    // the classic 2-dedicated-+-1-FLEX, 10-team RB/WR number the original bands were tuned on
+function outcomeBand(rank, pos, season){      // real-NFL season-finish rank (at this position, this season) -> band
   if(rank<=5) return "top5";
   if(rank<=10) return "top10";
-  if(rank<=20) return "great";
-  if(rank<=30) return "good";
-  if(rank<=50) return "replacement";
+  const slots=((D.pos_slots[String(season)]||{})[pos]) || PQ_BASELINE_SLOTS;
+  const scale=slots/PQ_BASELINE_SLOTS;
+  if(rank<=Math.round(20*scale)) return "great";
+  if(rank<=slots) return "good";                           // the startable floor itself, whatever it is this season/position
+  if(rank<=Math.round(50*scale)) return "replacement";
   return "deep";
 }
 function priceTier(rank, pool){        // price rank among this draft's pool at the position -> tier A (priciest) .. E (cheapest)
@@ -588,7 +614,7 @@ function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail", or
   if(r.position==="K"||r.position==="DEF"||r.pos_rank==null) return null;
   if(r.pos_rank===1) return "banger";                 // the single best at the position that year: always a banger
   const pr=PRICE_RANK.get(r); if(!pr) return null;
-  const tier=priceTier(pr.rank,pr.pool), band=outcomeBand(r.pos_rank);
+  const tier=priceTier(pr.rank,pr.pool), band=outcomeBand(r.pos_rank,r.position,r.season);
   let grade=GRADE_GRID[tier][band];
   if(grade==="banger" && (tier==="C"||tier==="D") && (band==="top5"||band==="top10") && r.price>pr.poolMin+PQ_NEAR_FLOOR_MARGIN){
     grade="hit";          // a middling price merely matching its outcome rank is a Hit, not a steal -- see the comment above
@@ -1070,15 +1096,18 @@ function pqGradeStats(manager){            // counts/picks/score for this manage
   const counts={banger:0,hit:0,meh:0,bust:0,fail:0};
   const byGrade={banger:[],hit:[],meh:[],bust:[],fail:[]};
   const positions=pqActivePos();
-  let total=0, scoreSum=0;
+  const seasonsPlayed=new Set();             // every season this manager drafted at all in the current range, regardless of
+  let total=0, scoreSum=0;                   // the position filter -- the denominator for "picks per season" below
   pqFilteredPicks().forEach(r=>{
     if(r.manager!==manager) return;
+    seasonsPlayed.add(r.season);
     if(!positions.includes(r.position)) return;
     const k=pickGradeKey(r); if(!k) return;
     counts[k]++; total++; scoreSum+=PQ_SCORE[k]; byGrade[k].push(r);
   });
-  return {total, counts, byGrade, score: total?scoreSum/total:null};
+  return {total, counts, byGrade, score: total?scoreSum/total:null, seasons:seasonsPlayed.size};
 }
+function pqPerYear(stats, grade){ return stats.counts[grade]/(stats.seasons||1); }   // average picks of this grade per season drafted
 function pqPriceRankShort(r){               // compact price rank: "RB4" (single rank) or "WR 16-18" (tied range) -- no ordinal, no "Drafted"
   const pr=PRICE_RANK.get(r); if(!pr) return "–";
   return pr.rank===pr.end ? r.position+pr.rank : r.position+" "+pr.rank+"-"+pr.end;
@@ -1137,11 +1166,11 @@ function pqGradeCell(manager, grade, stats, range){
   const empty=stats.total===0;
   const td=el("td",{class:"sc"+(empty?" empty":"")});
   if(empty){ td.textContent="–"; return td; }
-  const n=stats.counts[grade], pct=n/stats.total*100;
-  const bg=pqGradientBg(PQ_GRADE_KIND[grade], n, range);
+  const n=stats.counts[grade], pct=n/stats.total*100, perYr=pqPerYear(stats,grade);
+  const bg=pqGradientBg(PQ_GRADE_KIND[grade], perYr, range);
   if(bg) td.style.background=bg;
-  td.appendChild(el("div",{class:"val"},[String(n),el("span",{class:"n",text:Math.round(pct)+"%"})]));
-  const title=manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label+" — "+n+" of "+stats.total+" ("+Math.round(pct)+"%)";
+  td.appendChild(el("div",{class:"val"},[perYr.toFixed(1),el("span",{class:"n",text:Math.round(pct)+"%"})]));
+  const title=manager+" · "+GRADE_META[grade].icon+" "+GRADE_META[grade].label+" — "+perYr.toFixed(1)+"/season ("+n+" of "+stats.total+" picks, "+Math.round(pct)+"%, over "+stats.seasons+" season"+(stats.seasons===1?"":"s")+")";
   td.addEventListener("mouseenter",()=>pqShowListTip(td,title,stats.byGrade[grade],false));
   td.addEventListener("mouseleave",hideTip);
   td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,stats.byGrade[grade],false); });
@@ -1167,13 +1196,13 @@ function pqPicksCell(manager, stats){
   const empty=stats.total===0;
   const td=el("td",{class:"sc tot"+(empty?" empty":"")});
   if(empty){ td.textContent="–"; return td; }
-  td.appendChild(document.createTextNode(String(stats.total)));
+  td.appendChild(el("div",{class:"val"},[String(stats.total),el("span",{class:"n",text:stats.seasons+(stats.seasons===1?" yr":" yrs")})]));
   // the full pick list is only worth popping open when it's short enough to actually skim -- past PQ_ROWS_PER_COL
   // picks (i.e. the cumulative all-seasons view for most managers) it's a wall of columns nobody reads; narrow
   // the season filter down to a few years and the list (and the tooltip) comes back.
   if(stats.total>PQ_ROWS_PER_COL){ td.classList.add("notip"); return td; }
   const all=GRADE_ORDER.flatMap(g=>stats.byGrade[g]);
-  const title=manager+" — "+stats.total+" graded pick"+(stats.total===1?"":"s");
+  const title=manager+" — "+stats.total+" graded pick"+(stats.total===1?"":"s")+" over "+stats.seasons+" season"+(stats.seasons===1?"":"s");
   td.addEventListener("mouseenter",()=>pqShowListTip(td,title,all,true));
   td.addEventListener("mouseleave",hideTip);
   td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,all,true); });
@@ -1199,7 +1228,7 @@ function pqSortVal(stats, col){
   if(col==="picks") return stats.total>0 ? stats.total : null;
   if(col==="overall") return stats.total>0 ? stats.score : null;
   if(col==="hitrate" || col==="missrate") return stats.total>0 ? pqRateVal(stats,col).pct : null;
-  if(GRADE_ORDER.includes(col)) return stats.total>0 ? stats.counts[col] : null;   // sort by the gross count, not its share
+  if(GRADE_ORDER.includes(col)) return stats.total>0 ? pqPerYear(stats,col) : null;   // sort by the per-season rate, matching what's shown
   return null;
 }
 function pqSortManagers(list, statsByMgr){   // managers with no graded picks always sort last, whichever direction
@@ -1236,7 +1265,7 @@ function renderPQTable(){
 
   // every column's gradient is scaled to the managers actually on screen under the current filters, not a fixed scale
   const ranges={};
-  GRADE_ORDER.forEach(g=>{ ranges[g]=pqColumnRange(statsByMgr, D.managers, s=>s.counts[g]); });
+  GRADE_ORDER.forEach(g=>{ ranges[g]=pqColumnRange(statsByMgr, D.managers, s=>pqPerYear(s,g)); });
   ranges.hitrate=pqColumnRange(statsByMgr, D.managers, s=>pqRateVal(s,"hitrate").pct);
   ranges.missrate=pqColumnRange(statsByMgr, D.managers, s=>pqRateVal(s,"missrate").pct);
 
@@ -1271,6 +1300,34 @@ function renderPQTable(){
     th.setAttribute("aria-sort",on?(pqSort.dir===1?"ascending":"descending"):"none");
     let a=th.querySelector(".arrow"); if(a) a.remove();
     if(on) th.appendChild(el("span",{class:"arrow",text:pqSort.dir===1?" ▲":" ▼"}));
+  });
+}
+// The startable-pool reference table in the "Exactly how a grade is decided" explainer: group
+// consecutive seasons that share the same team count and position-scarcity numbers (D.pos_slots, baked
+// in by scripts/update_data.py from config/lineups.json) into one row each, so a lineup-rule change
+// (more teams, superflex, a new flex slot) shows up on its own row automatically -- nothing here is
+// hand-typed, so it can't drift out of sync with the numbers actually used to grade picks.
+function pqSlotsEraRows(){
+  const sig=s=>teamsIn(s)+"|"+PQ_POS.map(p=>(D.pos_slots[String(s)]||{})[p]).join(",");
+  const rows=[]; let start=seasons[0], cur=sig(start);
+  for(let i=1;i<=seasons.length;i++){
+    if(i===seasons.length || sig(seasons[i])!==cur){
+      const end=seasons[i-1];
+      rows.push({label:start===end?String(start):start+"–"+end, teams:teamsIn(end), ps:D.pos_slots[String(end)]||{}});
+      if(i<seasons.length){ start=seasons[i]; cur=sig(start); }
+    }
+  }
+  return rows;
+}
+function renderPQSlotsTable(){
+  const tb=$("pq-slotstbl-body"); if(!tb) return;
+  tb.textContent="";
+  pqSlotsEraRows().forEach(r=>{
+    const tr=el("tr");
+    tr.appendChild(el("td",{style:"text-align:left",text:r.label}));
+    tr.appendChild(el("td",{text:String(r.teams)}));
+    PQ_POS.forEach(p=>tr.appendChild(el("td",{text:r.ps[p]!=null?String(r.ps[p]):"–"})));
+    tb.appendChild(tr);
   });
 }
 function pqRangeLabel(){
@@ -1346,6 +1403,7 @@ function initPickQuality(){
     th.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
   });
   renderPQPosDropdown();
+  renderPQSlotsTable();
   renderPQTable();
 }
 

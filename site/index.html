@@ -504,20 +504,23 @@ const MEDAL={
   3:{c1:"#f3bf8c",c2:"#b8681f",edge:"#75400f",ink:"#3a1c04",name:"3rd Place"},
   9:{sacko:true,edge:"#8a5a2b",name:"Sacko"}};       // last place after the losers bracket: a 💩 instead of a medal
 /* this pick's rank by price among every pick at the same position in the same draft -- stored as
-   {rank, pool, text}: rank/pool feed the pick-quality grade below, text is "1st RB Drafted", or
+   {rank, pool, text, poolMin}: rank/pool feed the pick-quality grade below, text is "1st RB Drafted", or
    "30-32nd WR Drafted" when tied with others at the exact same price (competition ranking: ties share
-   the same rank-range, and the next distinct price resumes counting after the whole tied group). */
-const PRICE_RANK = new Map();   // pick row object -> {rank, pool, text}
+   the same rank-range, and the next distinct price resumes counting after the whole tied group). poolMin
+   is the cheapest price paid for that position in that draft -- it feeds the "was this really a bargain
+   price, or just a middling one" check in pickGradeKey below. */
+const PRICE_RANK = new Map();   // pick row object -> {rank, pool, text, poolMin}
 (function(){
   const groups=new Map();
   picks.forEach(r=>{ const k=r.season+"|"+r.position; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(r); });
   groups.forEach(rows=>{
     const sorted=[...rows].sort((a,b)=>b.price-a.price), pool=sorted.length;
+    const poolMin=Math.min(...rows.map(r=>r.price));
     let i=0;
     while(i<sorted.length){
       let j=i; while(j<sorted.length && sorted[j].price===sorted[i].price) j++;
       const start=i+1, end=j, txt=(start===end?ORD(start):start+"-"+ORD(end));
-      for(let k=i;k<j;k++) PRICE_RANK.set(sorted[k], {rank:start, end:end, pool:pool, text:txt+" "+sorted[k].position+" Drafted"});
+      for(let k=i;k<j;k++) PRICE_RANK.set(sorted[k], {rank:start, end:end, pool:pool, poolMin:poolMin, text:txt+" "+sorted[k].position+" Drafted"});
       i=j;
     }
   });
@@ -537,7 +540,19 @@ function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:nul
    the single best player at the position (rank 1) is always a banger, no matter the price, since there's
    nothing left to outperform. Kickers and defenses aren't graded (too much week-to-week noise for
    price-vs-result to mean much). Picks without a season-finish rank yet (part of 2012–2020, or a season
-   still in progress) aren't graded either. */
+   still in progress) aren't graded either.
+
+   Two guardrails sit on top of the tier/band grid:
+   - A middling price (tier C or D) landing in the top5/top10 outcome bands only earns Banger when the price
+     was genuinely close to that position's floor that year (within $1 of the cheapest same-position pick in
+     that draft) -- tiers C/D span everything from "basically free" down to "paid real money, just not the
+     most," and a price that isn't actually near the floor usually means the price rank and the finish rank
+     landed in roughly the same place: a Hit (delivered what the price demanded), not a steal. A truly cheap
+     (tier E) pick never needed this check -- being in the cheapest quarter already means the price was close
+     to the floor. Example: a $4 QB priced 9th-cheapest of 15 (tier D) who finishes QB9 matched his price
+     almost exactly -- that's a Hit, even though plenty of $1 QBs that same year make the floor cut and keep
+     their Banger for the same finish.
+   - A pick that cost $5 or less risked too little to ever be branded a total Fail -- it's capped at Bust. */
 const GRADE_META = {
   banger:{icon:"🔥", label:"Banger"},
   hit:{icon:"✅", label:"Hit"},
@@ -567,12 +582,21 @@ function priceTier(rank, pool){        // price rank among this draft's pool at 
   if(rank<=Math.round(pool*.75)) return "D";
   return "E";
 }
+const PQ_NEAR_FLOOR_MARGIN = 1;    // a tier C/D "banger" needs a price within this many dollars of the position's floor that year
+const PQ_NEVER_FAIL_MAX = 5;       // a pick priced at or under this never grades worse than Bust
 function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail", or null when ungraded
   if(r.position==="K"||r.position==="DEF"||r.pos_rank==null) return null;
   if(r.pos_rank===1) return "banger";                 // the single best at the position that year: always a banger
   const pr=PRICE_RANK.get(r); if(!pr) return null;
   const tier=priceTier(pr.rank,pr.pool), band=outcomeBand(r.pos_rank);
-  return GRADE_GRID[tier][band];
+  let grade=GRADE_GRID[tier][band];
+  if(grade==="banger" && (tier==="C"||tier==="D") && (band==="top5"||band==="top10") && r.price>pr.poolMin+PQ_NEAR_FLOOR_MARGIN){
+    grade="hit";          // a middling price merely matching its outcome rank is a Hit, not a steal -- see the comment above
+  }
+  if(grade==="fail" && r.price<=PQ_NEVER_FAIL_MAX){
+    grade="bust";          // too little was risked to ever call it a total Fail
+  }
+  return grade;
 }
 function pickGrade(r){ const k=pickGradeKey(r); return k?GRADE_META[k]:null; }   // {icon, label} or null when ungraded
 const medalCache={};

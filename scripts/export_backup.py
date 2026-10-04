@@ -84,8 +84,10 @@ def read_picks():
 
 
 def price_ranks(picks):
-    """season+position -> each pick's {rank, end, pool}, same competition-ranking-with-tie-ranges the
-    site uses: priciest pick at the position that draft is rank 1, ties share a rank range."""
+    """season+position -> each pick's {rank, end, pool, poolMin}, same competition-ranking-with-tie-ranges
+    the site uses: priciest pick at the position that draft is rank 1, ties share a rank range. poolMin is
+    the cheapest price paid for that position in that draft -- it feeds the "was this really a bargain
+    price" check in pick_grade below."""
     groups = {}
     for r in picks:
         groups.setdefault((r["season"], r["position"]), []).append(r)
@@ -93,6 +95,7 @@ def price_ranks(picks):
     for rows in groups.values():
         rows = sorted(rows, key=lambda r: -r["price"])
         pool = len(rows)
+        pool_min = min(r["price"] for r in rows)
         i = 0
         while i < len(rows):
             j = i
@@ -100,7 +103,7 @@ def price_ranks(picks):
                 j += 1
             start, end = i + 1, j
             for k in range(i, j):
-                out[id(rows[k])] = (start, end, pool)
+                out[id(rows[k])] = (start, end, pool, pool_min)
             i = j
     return out
 
@@ -109,16 +112,27 @@ def price_rank_text(pos, rank, end):
     return f"{pos}{rank}" if rank == end else f"{pos}{rank}-{end}"
 
 
+PQ_NEAR_FLOOR_MARGIN = 1    # a tier C/D "banger" needs a price within this many dollars of the position's floor that year
+PQ_NEVER_FAIL_MAX = 5       # a pick priced at or under this never grades worse than Bust
+
+
 def pick_grade(r, pr):
+    """Same grading as the live site's pickGradeKey (site/index.html) -- see the comment there for the
+    reasoning behind the two guardrails on top of the tier/band grid."""
     if r["position"] in ("K", "DEF") or r["pos_rank"] is None:
         return ""
     if r["pos_rank"] == 1:
         return GRADE_META["banger"]
     if pr is None:
         return ""
-    rank, end, pool = pr
+    rank, end, pool, pool_min = pr
     tier, band = price_tier(rank, pool), outcome_band(r["pos_rank"])
-    return GRADE_META[GRADE_GRID[tier][band]]
+    grade = GRADE_GRID[tier][band]
+    if grade == "banger" and tier in ("C", "D") and band in ("top5", "top10") and r["price"] > pool_min + PQ_NEAR_FLOOR_MARGIN:
+        grade = "hit"
+    if grade == "fail" and r["price"] <= PQ_NEVER_FAIL_MAX:
+        grade = "bust"
+    return GRADE_META[grade]
 
 
 def roster_label(slot):

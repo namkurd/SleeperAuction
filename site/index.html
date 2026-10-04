@@ -134,7 +134,15 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .pq-slider input[type=range]::-moz-range-track{background:transparent;height:26px;border:none}
 .pq-slider input[type=range]::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#8ec1ff;border:2px solid #16171a;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.6)}
 .pq-slider input[type=range]:focus-visible::-webkit-slider-thumb,.pq-slider input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid #8ec1ff;outline-offset:2px}
-.pq-slider-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);padding:0 4px}
+.pq-ticks{position:relative;height:20px;margin-top:1px}
+.pq-tick{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;margin:0;padding:3px 3px 0;cursor:pointer;color:var(--ink3);font:inherit;line-height:1;border-radius:3px}
+.pq-tick .ln{width:2px;height:5px;background:var(--line);border-radius:1px}
+.pq-tick .yr{font-size:9px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pq-tick:hover .ln,.pq-tick:focus-visible .ln{background:#8ec1ff}
+.pq-tick:hover .yr,.pq-tick:focus-visible .yr{color:#8ec1ff}
+.pq-tick.active .ln{background:#8ec1ff;height:7px}
+.pq-tick.active .yr{color:#8ec1ff;font-weight:700}
+.pq-tick:focus-visible{outline:2px solid #8ec1ff;outline-offset:2px}
 /* ---- pick quality table ---- */
 #pq-table th,#pq-table td{text-align:center}
 #pq-table th:first-child,#pq-table td:first-child{text-align:left}
@@ -286,7 +294,7 @@ html,body{max-width:100%}
             <input type="range" id="pq-range-start" step="1">
             <input type="range" id="pq-range-end" step="1">
           </div>
-          <div class="pq-slider-ends"><span id="pq-slider-min"></span><span id="pq-slider-max"></span></div>
+          <div class="pq-ticks" id="pq-ticks" role="group" aria-label="Jump to a single season"></div>
         </div>
         <div class="ddwrap" id="pq-posddwrap">
           <button type="button" class="ddbtn" id="pq-posddbtn" aria-haspopup="true" aria-expanded="false">
@@ -1382,13 +1390,37 @@ function pqSyncRangeUI(){
   fill.style.left="calc(8px + (100% - 16px) * "+leftT.toFixed(4)+")";
   fill.style.width="calc((100% - 16px) * "+(rightT-leftT).toFixed(4)+")";
   $("pq-rangereset").disabled=pqCumulative();
+  const sel=pqSingleSeason();
+  $("pq-ticks").querySelectorAll(".pq-tick").forEach(b=>{
+    const isSel=sel!==null && +b.dataset.yr===sel;
+    b.classList.toggle("active",isSel);
+    b.setAttribute("aria-pressed",isSel?"true":"false");
+  });
+}
+function renderPQTicks(){
+  // one small clickable notch per drafted season, along the same track the two drag-handles ride on --
+  // the fastest way to pin the table to exactly one year without hunting for it with the slider
+  const host=$("pq-ticks"); host.textContent="";
+  const span=(pqSeasonMax-pqSeasonMin)||1;
+  seasons.forEach(yr=>{
+    const t=(yr-pqSeasonMin)/span;
+    const btn=el("button",{type:"button",class:"pq-tick","data-yr":yr,title:"Show just "+yr,
+                            "aria-label":"Show just "+yr,"aria-pressed":"false"},
+      [el("span",{class:"ln"}), el("span",{class:"yr",text:"’"+String(yr).slice(2)})]);
+    btn.style.left="calc(8px + (100% - 16px) * "+t.toFixed(4)+")";
+    btn.addEventListener("click",()=>{
+      const s=$("pq-range-start"), e=$("pq-range-end");
+      s.value=yr; e.value=yr; pqRangeStart=pqRangeEnd=yr;
+      pqSyncRangeUI(); renderPQTable();
+    });
+    host.appendChild(btn);
+  });
 }
 function initPQRangeSlider(){
   const s=$("pq-range-start"), e=$("pq-range-end");
   s.min=e.min=pqSeasonMin; s.max=e.max=pqSeasonMax;
   s.value=pqRangeStart; e.value=pqRangeEnd;
-  $("pq-slider-min").textContent=pqSeasonMin;
-  $("pq-slider-max").textContent=pqSeasonMax;
+  renderPQTicks();
   const apply=()=>{ pqRangeStart=+s.value; pqRangeEnd=+e.value; pqSyncRangeUI(); renderPQTable(); };
   s.addEventListener("input",()=>{ if(+s.value>+e.value) s.value=e.value; apply(); });
   e.addEventListener("input",()=>{ if(+e.value<+s.value) e.value=s.value; apply(); });

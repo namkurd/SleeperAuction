@@ -42,6 +42,7 @@ GRADE_META = {
     "meh": "\U0001F610 Meh",
     "bust": "\U0001F4C9 Bust",
     "fail": "\U0001F480 Fail",
+    "injury": "\U0001FA7C Injury",
 }
 GRADE_GRID = {
     "A": {"top5": "hit",    "top10": "meh",    "great": "meh",    "good": "bust", "replacement": "fail", "deep": "fail"},
@@ -88,6 +89,7 @@ def read_picks():
         r["pts"] = float(r["pts"]) if r["pts"] else None
         r["pos_rank"] = int(r["pos_rank"]) if r["pos_rank"] else None
         r["pos_n"] = int(r["pos_n"]) if r["pos_n"] else None
+        r["games"] = int(r["games"]) if r.get("games") not in (None, "") else None
     return rows
 
 
@@ -122,11 +124,12 @@ def price_rank_text(pos, rank, end):
 
 PQ_NEAR_FLOOR_MARGIN = 1    # a tier C/D "banger" needs a price within this many dollars of the position's floor that year
 PQ_NEVER_FAIL_MAX = 5       # a pick priced at or under this never grades worse than Bust
+PQ_INJURY_MAX_GAMES = 7     # a Fail where he played this many games or fewer that season is an Injury instead
 
 
 def pick_grade(r, pr, pos_slots):
     """Same grading as the live site's pickGradeKey (site/index.html) -- see the comment there for the
-    reasoning behind the scarcity-scaled bands and the two guardrails on top of the tier/band grid."""
+    reasoning behind the scarcity-scaled bands and the three guardrails on top of the tier/band grid."""
     if r["position"] in ("K", "DEF") or r["pos_rank"] is None:
         return ""
     if r["pos_rank"] == 1:
@@ -140,6 +143,8 @@ def pick_grade(r, pr, pos_slots):
         grade = "hit"
     if grade == "fail" and r["price"] <= PQ_NEVER_FAIL_MAX:
         grade = "bust"
+    if grade == "fail" and r["games"] is not None and r["games"] <= PQ_INJURY_MAX_GAMES:
+        grade = "injury"
     return GRADE_META[grade]
 
 
@@ -204,7 +209,8 @@ def main(out_path):
         ("PF+ : points-for indexed to that season's league average (100 = average team), like baseball's OPS+ -- comparable across seasons even when scoring rules changed.", None),
         ("Price Rank: this pick's price rank among every pick at the same position in that season's draft (1 = priciest); a range (e.g. WR34-37) means tied picks share that rank.", None),
         ("Season Finish / Season Rank: the player's rank among every NFL player at his position that real NFL season (e.g. RB7 = the 7th-highest-scoring RB in the league that year), not just among DTF picks. Blank for the season still in progress and for K/DEF (not ranked).", None),
-        ("Pick Quality: this project's grade for how the price matched the outcome -- a cheap pick that massively outperformed grades higher than an expensive pick that merely met expectations. Blank for K/DEF and ungraded picks.", None),
+        ("Games Played: how many games of that real NFL season he actually played. Blank for K/DEF and for the season still in progress -- it's what lets a pick grade \U0001FA7C Injury instead of \U0001F480 Fail when a real injury, not a bad pick, wrecked the season (7 games or fewer).", None),
+        ("Pick Quality: this project's grade for how the price matched the outcome -- a cheap pick that massively outperformed grades higher than an expensive pick that merely met expectations. \U0001FA7C Injury is a would-be Fail where he played 7 games or fewer that season; it's excluded from Overall/Hit Rate/Miss Rate on the site since it reflects bad luck, not a bad pick. Blank for K/DEF and ungraded picks.", None),
     ]
     for i, (text, kind) in enumerate(lines, 1):
         c = ws.cell(row=i, column=1, value=text)
@@ -236,20 +242,21 @@ def main(out_path):
     # ------------------------------------------------------------------ Auction Draft Picks
     ws = wb.create_sheet("Auction Draft Picks")
     cols = ["Season", "Manager", "Player", "Position", "NFL Team", "College", "Price", "Depth Slot",
-            "Lineup Slot", "Price Rank", "Season Points", "Season Finish", "Pick Quality",
-            "Auction Pick #", "Data Source"]
+            "Lineup Slot", "Price Rank", "Season Points", "Season Finish", "Games Played",
+            "Pick Quality", "Auction Pick #", "Data Source"]
     ws.append(cols)
     ordered = sorted(picks, key=lambda r: (-r["season"], r["manager"], -r["price"]))
     for r in ordered:
         rk = pr.get(id(r))
         price_rank = price_rank_text(r["position"], rk[0], rk[1]) if rk else ""
         season_finish = f"{r['position']}{r['pos_rank']}" if r["pos_rank"] is not None else ""
+        games_played = r["games"] if r["games"] is not None and r["position"] not in ("K", "DEF") else ""
         ws.append([
             r["season"], r["manager"], r["player"], r["position"], r["team"] or "",
             "" if r["position"] == "DEF" else (r["college"] or ""), r["price"],
             f"{r['position']}{r['depth']}", roster_label(r["slot"]), price_rank,
-            r["pts"] if r["pts"] is not None else "", season_finish, pick_grade(r, rk, pos_slots),
-            r["pick_no"] if r["pick_no"] is not None else "", r["source"],
+            r["pts"] if r["pts"] is not None else "", season_finish, games_played,
+            pick_grade(r, rk, pos_slots), r["pick_no"] if r["pick_no"] is not None else "", r["source"],
         ])
     style_header(ws, len(cols))
     style_body(ws)
@@ -257,22 +264,22 @@ def main(out_path):
         row[6].number_format = '"$"#,##0'          # Price
         if row[10].value != "":
             row[10].number_format = '0.0'          # Season Points
-    finish_sheet(ws, (8, 14, 24, 10, 22, 20, 8, 11, 11, 12, 13, 13, 12, 13, 11))
+    finish_sheet(ws, (8, 14, 24, 10, 22, 20, 8, 11, 11, 12, 13, 13, 12, 13, 13, 11))
 
     # ------------------------------------------------------------------ Player Season Scores
     ws = wb.create_sheet("Player Season Scores")
-    cols = ["Season", "Player", "Position", "Drafted By", "Season Points", "Season Rank"]
+    cols = ["Season", "Player", "Position", "Drafted By", "Season Points", "Season Rank", "Games Played"]
     ws.append(cols)
     scored = [r for r in ordered if r["pts"] is not None and r["position"] not in ("K", "DEF")]
     scored.sort(key=lambda r: (-r["season"], r["position"], r["pos_rank"]))
     for r in scored:
         ws.append([r["season"], r["player"], r["position"], r["manager"], r["pts"],
-                    f"{r['position']}{r['pos_rank']}"])
+                    f"{r['position']}{r['pos_rank']}", r["games"] if r["games"] is not None else ""])
     style_header(ws, len(cols))
     style_body(ws)
     for row in ws.iter_rows(min_row=2):
         row[4].number_format = '0.0'
-    finish_sheet(ws, (8, 24, 10, 14, 13, 12))
+    finish_sheet(ws, (8, 24, 10, 14, 13, 12, 13))
 
     # ------------------------------------------------------------------ Managers
     ws = wb.create_sheet("Managers")

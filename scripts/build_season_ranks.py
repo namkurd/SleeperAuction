@@ -21,9 +21,11 @@ file exists, those seasons are simply skipped (picks from 2012-2020 show no rank
 Ranking uses the real NFL regular season only (17 weeks through 2020, 18 from 2021), not our league's
 own shorter regular-season window and not the NFL playoffs -- the usual meaning of "finished RB4" etc.
 
-Writes data/season_ranks.csv: season, player_key, position, points, rank, n
+Writes data/season_ranks.csv: season, player_key, position, points, rank, n, games
   rank/n are computed against EVERY NFL player who played that position that season, but only rows for
-  players who were actually drafted in DTF that season are kept (that's all the site needs).
+  players who were actually drafted in DTF that season are kept (that's all the site needs). games is
+  how many of that season's weeks he actually played (Sleeper's "gp" stat) -- it's what lets a pick be
+  graded Injury instead of Fail when a real injury, not a bad pick, wrecked the season.
 Team defenses are keyed by their Sleeper team-abbreviation stat entry and matched to our def:<Nickname>
 player_key with the same DEF_NICK table update_data.py uses, so history stays consistent if a team
 changes abbreviation.
@@ -38,7 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import update_data as U  # noqa: E402  (reuse get/read_csv/write_csv/DEF_NICK/load_json)
 
 ROOT = U.ROOT
-RANK_COLS = ["season", "player_key", "position", "points", "rank", "n"]
+RANK_COLS = ["season", "player_key", "position", "points", "rank", "n", "games"]
 POSITIONS = {"QB", "RB", "WR", "TE", "K", "DEF"}
 WEEKS = {**{y: 17 for y in range(2012, 2021)}, **{y: 18 for y in range(2021, 2027)}}
 
@@ -63,7 +65,10 @@ def season_scoring(season, leagues):
 
 
 def compute_season(season, scoring, players, weeks):
-    """{stat_id (Sleeper player id or team code): fantasy points}."""
+    """{stat_id (Sleeper player id or team code): fantasy points}, plus how many of those weeks he
+    actually played (Sleeper's "gp" stat category, summed the same way as every other stat) -- that
+    games-played count is what lets the pick-quality grade (site/index.html) tell a real injury-wrecked
+    season apart from a healthy player who just didn't perform."""
     totals = defaultdict(lambda: defaultdict(float))
     for wk in range(1, weeks + 1):
         wk_stats = U.get(f"/stats/nfl/regular/{season}/{wk}", timeout=60)
@@ -72,21 +77,26 @@ def compute_season(season, scoring, players, weeks):
             for k, v in cats.items():
                 if isinstance(v, (int, float)):
                     t[k] += v
-    points, position = {}, {}
+    points, position, games = {}, {}, {}
     for pid, t in totals.items():
         pts = sum(v * scoring.get(k, 0) for k, v in t.items())
+        gp = round(t.get("gp", 0))
         if len(pid) <= 3 and pid.isalpha():          # team defense entry, e.g. "NYJ"
-            points[f"def:{U.DEF_NICK.get(pid, pid)}"] = pts
-            position[f"def:{U.DEF_NICK.get(pid, pid)}"] = "DEF"
+            key = f"def:{U.DEF_NICK.get(pid, pid)}"
+            points[key] = pts
+            position[key] = "DEF"
+            games[key] = gp
         else:
             pos = (players.get(pid) or {}).get("position")
             if pos in POSITIONS:
-                points[f"id:{pid}"] = pts
-                position[f"id:{pid}"] = pos
-    return points, position
+                key = f"id:{pid}"
+                points[key] = pts
+                position[key] = pos
+                games[key] = gp
+    return points, position, games
 
 
-def rank_within_position(points, position):
+def rank_within_position(points, position, games):
     by_pos = defaultdict(list)
     for key, pts in points.items():
         by_pos[position[key]].append((key, pts))
@@ -95,7 +105,7 @@ def rank_within_position(points, position):
         rows.sort(key=lambda kv: -kv[1])
         n = len(rows)
         for i, (key, pts) in enumerate(rows, 1):
-            ranks[key] = (round(pts, 1), i, n)
+            ranks[key] = (round(pts, 1), i, n, games.get(key, 0))
     return ranks
 
 
@@ -135,14 +145,14 @@ def main(argv):
         if players is None:
             players = load_players()
         print(f"  {season}: fetching {WEEKS[season]} weeks of NFL stats ...")
-        points, position = compute_season(season, scoring, players, WEEKS[season])
-        ranks = rank_within_position(points, position)
+        points, position, games = compute_season(season, scoring, players, WEEKS[season])
+        ranks = rank_within_position(points, position, games)
         got, missing = 0, []
         for key in needed[season]:
             if key in ranks:
-                pts, rank, n = ranks[key]
+                pts, rank, n, gp = ranks[key]
                 new_rows.append({"season": season, "player_key": key, "position": position[key],
-                                 "points": pts, "rank": rank, "n": n})
+                                 "points": pts, "rank": rank, "n": n, "games": gp})
                 got += 1
             else:
                 missing.append(key)

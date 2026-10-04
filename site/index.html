@@ -273,7 +273,7 @@ html,body{max-width:100%}
     </div>
     <div class="card" id="pq-card">
       <h2>Pick quality by manager</h2>
-      <p class="lede">One row per manager, ranked by <b>Overall</b>. Each grade column shows <b>picks per season drafted</b>, with that grade's share of all picks beside it — so a manager with 4 seasons and a manager with 15 compare fairly. Kickers, defenses, and ungraded picks don't count. Exactly how a grade (and the position-scarcity adjustment below) is decided is explained under the table.</p>
+      <p class="lede">One row per manager, ranked by <b>Overall</b>. Each grade column shows <b>picks per season drafted</b>, with that grade's share of all picks beside it — so a manager with 4 seasons and a manager with 15 compare fairly. <b>🩼 Injury</b> carves badly-hurt Fails out on their own and doesn't count toward Overall, Hit Rate, or Miss Rate — bad luck isn't bad drafting. Kickers, defenses, and ungraded picks don't count either. Exactly how a grade is decided is explained under the table.</p>
       <div class="filters">
         <div class="pq-rangewrap" id="pq-rangewrap">
           <div class="pq-rangehead">
@@ -314,6 +314,7 @@ html,body{max-width:100%}
             <th data-col="meh" tabindex="0" role="button" aria-label="Sort by Meh picks per season" class="gico" title="Meh — picks per season drafted (share of all picks below)">😐</th>
             <th data-col="bust" tabindex="0" role="button" aria-label="Sort by Bust picks per season" class="gico" title="Bust — picks per season drafted (share of all picks below)">📉</th>
             <th data-col="fail" tabindex="0" role="button" aria-label="Sort by Fail picks per season" class="gico" title="Fail — picks per season drafted (share of all picks below)">💀</th>
+            <th data-col="injury" tabindex="0" role="button" aria-label="Sort by Injury picks per season" class="gico sep" title="Injury — a Fail where he played 7 games or fewer that season; excluded from Overall, Hit Rate and Miss Rate (share of this manager's Fail-or-worse picks below)">🩼</th>
           </tr></thead>
           <tbody id="pq-tbody"></tbody>
         </table>
@@ -324,6 +325,7 @@ html,body{max-width:100%}
         <span><b>😐 Meh</b> — low-stakes result, or one tier short of a top price's target</span>
         <span><b>📉 Bust</b> — underperformed what the price demanded</span>
         <span><b>💀 Fail</b> — badly missed what the price demanded</span>
+        <span><b>🩼 Injury</b> — a Fail where he played 7 games or fewer that season; doesn't count toward Overall, Hit Rate or Miss Rate</span>
       </div>
       <details class="pq-criteria" open>
         <summary>Exactly how a grade is decided</summary>
@@ -348,10 +350,11 @@ html,body{max-width:100%}
             </tbody>
           </table>
         </div>
-        <p class="lede">Two guardrails on top of the grid: a middling price that merely reaches Top 5/Top 10 without actually being close to that position's cheapest price that year earns a Hit, not a Banger (barely-a-bargain shouldn't outrank a true steal), and a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
+        <p class="lede">A few guardrails on top of the grid: a middling price that merely reaches Top 5/Top 10 without actually being close to that position's cheapest price that year earns a Hit, not a Banger (barely-a-bargain shouldn't outrank a true steal), and a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
+        <p class="lede"><b>🩼 Injury</b> pulls a real bad-luck case out of Fail: if the player took the field for 7 games or fewer that season — less than half of it — a Fail becomes an Injury instead, and it's dropped from Overall, Hit Rate, and Miss Rate entirely (it still gets its own column, and its share is of this manager's Fail-or-worse picks, not all picks). A $5-or-less pick that's already capped at Bust by the guardrail above never reaches Injury either — too little was risked either way.</p>
       </details>
       <div class="pq-legend">
-        <span>Each grade column: picks per season first, then that grade's share of all picks</span>
+        <span>Each grade column: picks per season first, then that grade's share of all picks (Injury's share is of Fail-or-worse picks, and it's excluded from Overall/Hit Rate/Miss Rate)</span>
         <span><b style="color:#77e6a6">Overall</b> is a weighted average of grades (Banger highest, Fail lowest) — green above zero, red below</span>
       </div>
     </div>
@@ -563,13 +566,22 @@ function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:nul
      to the floor. Example: a $4 QB priced 9th-cheapest of 15 (tier D) who finishes QB9 matched his price
      almost exactly -- that's a Hit, even though plenty of $1 QBs that same year make the floor cut and keep
      their Banger for the same finish.
-   - A pick that cost $5 or less risked too little to ever be branded a total Fail -- it's capped at Bust. */
+   - A pick that cost $5 or less risked too little to ever be branded a total Fail -- it's capped at Bust.
+
+   On top of that, a Fail that was really a bad injury rather than a bad pick becomes 🩼 Injury instead:
+   a Fail where the player took the field for 7 games or fewer that season (PQ_INJURY_MAX_GAMES below) --
+   less than half a season -- didn't get a fair chance to perform, so it's pulled out of the drafting-skill
+   picture entirely. Injury doesn't count toward Overall, Hit Rate, or Miss Rate, the same as K/DEF and
+   ungraded picks; it's shown only as its own column/count, so a run of bad luck doesn't get read as bad
+   drafting (and vice versa). A cheap pick that's already capped at Bust (the rule just above) never
+   reaches Injury either -- that cap already applies before this check does. */
 const GRADE_META = {
   banger:{icon:"🔥", label:"Banger"},
   hit:{icon:"✅", label:"Hit"},
   meh:{icon:"😐", label:"Meh"},
   bust:{icon:"📉", label:"Bust"},
   fail:{icon:"💀", label:"Fail"},
+  injury:{icon:"🩼", label:"Injury"},
 };
 const GRADE_GRID = {              // price tier -> outcome band -> grade key
   A:{top5:"hit",    top10:"meh",    great:"meh",    good:"bust", replacement:"fail", deep:"fail"},
@@ -610,7 +622,8 @@ function priceTier(rank, pool){        // price rank among this draft's pool at 
 }
 const PQ_NEAR_FLOOR_MARGIN = 1;    // a tier C/D "banger" needs a price within this many dollars of the position's floor that year
 const PQ_NEVER_FAIL_MAX = 5;       // a pick priced at or under this never grades worse than Bust
-function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail", or null when ungraded
+const PQ_INJURY_MAX_GAMES = 7;     // a Fail where he played this many games or fewer that season becomes an Injury instead
+function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail"/"injury", or null when ungraded
   if(r.position==="K"||r.position==="DEF"||r.pos_rank==null) return null;
   if(r.pos_rank===1) return "banger";                 // the single best at the position that year: always a banger
   const pr=PRICE_RANK.get(r); if(!pr) return null;
@@ -621,6 +634,9 @@ function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail", or
   }
   if(grade==="fail" && r.price<=PQ_NEVER_FAIL_MAX){
     grade="bust";          // too little was risked to ever call it a total Fail
+  }
+  if(grade==="fail" && r.games!=null && r.games<=PQ_INJURY_MAX_GAMES){
+    grade="injury";        // a real injury, not a bad pick, wrecked this one -- see the comment above
   }
   return grade;
 }
@@ -1040,7 +1056,8 @@ function drawLeague(){
 
 /* ---------- LEAGUE: pick quality by manager (columns are the grades; seasons/positions are filters) ---------- */
 const PQ_POS = ["QB","RB","WR","TE"];                 // K/DEF are never graded, so they're left out of the filter too
-const GRADE_ORDER = ["banger","hit","meh","bust","fail"];
+const GRADE_ORDER = ["banger","hit","meh","bust","fail"];      // the five that count toward Overall / Hit Rate / Miss Rate
+const GRADE_ORDER_FULL = [...GRADE_ORDER, "injury"];            // all six columns the table actually renders
 const pqSeasonMin = seasons[0], pqSeasonMax = seasons[seasons.length-1];
 let pqRangeStart = pqSeasonMin, pqRangeEnd = pqSeasonMax, pqPos = new Set();
 const pqCumulative = () => pqRangeStart===pqSeasonMin && pqRangeEnd===pqSeasonMax;
@@ -1058,7 +1075,7 @@ const PQ_SCORE = {banger:2, hit:1, meh:0, bust:-1, fail:-2};
 const PQ_RATE_GRADES = {hitrate:["banger","hit"], missrate:["bust","fail"]};   // Hit Rate / Miss Rate are just Overall's two good/bad grades, rolled into one share
 const PQ_RATE_KIND = {hitrate:"seq", missrate:"div"};
 const PQ_RATE_LABEL = {hitrate:"Hit Rate", missrate:"Miss Rate"};
-const PQ_GRADE_KIND = {banger:"seq", hit:"seq", meh:null, bust:"div", fail:"div"};   // Meh is neither good nor bad, so it never tints
+const PQ_GRADE_KIND = {banger:"seq", hit:"seq", meh:null, bust:"div", fail:"div", injury:null};   // Meh and Injury are neither good nor bad, so they never tint
 function pqRateVal(stats, kind){           // {n, pct} -- n picks in Banger+Hit (or Bust+Fail), pct of this manager's graded total
   const grades=PQ_RATE_GRADES[kind];
   const n=grades.reduce((sum,g)=>sum+stats.counts[g],0);
@@ -1093,8 +1110,8 @@ function pqGradientBg(kind, value, range){
   return a<0.03 ? null : "rgba("+PQ_BAD_RGB.join(",")+","+a.toFixed(3)+")";
 }
 function pqGradeStats(manager){            // counts/picks/score for this manager under the active season/position filters
-  const counts={banger:0,hit:0,meh:0,bust:0,fail:0};
-  const byGrade={banger:[],hit:[],meh:[],bust:[],fail:[]};
+  const counts={banger:0,hit:0,meh:0,bust:0,fail:0,injury:0};
+  const byGrade={banger:[],hit:[],meh:[],bust:[],fail:[],injury:[]};
   const positions=pqActivePos();
   const seasonsPlayed=new Set();             // every season this manager drafted at all in the current range, regardless of
   let total=0, scoreSum=0;                   // the position filter -- the denominator for "picks per season" below
@@ -1103,11 +1120,17 @@ function pqGradeStats(manager){            // counts/picks/score for this manage
     seasonsPlayed.add(r.season);
     if(!positions.includes(r.position)) return;
     const k=pickGradeKey(r); if(!k) return;
-    counts[k]++; total++; scoreSum+=PQ_SCORE[k]; byGrade[k].push(r);
+    counts[k]++; byGrade[k].push(r);
+    if(k==="injury") return;      // excluded entirely from Overall / Hit Rate / Miss Rate / the Picks total -- see the lede
+    total++; scoreSum+=PQ_SCORE[k];
   });
   return {total, counts, byGrade, score: total?scoreSum/total:null, seasons:seasonsPlayed.size};
 }
 function pqPerYear(stats, grade){ return stats.counts[grade]/(stats.seasons||1); }   // average picks of this grade per season drafted
+function pqInjuryShare(stats){   // % of this manager's Fail-or-worse (Fail + Injury) picks that were actually an Injury, or null with none of either
+  const denom=stats.counts.injury+stats.counts.fail;
+  return denom ? stats.counts.injury/denom*100 : null;
+}
 function pqPriceRankShort(r){               // compact price rank: "RB4" (single rank) or "WR 16-18" (tied range) -- no ordinal, no "Drafted"
   const pr=PRICE_RANK.get(r); if(!pr) return "–";
   return pr.rank===pr.end ? r.position+pr.rank : r.position+" "+pr.rank+"-"+pr.end;
@@ -1176,6 +1199,21 @@ function pqGradeCell(manager, grade, stats, range){
   td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,stats.byGrade[grade],false); });
   return td;
 }
+function pqInjuryCell(manager, stats){     // 🩼 Injury: its own column, excluded from Overall/Hit Rate/Miss Rate -- see pqGradeStats
+  const empty=stats.seasons===0;           // (not stats.total===0 -- a manager can have an Injury pick in a range with no scored picks)
+  const td=el("td",{class:"sc"+(empty?" empty":"")});
+  if(empty){ td.textContent="–"; return td; }
+  const n=stats.counts.injury, perYr=pqPerYear(stats,"injury"), share=pqInjuryShare(stats);
+  const valKids=[perYr.toFixed(1)];
+  if(share!=null) valKids.push(el("span",{class:"n",text:Math.round(share)+"%"}));
+  td.appendChild(el("div",{class:"val"},valKids));
+  const shareTxt=share!=null ? ", "+Math.round(share)+"% of this manager's Fail-or-worse picks" : "";
+  const title=manager+" · 🩼 Injury — "+perYr.toFixed(1)+"/season ("+n+" pick"+(n===1?"":"s")+shareTxt+") — excluded from Overall, Hit Rate and Miss Rate";
+  td.addEventListener("mouseenter",()=>pqShowListTip(td,title,stats.byGrade.injury,false));
+  td.addEventListener("mouseleave",hideTip);
+  td.addEventListener("click",e=>{ e.stopPropagation(); pqShowListTip(td,title,stats.byGrade.injury,false); });
+  return td;
+}
 function pqRateCell(manager, stats, kind, range){
   const empty=stats.total===0;
   const td=el("td",{class:"sc rate"+(empty?" empty":"")});
@@ -1228,6 +1266,7 @@ function pqSortVal(stats, col){
   if(col==="picks") return stats.total>0 ? stats.total : null;
   if(col==="overall") return stats.total>0 ? stats.score : null;
   if(col==="hitrate" || col==="missrate") return stats.total>0 ? pqRateVal(stats,col).pct : null;
+  if(col==="injury") return stats.seasons>0 ? pqPerYear(stats,"injury") : null;
   if(GRADE_ORDER.includes(col)) return stats.total>0 ? pqPerYear(stats,col) : null;   // sort by the per-season rate, matching what's shown
   return null;
 }
@@ -1274,7 +1313,7 @@ function renderPQTable(){
   const old=pqSortManagers(D.managers.filter(m=>!m.current), statsByMgr);
   const addGroup=(label, list)=>{
     if(!list.length) return;
-    if(label) tbody.appendChild(el("tr",{class:"grp"},[el("td",{colspan:"10",text:label})]));
+    if(label) tbody.appendChild(el("tr",{class:"grp"},[el("td",{colspan:"11",text:label})]));
     list.forEach(m=>{
       const s=statsByMgr[m.name];
       const tr=el("tr");
@@ -1288,6 +1327,7 @@ function renderPQTable(){
         if(i===0) c.classList.add("sep");
         tr.appendChild(c);
       });
+      const inj=pqInjuryCell(m.name,s); inj.classList.add("sep"); tr.appendChild(inj);
       tbody.appendChild(tr);
     });
   };
@@ -1835,7 +1875,7 @@ function drawDrafts(arg){
   [ "Names are the validated ones: nicknames, misspellings and initials in the old spreadsheet were matched to real players (see data/history_name_map.csv). Flex and bench rows show each player’s position.",
     "Every team is laid out the same way, by price: its priciest QB in QB, its second QB in SFLEX (2023 on), its two priciest RBs and two priciest WRs in the RB and WR slots, the next-best RB or WR in FLEX, the priciest TE, K and D/ST, and everyone else on the bench, priciest first. (2020 and 2021 had two FLEX slots and 2022 a WR/TE flex; those take the next-best players in the same way.) Ties go to the earlier pick.",
     "Hover or tap a filled pick for where that price ranked among every pick at the position in that draft (ties share a rank range, e.g. \"30-32nd WR Drafted\"), how that player finished the real NFL season (his rank among every NFL player at his position that year), and how the buying manager's team did that season, when both are known -- the NFL-season rank isn't yet available for 2012–2020 picks.",
-    "The icon before a player's name grades the pick -- price paid vs. how he actually finished the real NFL season, for a 10-team league: "+Object.values(GRADE_META).map(g=>g.icon+" "+g.label).join("   ")+". A cheap, late pick can only grade as low as Meh (there's little invested to disappoint), and finishing as the single best player at the position is always a Banger, however it was priced. Kickers and defenses aren't graded, and neither are picks without a season-finish rank yet.",
+    "The icon before a player's name grades the pick -- price paid vs. how he actually finished the real NFL season, scaled to that position's real scarcity that year: "+Object.values(GRADE_META).map(g=>g.icon+" "+g.label).join("   ")+". A cheap, late pick can only grade as low as Meh (there's little invested to disappoint), finishing as the single best player at the position is always a Banger however it was priced, and a Fail where he played 7 games or fewer that season is an Injury instead. Kickers and defenses aren't graded, and neither are picks without a season-finish rank yet. See the Pick Quality card on the League tab for the full breakdown.",
     "Sources: "+D.sources_note+" Where the two disagree, Sleeper wins; see data/reconcile_report.md in the repo."
   ].forEach(t=>notes.appendChild(el("p",{text:t})));
   fitBoards();

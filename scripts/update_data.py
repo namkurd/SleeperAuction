@@ -36,7 +36,7 @@ SHEET_LAST_SEASON = 2020
 PICK_COLS = ["season", "draft_id", "pick_no", "roster_id", "picked_by", "manager", "player_id",
              "first_name", "last_name", "position", "nfl_team", "amount"]
 CANON_COLS = ["season", "manager", "player", "player_id", "player_key", "position", "price",
-              "pick_no", "depth", "slot", "row", "team", "college", "pts", "pos_rank", "pos_n", "source"]
+              "pick_no", "depth", "slot", "row", "team", "college", "pts", "pos_rank", "pos_n", "games", "source"]
 
 # team abbreviation -> nickname, so defenses look identical in every era
 DEF_NICK = {
@@ -499,16 +499,18 @@ def sync_season_ranks(offline, refresh):
 
 
 def add_season_ranks(canon):
-    """Attach each pick's real-NFL-season finish: points, and rank among every NFL player at his
-    position that year (data/season_ranks.csv, built by build_season_ranks.py). Blank until that
-    season's ranks have been computed -- for 2012-2020 that needs config/scoring_pre2021.json."""
+    """Attach each pick's real-NFL-season finish: points, rank among every NFL player at his position
+    that year, and how many games he played that season (data/season_ranks.csv, built by
+    build_season_ranks.py). Blank until that season's ranks have been computed -- for 2012-2020 that
+    needs config/scoring_pre2021.json. games feeds the pick-quality Injury grade (site/index.html)."""
     path = ROOT / "data" / "season_ranks.csv"
     ranks = {}
     if path.exists():
-        ranks = {(int(r["season"]), r["player_key"]): (r["points"], r["rank"], r["n"]) for r in read_csv(path)}
+        ranks = {(int(r["season"]), r["player_key"]): (r["points"], r["rank"], r["n"], r.get("games", ""))
+                  for r in read_csv(path)}
     for r in canon:
-        pts, rank, n = ranks.get((r["season"], r["player_key"]), ("", "", ""))
-        r["pts"], r["pos_rank"], r["pos_n"] = pts, rank, n
+        pts, rank, n, games = ranks.get((r["season"], r["player_key"]), ("", "", "", ""))
+        r["pts"], r["pos_rank"], r["pos_n"], r["games"] = pts, rank, n, games
 
 
 # ----------------------------------------------------------------------------- reconcile
@@ -622,7 +624,7 @@ def build_site_json(canon, sources_note, boards, league, standings):
     spent = {str(s): sum(r["price"] for r in canon if r["season"] == s) for s in seasons}
     source = {str(s): next(r["source"] for r in canon if r["season"] == s) for s in seasons}
     cols = ["season", "manager", "player", "player_key", "position", "price", "depth", "pick_no", "row", "team", "college",
-            "pts", "pos_rank", "pos_n"]
+            "pts", "pos_rank", "pos_n", "games"]
     return {
         "generated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "latest_season": latest, "seasons": seasons, "teams": teams, "spent": spent,
@@ -635,7 +637,8 @@ def build_site_json(canon, sources_note, boards, league, standings):
                    r["team"], r["college"],
                    float(r["pts"]) if r["pts"] != "" else None,
                    int(r["pos_rank"]) if r["pos_rank"] != "" else None,
-                   int(r["pos_n"]) if r["pos_n"] != "" else None]
+                   int(r["pos_n"]) if r["pos_n"] != "" else None,
+                   int(r["games"]) if r["games"] != "" else None]
                   for r in canon],
     }
 

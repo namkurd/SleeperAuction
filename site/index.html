@@ -174,9 +174,9 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .tip.wide{max-width:calc(100vw - 16px)}
 .tip .pqtip-cols{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:4px}
 .tip table.pqtip{border-collapse:collapse;width:auto;flex:0 0 auto;font-size:11.5px}
-.tip table.pqtip th,.tip table.pqtip td{padding:2px 9px 2px 0;text-align:right;white-space:nowrap;border:0}
+.tip table.pqtip th,.tip table.pqtip td{padding:2px 6px 2px 0;text-align:right;white-space:nowrap;border:0}
 .tip table.pqtip th:first-child,.tip table.pqtip td:first-child{text-align:left;padding-left:0}
-.tip table.pqtip td.nm{text-align:left;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.tip table.pqtip td.nm{text-align:left;max-width:128px;overflow:hidden;text-overflow:ellipsis}
 .tip table.pqtip thead th{color:var(--ink3);font-weight:600;position:sticky;top:0;background:#17181a}
 .tip table.pqtip tbody tr:nth-child(even) td{background:rgba(255,255,255,.035)}
 .tip table.pqtip td.g{text-align:center;padding-right:3px}
@@ -338,14 +338,14 @@ html,body{max-width:100%}
       <details class="pq-criteria" open>
         <summary>Exactly how a grade is decided</summary>
         <p class="lede">Every graded pick is priced into a <b>tier</b> (A–E: where its price ranked among every pick at that position in that draft) and its result lands in a <b>band</b> (where it finished among every NFL player at that position that season). The grade is just that tier crossed with that band — the pricier the tier, the higher the bar for a good grade.</p>
-        <p class="lede"><b>The bands scale to each position's real scarcity.</b> Top 5 and Top 10 always mean the same thing, but past that, "good enough to start" depends on how many roster spots the position actually fills league-wide — a league with one starting QB slot has only as many startable QBs as it has teams, while two starting RB/WR slots plus a shared flex make far more RB/WR finishes startable. A QB or TE is judged against its own, usually much smaller, startable pool — not a flex position's bigger one — and superflex or extra flex slots widen the pool they apply to:</p>
+        <p class="lede"><b>Every band — including Top 5 and Top 10 — scales to each position's real scarcity.</b> Being the 9th-best player at a position only means something once you know how many were actually startable: 9th of 10 is barely droppable, 9th of 40 is a clear weekly starter. So "good enough to start," "elite," and everything between scale off how many roster spots the position actually fills league-wide — a league with one starting QB slot has only as many startable QBs as it has teams, while two starting RB/WR slots plus a shared flex make far more RB/WR finishes startable. A QB or TE is judged against its own, usually much smaller, startable pool — not a flex position's bigger one — and superflex or extra flex slots widen the pool they apply to:</p>
         <div class="tablewrap">
           <table class="pqgridtbl" id="pq-slotstbl">
             <thead><tr><th style="text-align:left">Seasons</th><th>Teams</th><th>QB startable</th><th>RB startable</th><th>WR startable</th><th>TE startable</th></tr></thead>
             <tbody id="pq-slotstbl-body"></tbody>
           </table>
         </div>
-        <p class="lede">Example: Jay Cutler, QB14 for $1 in a 10-team, one-QB season — 14th is past that year's 10 startable quarterbacks, so no price makes it better than 😐 Meh. The same $1 and finish at WR, with 30 startable that year, would be a different story. Here's the full tier × band grid (band cutoffs are the "startable" column above, scaled the same way for Great/Replacement):</p>
+        <p class="lede">Two examples: Jay Cutler, QB14 for $1 in a 10-team, one-QB season — 14th is past that year's 10 startable quarterbacks, so no price makes it better than 😐 Meh. And Rob Gronkowski, TE9 at a roughly median TE price in that same 10-team, one-TE era — 9th is barely inside the 10 startable tight ends, not a difference-maker, so a middling price for it tops out at 😐 Meh rather than the 🔥 Banger a flat "top 10" cutoff used to hand it. The same price and TE9 finish, in a two-TE-slot season with 20 startable, would read very differently. Here's the full tier × band grid (band cutoffs are the "startable" column above, scaled the same way for every column):</p>
         <div class="tablewrap">
           <table class="pqgridtbl">
             <thead><tr><th style="text-align:left">Price tier</th><th>Top 5</th><th>Top 10</th><th>Great</th><th>Good<br>(startable)</th><th>Replacement</th><th>Deep</th></tr></thead>
@@ -600,25 +600,31 @@ const GRADE_GRID = {              // price tier -> outcome band -> grade key
 };
 /* posSlots[season][pos] (baked in by scripts/update_data.py from config/lineups.json) is how many
    startable slots that position actually had league-wide that year -- 1 dedicated QB slot x 10 teams
-   is only 10 startable QBs, while 2 dedicated RB slots plus a shared FLEX is 30. outcomeBand uses it to
-   scale the "great"/"good"/"replacement" cutoffs to that number, so a QB or TE (a small, mostly
-   non-flexable pool) is judged on a tighter ladder than an RB or WR (a large, flex-padded one). top5 and
-   top10 stay fixed at every position -- being the 5th- or 10th-best at anything is impressive regardless
-   of the position's pool size -- but everything past that is relative to what was actually startable:
-   "good" lands exactly on the startable number itself (PQ_BASELINE_SLOTS is what 30 scales from), so a
-   finish just outside the startable pool can be no better than replacement-level, never a Hit or Banger.
-   Example: a 10-team league with 1 starting QB has 10 startable QBs; QB14 falls past even the scaled
-   "replacement" cutoff into "deep" -- a cheap, late QB14 pick is a Meh at best, never the Banger a flat
-   top-20 cutoff would have called it. */
+   is only 10 startable QBs, while 2 dedicated RB slots plus a shared FLEX is 30. Every band in
+   outcomeBand scales off that number, including top5/top10: being the 5th- or 10th-best QB in a season
+   with only 10 startable QBs is barely startable, not elite, so that band has to shrink right along with
+   "great"/"good"/"replacement" -- a QB or TE (a small, mostly non-flexable pool) is judged on a tighter
+   ladder than an RB or WR (a large, flex-padded one). "good" lands exactly on the startable number itself
+   (PQ_BASELINE_SLOTS is what 30 scales from, so a season with the classic 30-slot RB/WR setup reproduces
+   the original flat 5/10/20/30/50 cutoffs exactly), so a finish just outside the startable pool can be no
+   better than replacement-level, never a Hit or Banger. Two examples: a 10-team league with 1 starting QB
+   has 10 startable QBs, so QB14 falls past even the scaled "replacement" cutoff into "deep" -- a cheap,
+   late QB14 pick is a Meh at best, never the Banger a flat top-20 cutoff would have called it. And with
+   only 10 startable TEs that same season, TE9 -- barely droppable, not a difference-maker -- scales down
+   into "good" rather than the flat "top10" cutoff that used to call it elite at any price. */
 const PQ_BASELINE_SLOTS = 30;    // the classic 2-dedicated-+-1-FLEX, 10-team RB/WR number the original bands were tuned on
 function outcomeBand(rank, pos, season){      // real-NFL season-finish rank (at this position, this season) -> band
-  if(rank<=5) return "top5";
-  if(rank<=10) return "top10";
   const slots=((D.pos_slots[String(season)]||{})[pos]) || PQ_BASELINE_SLOTS;
   const scale=slots/PQ_BASELINE_SLOTS;
-  if(rank<=Math.round(20*scale)) return "great";
+  const c5=Math.max(1, Math.round(5*scale));
+  const c10=Math.max(c5+1, Math.round(10*scale));
+  const c20=Math.max(c10+1, Math.round(20*scale));
+  const c50=Math.max(slots+1, Math.round(50*scale));
+  if(rank<=c5) return "top5";
+  if(rank<=c10) return "top10";
+  if(rank<=c20) return "great";
   if(rank<=slots) return "good";                           // the startable floor itself, whatever it is this season/position
-  if(rank<=Math.round(50*scale)) return "replacement";
+  if(rank<=c50) return "replacement";
   return "deep";
 }
 function priceTier(rank, pool){        // price rank among this draft's pool at the position -> tier A (priciest) .. E (cheapest)
@@ -1139,29 +1145,26 @@ function pqInjuryShare(stats){   // % of this manager's Fail-or-worse (Fail + In
   const denom=stats.counts.injury+stats.counts.fail;
   return denom ? stats.counts.injury/denom*100 : null;
 }
-function pqPriceRankShort(r){               // compact price rank: "RB4" (single rank) or "WR 16-18" (tied range) -- no ordinal, no "Drafted"
-  const pr=PRICE_RANK.get(r); if(!pr) return "–";
-  return pr.rank===pr.end ? r.position+pr.rank : r.position+" "+pr.rank+"-"+pr.end;
-}
-function pqPriceRankTight(r){               // same, but no space before a tied range: "RB4" or "WR34-37" -- used in the player-detail table
+function pqPriceRankTight(r){               // compact price rank: "RB4" (single rank) or "WR34-37" (tied range) -- no ordinal,
+                                             // no "Drafted", no space before a tied range -- used in the pick-list tooltip and the player-detail table
   const pr=PRICE_RANK.get(r); if(!pr) return "–";
   return pr.rank===pr.end ? r.position+pr.rank : r.position+pr.rank+"-"+pr.end;
 }
-function pqPickRow(r, showGrade){           // one row of the hover pick-list: Year · Pos · Name · Price · Price rank · Finish
+function pqPickRow(r, showGrade){           // one row of the hover pick-list: Year · Name · Price · Rank · Finish
+                                             // (position isn't its own column -- it's already the prefix on Rank and Finish)
   const cells=[];
   if(showGrade){ const g=pickGradeKey(r); cells.push(el("td",{class:"g",text:g?GRADE_META[g].icon:""})); }
   cells.push(el("td",{text:String(r.season)}));
-  cells.push(el("td",{text:r.position}));
   cells.push(el("td",{class:"nm",text:r.player}));
   cells.push(el("td",{text:fmt$(r.price)}));
-  cells.push(el("td",{text:pqPriceRankShort(r)}));
+  cells.push(el("td",{text:pqPriceRankTight(r)}));
   cells.push(el("td",{text:r.position+r.pos_rank}));
   return el("tr",{},cells);
 }
 const PQ_ROWS_PER_COL = 50;    // a pick-list tooltip splits into side-by-side columns of this many rows, instead of one tall list
 function pqTipColumn(chunk, showGrade){    // one column's worth: its own header + up to PQ_ROWS_PER_COL rows
   const hcells=[]; if(showGrade) hcells.push(el("th",{text:""}));
-  hcells.push(el("th",{text:"Yr"}),el("th",{text:"Pos"}),el("th",{text:"Player"}),el("th",{text:"Price"}),el("th",{text:"Price rank"}),el("th",{text:"Finish"}));
+  hcells.push(el("th",{text:"Yr"}),el("th",{text:"Player"}),el("th",{text:"Price"}),el("th",{text:"Rank"}),el("th",{text:"Finish"}));
   const t=el("table",{class:"pqtip"},[el("thead",{},[el("tr",{},hcells)])]);
   const tb=el("tbody"); chunk.forEach(r=>tb.appendChild(pqPickRow(r,showGrade))); t.appendChild(tb);
   return t;

@@ -25,6 +25,7 @@ Sheets
 """
 import csv
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -34,6 +35,14 @@ from openpyxl.utils import get_column_letter
 
 ROOT = Path(__file__).resolve().parent.parent
 FONT = "Arial"
+
+
+def rhu(x):
+    """Round half up, like JS's Math.round() -- Python's built-in round() rounds half to even
+    (banker's rounding), which silently disagrees with the live site at exact .5 ties (e.g. round(8.5)
+    is 8 in Python but 9 in JS). Every grade-boundary computation below must match the JS bit-for-bit,
+    so this is used instead of round() anywhere a tier or band cutoff is computed."""
+    return math.floor(x + 0.5)
 
 MEDAL_LABEL = {1: "Champion", 2: "2nd Place", 3: "3rd Place", 9: "Sacko"}
 GRADE_META = {
@@ -57,24 +66,29 @@ PQ_BASELINE_SLOTS = 30   # the classic 2-dedicated-+-1-FLEX, 10-team RB/WR numbe
 
 
 def outcome_band(rank, pos, season, pos_slots):
-    """Same scarcity-scaled bands as the live site's outcomeBand (site/index.html): Top 5/Top 10 are fixed,
-    everything past that scales to how many of this position were actually startable league-wide that
-    season (pos_slots, baked into site/data.json by scripts/update_data.py from config/lineups.json)."""
-    if rank <= 5: return "top5"
-    if rank <= 10: return "top10"
+    """Same scarcity-scaled bands as the live site's outcomeBand (site/index.html): every band, including
+    Top 5/Top 10, scales to how many of this position were actually startable league-wide that season
+    (pos_slots, baked into site/data.json by scripts/update_data.py from config/lineups.json) -- 9th-best
+    at a position means something different with 10 startable slots than with 40."""
     slots = (pos_slots.get(str(season)) or {}).get(pos) or PQ_BASELINE_SLOTS
     scale = slots / PQ_BASELINE_SLOTS
-    if rank <= round(20 * scale): return "great"
+    c5 = max(1, rhu(5 * scale))
+    c10 = max(c5 + 1, rhu(10 * scale))
+    c20 = max(c10 + 1, rhu(20 * scale))
+    c50 = max(slots + 1, rhu(50 * scale))
+    if rank <= c5: return "top5"
+    if rank <= c10: return "top10"
+    if rank <= c20: return "great"
     if rank <= slots: return "good"
-    if rank <= round(50 * scale): return "replacement"
+    if rank <= c50: return "replacement"
     return "deep"
 
 
 def price_tier(rank, pool):
-    if rank <= max(5, round(pool * .10)): return "A"
-    if rank <= round(pool * .25): return "B"
-    if rank <= round(pool * .50): return "C"
-    if rank <= round(pool * .75): return "D"
+    if rank <= max(5, rhu(pool * .10)): return "A"
+    if rank <= rhu(pool * .25): return "B"
+    if rank <= rhu(pool * .50): return "C"
+    if rank <= rhu(pool * .75): return "D"
     return "E"
 
 

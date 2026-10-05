@@ -358,7 +358,7 @@ html,body{max-width:100%}
             </tbody>
           </table>
         </div>
-        <p class="lede">A few guardrails on top of the grid: a middling price that merely reaches Top 5/Top 10 without actually being close to that position's cheapest price that year earns a Hit, not a Banger (barely-a-bargain shouldn't outrank a true steal), and a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
+        <p class="lede">A few guardrails on top of the grid: at a middling price (tier C/D), reaching Top 5/Top 10 only earns a Banger when the price was genuinely close to that position's cheapest pick that year (within $5, since the floor is almost always $1) — otherwise it's a Hit, not a Banger (barely-a-bargain shouldn't outrank a true steal). And a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
         <p class="lede"><b>🩼 Injury</b> pulls a real bad-luck case out of Fail: if the player took the field for 7 games or fewer that season — less than half of it — a Fail becomes an Injury instead, and it's dropped from Overall, Hit Rate, and Miss Rate entirely (it still gets its own column, and its share is of this manager's Fail-or-worse picks, not all picks). A $5-or-less pick that's already capped at Bust by the guardrail above never reaches Injury either — too little was risked either way.</p>
       </details>
       <div class="pq-legend">
@@ -566,14 +566,16 @@ function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:nul
 
    Two guardrails sit on top of the tier/band grid:
    - A middling price (tier C or D) landing in the top5/top10 outcome bands only earns Banger when the price
-     was genuinely close to that position's floor that year (within $1 of the cheapest same-position pick in
-     that draft) -- tiers C/D span everything from "basically free" down to "paid real money, just not the
-     most," and a price that isn't actually near the floor usually means the price rank and the finish rank
-     landed in roughly the same place: a Hit (delivered what the price demanded), not a steal. A truly cheap
-     (tier E) pick never needed this check -- being in the cheapest quarter already means the price was close
-     to the floor. Example: a $4 QB priced 9th-cheapest of 15 (tier D) who finishes QB9 matched his price
-     almost exactly -- that's a Hit, even though plenty of $1 QBs that same year make the floor cut and keep
-     their Banger for the same finish.
+     was genuinely close to that position's floor that year (within $4 of the cheapest same-position pick in
+     that draft -- the floor itself is $1 in literally every season/position in this league's history, so in
+     practice this means $5 or less; see PQ_NEAR_FLOOR_MARGIN) -- tiers C/D span everything from "basically
+     free" down to "paid real money, just not the most," and a price that isn't actually near the floor
+     usually means the price rank and the finish rank landed in roughly the same place: a Hit (delivered what
+     the price demanded), not a steal. A truly cheap (tier E) pick never needed this check -- being in the
+     cheapest quarter already means the price was close to the floor. Two real examples: Austin Ekeler, $3
+     (tier D) in 2019, finished RB7 -- $3 is close enough to that year's $1 RB floor to call it a real steal,
+     so it's a Banger. Joe Mixon, $20 (tier C) in 2018, also finished top10 (RB9) -- $20 isn't remotely close
+     to that year's floor, so the price rank and the finish rank just matched: a Hit, not a steal.
    - A pick that cost $5 or less risked too little to ever be branded a total Fail -- it's capped at Bust.
 
    On top of that, a Fail that was really a bad injury rather than a bad pick becomes 🩼 Injury instead:
@@ -634,7 +636,13 @@ function priceTier(rank, pool){        // price rank among this draft's pool at 
   if(rank<=Math.round(pool*.75)) return "D";
   return "E";
 }
-const PQ_NEAR_FLOOR_MARGIN = 1;    // a tier C/D "banger" needs a price within this many dollars of the position's floor that year
+const PQ_NEAR_FLOOR_MARGIN = 4;    // a tier C/D "banger" needs a price within this many dollars of the position's floor that
+                                    // year -- the floor itself is $1 in literally every season/position in this league's
+                                    // history, so this margin IS the real-dollar threshold (poolMin+4 = $5), matching
+                                    // PQ_NEVER_FAIL_MAX below: $5 or less is already this project's bar for "too little
+                                    // invested to judge harshly," and it's the same bar for "too little invested to deny
+                                    // a steal." A $1 margin (price<=$2) was too tight -- it capped genuine bargain-bin
+                                    // stories like a $3 Austin Ekeler finishing RB7 at Hit instead of Banger.
 const PQ_NEVER_FAIL_MAX = 5;       // a pick priced at or under this never grades worse than Bust
 const PQ_INJURY_MAX_GAMES = 7;     // a Fail where he played this many games or fewer that season becomes an Injury instead
 function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail"/"injury", or null when ungraded

@@ -136,7 +136,9 @@ def price_rank_text(pos, rank, end):
     return f"{pos}{rank}" if rank == end else f"{pos}{rank}-{end}"
 
 
-PQ_NEAR_FLOOR_MARGIN = 1    # a tier C/D "banger" needs a price within this many dollars of the position's floor that year
+PQ_NEAR_FLOOR_MARGIN = 4    # a tier C/D "banger" needs a price within this many dollars of the position's floor that year --
+                            # the floor itself is $1 in literally every season/position in this league's history, so this
+                            # margin IS the real-dollar threshold (poolMin+4 = $5), matching PQ_NEVER_FAIL_MAX below
 PQ_NEVER_FAIL_MAX = 5       # a pick priced at or under this never grades worse than Bust
 PQ_INJURY_MAX_GAMES = 7     # a Fail where he played this many games or fewer that season is an Injury instead
 

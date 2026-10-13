@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DTF Club Auction Archive</title>
-<meta name="description" content="Fourteen-plus years of DTF Club auction-draft prices: league trends, manager profiles and player price history.">
+<meta name="description" content="Fourteen-plus years of DTF Club auction-draft prices: league trends, draft quality, manager profiles and player price history.">
 <meta name="color-scheme" content="dark">
 <style>
 :root{
@@ -58,6 +58,7 @@ tbody tr:hover td:first-child{background:#33373d}
 .hero{display:flex;gap:26px;flex-wrap:wrap;margin:2px 0 6px}
 .hero div{min-width:110px}
 .hero b{display:block;font-size:24px;font-weight:700}
+#dq-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px 26px}
 .hero span{color:var(--ink3);font-size:12.5px}
 footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font-size:12.5px}
 .err{background:#4a2326;border:1px solid #7a3338;border-radius:10px;padding:14px 16px;margin:20px 24px}
@@ -170,6 +171,25 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .pq-criteria .tablewrap{max-width:620px}
 .pqgridtbl th,.pqgridtbl td{text-align:center}
 .pqgridtbl thead th{font-weight:600}
+/* ---- Draft Quality tab ---- */
+.dq-chipbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.dq-chiplabel{color:var(--ink2);font-size:13px}
+.dq-chips{display:flex;gap:6px;flex-wrap:wrap}
+.dq-chip{display:inline-flex;align-items:center;gap:6px}
+.dq-chip .dot{width:9px;height:9px;border-radius:50%;border:1px solid var(--ink3);flex:0 0 auto}
+.dq-chip[aria-pressed="true"]{color:var(--ink);border-color:var(--ink2);background:var(--card2)}
+.dq-h3{font-size:15px;margin:22px 0 2px;font-weight:650}
+.dq-tbl th,.dq-tbl td{text-align:right}
+.dq-tbl th:first-child,.dq-tbl td:first-child{text-align:left}
+.dq-fp td.c{text-align:center;cursor:help;font-weight:700;border-radius:6px;background-clip:padding-box}
+.dq-fp td.c:hover{outline:1px solid #8ec1ff;outline-offset:-1px}
+.dq-fp td.c .val .n{display:inline-block;font-weight:400;color:var(--ink2);font-size:10.5px;margin-left:6px}
+.dq-fp th{text-align:center}
+.dq-fp tr.lgrow td{border-top:2px solid #4a4f57;background-color:#30343a}
+.dq-hofbox{min-width:0}
+.dq-hofbox .lede{margin:0 0 6px}
+.dq-hofbox .tablewrap{margin:4px 0 0}
+.dq-hofbox .dq-h3{margin-top:4px}
 /* ---- pick-list tooltip (a wider variant of the shared .tip, for the per-pick breakdown table) ---- */
 .tip.wide{max-width:calc(100vw - 16px)}
 .tip .pqtip-cols{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:4px}
@@ -253,7 +273,8 @@ html,body{max-width:100%}
   <p class="sub" id="subtitle"></p>
 </header>
 <nav role="tablist" aria-label="Views">
-  <button role="tab" data-view="league" aria-selected="true">League</button>
+  <button role="tab" data-view="league" aria-selected="true">League Trends</button>
+  <button role="tab" data-view="draft" aria-selected="false">Draft Quality</button>
   <button role="tab" data-view="managers" aria-selected="false">Managers</button>
   <button role="tab" data-view="drafts" aria-selected="false">Drafts</button>
   <button role="tab" data-view="players" aria-selected="false">Players</button>
@@ -278,6 +299,43 @@ html,body{max-width:100%}
       <p class="lede">Every player bought at auction, one dot each. Hover a dot for the player, buyer and price, plus (when known) how that player finished the season and how that manager's team did that year.</p>
       <div class="filters"><label><input type="checkbox" id="show-kdef"> Show kickers and defenses</label></div>
       <div class="chart tall" id="league-scatter"></div>
+    </div>
+    <div class="card">
+      <h2>Players drafted from each NFL team, by manager</h2>
+      <p class="lede">How many players each manager has bought from each NFL team: the team the player was on that season, defenses excluded, one count per year bought. Sorted by total. Hover or tap a number for the players and years; former managers are on the right.</p>
+      <div class="tablewrap mxwrap" id="lg-nfl"></div>
+    </div>
+    <div class="card">
+      <h2>Players drafted from each college, by manager</h2>
+      <p class="lede">The same table by college (defenses excluded). Sorted by total; scroll inside the table for the full list.</p>
+      <div class="tablewrap mxwrap" id="lg-college"></div>
+    </div>
+    <div class="notes" id="notes-league"></div>
+  </section>
+
+  <section class="view" id="view-draft">
+    <div class="card" id="dq-hero-card">
+      <h2>Draft quality at a glance</h2>
+      <p class="lede" id="dq-hero-lede"></p>
+      <div class="hero" id="dq-hero"></div>
+    </div>
+    <div class="card" id="dq-trend-card">
+      <h2>Draft quality over time</h2>
+      <p class="lede" id="dq-trend-lede"></p>
+      <div class="filters">
+        <label>Measure <select id="dq-metric" aria-label="Measure">
+          <option value="overall">Overall (average grade score)</option>
+          <option value="hit">Hit Rate (Banger + Hit)</option>
+          <option value="miss">Miss Rate (Bust + Fail)</option>
+        </select></label>
+        <label>Smoothing <select id="dq-smooth" aria-label="Smoothing">
+          <option value="1">Each season on its own</option>
+          <option value="3">3-season rolling</option>
+        </select></label>
+      </div>
+      <div class="dq-chipbar"><span class="dq-chiplabel">Highlight up to 6 managers:</span><div class="dq-chips" id="dq-chips" role="group" aria-label="Managers to highlight"></div><button type="button" class="chip" id="dq-chipreset">Reset</button></div>
+      <div class="chart" id="dq-trend"></div>
+      <details><summary>Data table</summary><div class="tablewrap" id="dq-trend-table"></div></details>
     </div>
     <div class="card" id="pq-card">
       <h2>Pick quality by manager</h2>
@@ -366,17 +424,38 @@ html,body{max-width:100%}
         <span><b style="color:#77e6a6">Overall</b> is a weighted average of grades (Banger highest, Fail lowest) — green above zero, red below</span>
       </div>
     </div>
-    <div class="card">
-      <h2>Players drafted from each NFL team, by manager</h2>
-      <p class="lede">How many players each manager has bought from each NFL team: the team the player was on that season, defenses excluded, one count per year bought. Sorted by total. Hover or tap a number for the players and years; former managers are on the right.</p>
-      <div class="tablewrap mxwrap" id="lg-nfl"></div>
+    <div class="card" id="dq-win-card">
+      <h2>Does a good draft win?</h2>
+      <p class="lede" id="dq-win-lede"></p>
+      <div class="chart" id="dq-win"></div>
+      <h3 class="dq-h3">Who beats their draft?</h3>
+      <p class="lede" id="dq-over-lede"></p>
+      <div class="tablewrap" style="max-width:820px"><table id="dq-over-table" class="dq-tbl"></table></div>
     </div>
-    <div class="card">
-      <h2>Players drafted from each college, by manager</h2>
-      <p class="lede">The same table by college (defenses excluded). Sorted by total; scroll inside the table for the full list.</p>
-      <div class="tablewrap mxwrap" id="lg-college"></div>
+    <div class="card" id="dq-money-card">
+      <h2>Where the money went</h2>
+      <p class="lede" id="dq-money-lede"></p>
+      <div class="chart" id="dq-money"></div>
+      <details><summary>Data table</summary><div class="tablewrap" id="dq-money-table"></div></details>
     </div>
-    <div class="notes" id="notes-league"></div>
+    <div class="card" id="dq-fp-card">
+      <h2>Draft fingerprint</h2>
+      <p class="lede" id="dq-fp-lede"></p>
+      <div class="filters">
+        <label>Break down by <select id="dq-fp-by" aria-label="Break down by">
+          <option value="pos">Position</option>
+          <option value="price">Price paid</option>
+        </select></label>
+      </div>
+      <div class="tablewrap"><table id="dq-fp-table" class="dq-tbl dq-fp"></table></div>
+      <div class="pq-legend"><span>Cell = average grade score (Banger +2 … Fail −2) for that manager's graded picks · small number = how many picks · faded cells have fewer than 6 picks, so don't trust them much · hover a cell for the picks</span></div>
+    </div>
+    <div class="card" id="dq-hof-card">
+      <h2>Hall of Fame &amp; Hall of Shame</h2>
+      <p class="lede">The drafts and picks behind the averages.</p>
+      <div class="twocol" id="dq-hof"></div>
+    </div>
+    <div class="notes" id="notes-draft"></div>
   </section>
 
   <section class="view" id="view-managers">
@@ -1073,7 +1152,7 @@ function drawLeague(){
   scatterFigure();
   matrixTable($("lg-nfl"),"NFL team",r=>r.team);
   matrixTable($("lg-college"),"College",r=>r.college);
-  footnotes($("notes-league"),["Hovering a dot in the price-per-pick chart shows where that price ranked among every pick at the same position in that same draft (ties share a rank range, e.g. \"30-32nd WR Drafted\"), plus how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules) and how the buying manager's team did that season, when both are known -- the NFL-season rank isn't yet available for 2012–2020 picks. The icon next to the player's name in the tooltip grades the pick (price vs. how he actually finished); see the Drafts tab for what each icon means."],true);
+  footnotes($("notes-league"),["Hovering a dot in the price-per-pick chart shows where that price ranked among every pick at the same position in that same draft (ties share a rank range, e.g. \"30-32nd WR Drafted\"), plus how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules) and how the buying manager's team did that season, when both are known -- the NFL-season rank isn't yet available for 2012–2020 picks. The icon next to the player's name in the tooltip grades the pick (price vs. how he actually finished); see the Draft Quality tab for what each icon means."],true);
 }
 
 /* ---------- LEAGUE: pick quality by manager (columns are the grades; seasons/positions are filters) ---------- */
@@ -1490,6 +1569,344 @@ function initPickQuality(){
   renderPQTable();
 }
 
+/* ---------- DRAFT QUALITY view: the pick-quality table (above) plus the analysis around it ---------- */
+/* Everything here is built from the same pickGradeKey() the table uses, so a number on this tab can never
+   disagree with the table. Unit of analysis: one manager's graded picks in one draft (a "manager-season").
+   Injuries, kickers, defenses, and picks without a season-finish rank are excluded, exactly as in the table's
+   Overall / Hit Rate / Miss Rate. */
+const DQ_SLOT_COLORS = ["#3987e5","#d95926","#199e70","#c98500","#d55181","#9085e9"];   // categorical slots 1-6, validated for dark mode on this card surface
+const DQ_SYMBOLS = ["circle","square","diamond","triangle-up","hexagon","triangle-down"];  // second encoding besides colour
+const DQ_MAX_SEL = 6;
+const DQ_MIN_PICKS = 6;                      // fewer graded picks than this and a manager-season average is too noisy to rank
+const GRADE_COLOR = {banger:"#77e6a6", hit:"#3fa974", meh:"#6b7078", bust:"#e8848c", fail:"#d6404b", injury:"#7aa7d9"};
+const dqFmtOv = v => (v>=0?"+":"−")+Math.abs(v).toFixed(2);
+const dqPct = v => Math.round(v*100)+"%";
+let dqReady=false, dqSeasonList=[], dqMgrList=[], dqBy=new Map(), dqSel=[], dqSlotOf=new Map(), dqSeasonRows=[];
+function dqAgg(list){
+  const c={banger:0,hit:0,meh:0,bust:0,fail:0}; let sc=0;
+  list.forEach(g=>{ c[g.k]++; sc+=PQ_SCORE[g.k]; });
+  const n=list.length;
+  return {n, c, overall:n?sc/n:null, hit:n?(c.banger+c.hit)/n:null, miss:n?(c.bust+c.fail)/n:null};
+}
+function dqCorr(xs, ys){
+  const n=xs.length; if(n<3) return null;
+  const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+  let sxy=0,sxx=0,syy=0; for(let i=0;i<n;i++){ sxy+=(xs[i]-mx)*(ys[i]-my); sxx+=(xs[i]-mx)**2; syy+=(ys[i]-my)**2; }
+  return sxx&&syy ? sxy/Math.sqrt(sxx*syy) : null;
+}
+function dqOLS(xs, ys){
+  const n=xs.length, mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+  let sxy=0,sxx=0; for(let i=0;i<n;i++){ sxy+=(xs[i]-mx)*(ys[i]-my); sxx+=(xs[i]-mx)**2; }
+  const b=sxy/sxx; return {b, a:my-b*mx};
+}
+const dqMean = a => a.reduce((x,y)=>x+y,0)/a.length;
+function dqInit(){
+  if(dqReady) return; dqReady=true;
+  const seen=new Set(), mg=new Set();
+  picks.forEach(r=>{
+    const k=pickGradeKey(r); if(!k||k==="injury") return;
+    const key=r.manager+"|"+r.season;
+    if(!dqBy.has(key)) dqBy.set(key,[]);
+    dqBy.get(key).push({r,k}); seen.add(r.season); mg.add(r.manager);
+  });
+  dqSeasonList=[...seen].sort((a,b)=>a-b);
+  dqMgrList=[...D.managers.filter(m=>m.current),...D.managers.filter(m=>!m.current)].filter(m=>mg.has(m.name));
+  // manager-season rows joined to that year's standings, for the "does a good draft win" analysis
+  dqBy.forEach((list,key)=>{
+    if(list.length<DQ_MIN_PICKS) return;
+    const [m,sRaw]=key.split("|"), s=+sRaw, st=standingFor(s,m); if(!st) return;
+    const blk=Object.values(D.standings[String(s)]), avg=dqMean(blk.map(v=>v[4]));
+    const a=dqAgg(list);
+    dqSeasonRows.push({m, s, n:a.n, overall:a.overall, pf:st[4]/avg*100, rank:st[0], place:st[1], w:st[2], l:st[3], teams:st[6]});
+  });
+  dqDefaultSel();
+}
+function dqDefaultSel(){          // the three best career Overalls among managers with at least five graded drafts
+  dqSel.length=0; dqSlotOf.clear();
+  const car=dqMgrList.map(m=>{ const ss=dqSeasonList.filter(s=>dqBy.has(m.name+"|"+s)); const all=ss.flatMap(s=>dqBy.get(m.name+"|"+s)); return {name:m.name,seasons:ss.length,ov:dqAgg(all).overall}; })
+    .filter(x=>x.seasons>=5).sort((a,b)=>b.ov-a.ov);
+  car.slice(0,3).forEach(x=>dqSelect(x.name,true));
+}
+function dqSelect(name, on){
+  const i=dqSel.indexOf(name);
+  if(on && i<0){
+    if(dqSel.length>=DQ_MAX_SEL) return;
+    const used=new Set(dqSlotOf.values()); let slot=0; while(used.has(slot)) slot++;
+    dqSel.push(name); dqSlotOf.set(name,slot);
+  } else if(!on && i>=0){ dqSel.splice(i,1); dqSlotOf.delete(name); }
+}
+/* ---- headline numbers ---- */
+function dqHero(){
+  const host=$("dq-hero"); host.textContent="";
+  const perSeason=dqSeasonList.map(s=>{
+    const vals=dqMgrList.map(m=>dqBy.get(m.name+"|"+s)).filter(l=>l&&l.length>=DQ_MIN_PICKS).map(l=>dqAgg(l).overall);
+    const all=dqMgrList.flatMap(m=>dqBy.get(m.name+"|"+s)||[]);
+    return {s, avg:dqAgg(all).overall, sd:vals.length>1?Math.sqrt(dqMean(vals.map(v=>(v-dqMean(vals))**2))):null};
+  });
+  const k=Math.min(5,Math.floor(perSeason.length/2)), early=perSeason.slice(0,k), late=perSeason.slice(-k);
+  const stats=[];
+  if(k>=2){
+    stats.push([dqFmtOv(dqMean(early.map(x=>x.avg)))+" → "+dqFmtOv(dqMean(late.map(x=>x.avg))), "league-wide average Overall, "+early[0].s+"–"+early[k-1].s+" → "+late[0].s+"–"+late[k-1].s]);
+    const e=early.filter(x=>x.sd!=null), l=late.filter(x=>x.sd!=null);
+    if(e.length&&l.length) stats.push([dqMean(e.map(x=>x.sd)).toFixed(2)+" → "+dqMean(l.map(x=>x.sd)).toFixed(2), "gap between managers (spread of Overall) over the same spans"]);
+  }
+  const careers=dqMgrList.map(m=>{ const ss=dqSeasonList.filter(s=>dqBy.has(m.name+"|"+s)); return {name:m.name, n:ss.length, ov:dqAgg(ss.flatMap(s=>dqBy.get(m.name+"|"+s))).overall}; }).filter(x=>x.n>=5).sort((a,b)=>b.ov-a.ov);
+  if(careers.length) stats.push([careers[0].name+" "+dqFmtOv(careers[0].ov), "best career Overall ("+careers[0].n+" drafts; 5+ drafts to qualify)"]);
+  const drafts=[...dqBy.entries()].filter(([,l])=>l.length>=10).map(([key,l])=>({key,ov:dqAgg(l).overall})).sort((a,b)=>b.ov-a.ov);
+  if(drafts.length){ const [m,s]=drafts[0].key.split("|"); stats.push([m+" "+s+" "+dqFmtOv(drafts[0].ov), "best single draft (10+ graded picks)"]); }
+  const r=dqCorr(dqSeasonRows.map(x=>x.overall), dqSeasonRows.map(x=>x.pf));
+  if(r!=null) stats.push(["r = "+r.toFixed(2), "draft Overall vs that year’s points scored (PF+), "+dqSeasonRows.length+" manager-seasons"]);
+  const px=[],py=[];
+  dqMgrList.forEach(m=>dqSeasonList.forEach(s=>{
+    const a=dqBy.get(m.name+"|"+s), b=dqBy.get(m.name+"|"+(s+1));
+    if(a&&b&&a.length>=DQ_MIN_PICKS&&b.length>=DQ_MIN_PICKS){ px.push(dqAgg(a).overall); py.push(dqAgg(b).overall); }
+  }));
+  const rp=dqCorr(px,py);
+  if(rp!=null) stats.push(["r = "+rp.toFixed(2), "carry-over: a manager’s Overall one year vs the next ("+px.length+" pairs)"]);
+  stats.forEach(([big,small])=>host.appendChild(el("div",{},[el("b",{text:big}),el("span",{text:small})])));
+  $("dq-hero-lede").textContent="Every number on this tab comes from the same pick grades as the table below. Overall is the average grade score of a manager’s graded picks (Banger +2, Hit +1, Meh 0, Bust −1, Fail −2); r is a correlation (0 = unrelated, 1 = lockstep).";
+  return {r, rp};
+}
+/* ---- over time ---- */
+function dqSeriesFor(name, w){          // [{x, agg, label}] for one manager (or the whole league when name is null); null agg where there is no draft that year
+  return dqSeasonList.map(x=>{
+    if(name && !dqBy.has(name+"|"+x)) return {x, agg:null};
+    const ss=dqSeasonList.filter(s=>s<=x && s>x-w);
+    const list=name ? ss.flatMap(s=>dqBy.get(name+"|"+s)||[]) : ss.flatMap(s=>dqMgrList.flatMap(m=>dqBy.get(m.name+"|"+s)||[]));
+    const label = w>1&&ss.length>1 ? ss[0]+"–"+ss[ss.length-1] : String(x);
+    return {x, agg:list.length?dqAgg(list):null, label};
+  });
+}
+function dqMetricVal(agg, metric){ if(!agg) return null; return metric==="overall" ? agg.overall : metric==="hit" ? agg.hit*100 : agg.miss*100; }
+function dqMetricText(agg, metric){ return metric==="overall" ? "Overall "+dqFmtOv(agg.overall) : metric==="hit" ? "Hit Rate "+dqPct(agg.hit) : "Miss Rate "+dqPct(agg.miss); }
+function dqRenderChips(){
+  const host=$("dq-chips"); host.textContent="";
+  const full=dqSel.length>=DQ_MAX_SEL;
+  dqMgrList.forEach(m=>{
+    const on=dqSel.includes(m.name), slot=dqSlotOf.get(m.name);
+    const dot=el("span",{class:"dot"}); if(on) dot.style.background=DQ_SLOT_COLORS[slot], dot.style.borderColor=DQ_SLOT_COLORS[slot];
+    const b=el("button",{type:"button",class:"chip dq-chip","aria-pressed":on?"true":"false","data-mgr":m.name},[dot,m.name]);
+    if(!on && full) b.disabled=true;
+    b.addEventListener("click",()=>{ dqSelect(m.name,!on); dqRenderChips(); dqTrend(); });
+    host.appendChild(b);
+  });
+}
+function dqPlainLayout(o){
+  o=o||{};
+  return {
+    paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)", font:{family:FONT,color:INK2,size:12.5},
+    margin:Object.assign({l:narrow()?48:64,r:18,t:14,b:narrow()?110:90},o.margin||{}),
+    xaxis:Object.assign({gridcolor:GRID,gridwidth:1,zeroline:false,linecolor:GRID,fixedrange:true,title:{text:"",font:{size:12}}},o.xaxis||{}),
+    yaxis:Object.assign({gridcolor:GRID,gridwidth:1,zeroline:false,linecolor:GRID,fixedrange:true,title:{text:"",font:{size:12}}},o.yaxis||{}),
+    hoverlabel:{bgcolor:"#17181a",bordercolor:"#4a4f57",font:{family:FONT,color:INK,size:13},align:"left"},
+    legend:{orientation:"h",x:0,xanchor:"left",y:o.legendY!=null?o.legendY:-0.2,yanchor:"top",font:{color:INK,size:narrow()?11:12},bgcolor:"rgba(0,0,0,0)"},
+    hovermode:"closest", hoverdistance:o.hoverdistance||24, dragmode:false, shapes:o.shapes||[], annotations:o.annotations||[]
+  };
+}
+function dqTrend(){
+  const metric=$("dq-metric").value, w=+$("dq-smooth").value, xs=dqSeasonList, traces=[];
+  const gradeLine=a=>"🔥 "+a.c.banger+"  ✅ "+a.c.hit+"  😐 "+a.c.meh+"  📉 "+a.c.bust+"  💀 "+a.c.fail;
+  const tip=(who,pt)=>pt.agg?"<b>"+esc(who)+" · "+pt.label+"</b><br>"+dqMetricText(pt.agg,metric)+" · "+pt.agg.n+" graded picks<br>"+gradeLine(pt.agg):"";
+  const tableRows=[];
+  // everyone not highlighted: faint context lines, so a highlighted manager can be read against the whole league
+  dqMgrList.filter(m=>!dqSel.includes(m.name)).forEach(m=>{
+    const ser=dqSeriesFor(m.name,w);
+    if(!ser.some(p=>p.agg)) return;
+    traces.push({type:"scatter",mode:"lines+markers",name:m.name,showlegend:false,x:xs,y:ser.map(p=>dqMetricVal(p.agg,metric)),connectgaps:false,
+      line:{color:"rgba(180,185,193,.26)",width:1.2},marker:{color:"rgba(180,185,193,.26)",size:4},
+      customdata:ser.map(p=>tip(m.name,p)),hovertemplate:"%{customdata}<extra></extra>"});
+    tableRows.push({label:m.name, color:"#8b9199", ser});
+  });
+  dqSel.forEach(name=>{
+    const slot=dqSlotOf.get(name), ser=dqSeriesFor(name,w), col=DQ_SLOT_COLORS[slot];
+    traces.push({type:"scatter",mode:"lines+markers",name:name,x:xs,y:ser.map(p=>dqMetricVal(p.agg,metric)),connectgaps:false,
+      line:{color:col,width:2.6},marker:{symbol:DQ_SYMBOLS[slot],size:9,color:col,line:{color:SURFACE,width:2}},
+      customdata:ser.map(p=>tip(name,p)),hovertemplate:"%{customdata}<extra></extra>"});
+    tableRows.unshift({label:name, color:col, ser});
+  });
+  const lg=dqSeriesFor(null,w);
+  traces.push({type:"scatter",mode:"lines",name:"League average",x:xs,y:lg.map(p=>dqMetricVal(p.agg,metric)),
+    line:{color:INK,width:2.2,dash:"dash"},customdata:lg.map(p=>tip("League average",p)),hovertemplate:"%{customdata}<extra></extra>"});
+  tableRows.unshift({label:"League average", color:INK, dash:"dashed", ser:lg});
+  const lay=baseLayout(xs,{bottomLegend:true,host:"dq-trend",hovermode:"closest"});
+  lay.hoverlabel.align="left"; lay.hoverdistance=24;
+  lay.yaxis=Object.assign(lay.yaxis,{tickprefix:"",tickformat:metric==="overall"?"+.2f":".0f",ticksuffix:metric==="overall"?"":"%",rangemode:metric==="overall"?"normal":"tozero",
+    zeroline:metric==="overall",zerolinecolor:"#8b9199",zerolinewidth:1.5,
+    title:{text:metric==="overall"?"Overall (average grade score)":metric==="hit"?"Hit Rate":"Miss Rate",font:{size:12}}});
+  lay.margin.l=narrow()?58:70;
+  if(metric==="overall") lay.yaxis.tickformat="+.2f";
+  Plotly.react("dq-trend",traces,lay,CFG);
+  // table view
+  const fmtCell=p=>p.agg?(metric==="overall"?dqFmtOv(p.agg.overall):metric==="hit"?dqPct(p.agg.hit):dqPct(p.agg.miss)):"–";
+  const host=$("dq-trend-table"); host.textContent="";
+  const t=el("table"), hr=el("tr"), tb=el("tbody");
+  hr.appendChild(el("th",{text:""})); xs.forEach(x=>hr.appendChild(el("th",{text:String(x)})));
+  tableRows.forEach(r=>{
+    const tr=el("tr"); tr.appendChild(el("td",{},[el("span",{class:"sw",style:"border-color:"+r.color+";border-top-style:"+(r.dash||"solid")}),r.label]));
+    r.ser.forEach(p=>tr.appendChild(el("td",{text:fmtCell(p)})));
+    tb.appendChild(tr);
+  });
+  t.appendChild(el("thead",{},[hr])); t.appendChild(tb); host.appendChild(t);
+  $("dq-trend-lede").textContent="One line per manager: how good that manager’s auction drafts were, season by season. Click names to highlight up to six (the rest stay as faint context); the dashed white line is the whole league. Hover a point for the grade counts behind it. Drafts with no season-finish ranks yet (the current season) aren’t graded, so the lines end at "+xs[xs.length-1]+(w>1?". With 3-season rolling, each point pools that manager’s picks from the three most recent drafts, which smooths out a single lucky or unlucky year.":". Single drafts are noisy: 15 or so graded picks per manager-season, so try the 3-season rolling view for the underlying trend.");
+}
+/* ---- does a good draft win? ---- */
+function dqWin(){
+  const rows=dqSeasonRows;
+  if(!rows.length){ $("dq-win-lede").textContent="No seasons with both graded picks and standings yet."; return; }
+  const xs=rows.map(r=>r.overall), ys=rows.map(r=>r.pf), r=dqCorr(xs,ys), fit=dqOLS(xs,ys);
+  const champs=rows.filter(x=>x.place===1), rest=rows.filter(x=>x.place!==1);
+  const mk=(list,name,col,size,sym)=>({type:"scatter",mode:"markers",name:name,x:list.map(x=>x.overall),y:list.map(x=>x.pf),
+    marker:{color:col,size:size,symbol:sym,opacity:.9,line:{color:SURFACE,width:1.5}},
+    customdata:list.map(x=>"<b>"+esc(x.m)+" · "+x.s+"</b><br>Draft Overall "+dqFmtOv(x.overall)+" ("+x.n+" picks)<br>PF+ "+Math.round(x.pf)+" · finished "+ORD(x.rank)+" of "+x.teams+(x.place===1?" · Champion":"")),
+    hovertemplate:"%{customdata}<extra></extra>"});
+  const x0=Math.min(...xs), x1=Math.max(...xs);
+  const traces=[mk(rest,"Other seasons",DQ_SLOT_COLORS[0],9,"circle"), mk(champs,"Champion",GOLD,13,"star"),
+    {type:"scatter",mode:"lines",name:"Best-fit line",x:[x0,x1],y:[fit.a+fit.b*x0,fit.a+fit.b*x1],line:{color:INK2,width:2,dash:"dash"},hoverinfo:"skip"}];
+  const lay=dqPlainLayout({xaxis:{title:{text:"Draft Overall (average grade score) → better drafts to the right",font:{size:12}},tickformat:"+.1f",zeroline:true,zerolinecolor:"#6a6f78"},
+    yaxis:{title:{text:"PF+ (points scored; 100 = league average)",font:{size:12}},zeroline:false},
+    shapes:[{type:"line",xref:"paper",x0:0,x1:1,yref:"y",y0:100,y1:100,line:{color:"#6a6f78",width:1,dash:"dot"}}]});
+  Plotly.react("dq-win",traces,lay,CFG);
+  const r2=r*r;
+  $("dq-win-lede").textContent="One dot per manager-season ("+rows.length+" with 6+ graded picks and standings): how good that draft was against how many points the team went on to score. The correlation is r = "+r.toFixed(2)+", so the draft explains about "+Math.round(r2*100)+"% of the differences in scoring; the best-fit line says each +0.10 of Overall goes with about "+(fit.b*0.1).toFixed(1)+" PF+ points. Drafting well clearly helps, and most of the rest is injuries, waivers, trades, lineups and luck. Gold stars are league champions.";
+  // residuals: who scores more (or less) than their draft alone would predict
+  const by=new Map(); rows.forEach(x=>{ if(!by.has(x.m)) by.set(x.m,[]); by.get(x.m).push(x); });
+  const list=[...by.entries()].filter(([,l])=>l.length>=3).map(([m,l])=>({m, n:l.length, ov:dqMean(l.map(x=>x.overall)), pf:dqMean(l.map(x=>x.pf)), res:dqMean(l.map(x=>x.pf-(fit.a+fit.b*x.overall)))})).sort((a,b)=>b.res-a.res);
+  const t=$("dq-over-table"); t.textContent="";
+  t.appendChild(el("thead",{},[el("tr",{},["Manager","Seasons","Draft Overall","Avg PF+","PF+ vs. what the draft predicts"].map((h,i)=>el("th",{text:h,style:i===0?"text-align:left":""})))]));
+  const tb=el("tbody"), maxA=Math.max(1,...list.map(x=>Math.abs(x.res)));
+  list.forEach(x=>{
+    const tr=el("tr");
+    tr.appendChild(el("td",{text:x.m,style:"font-weight:600"}));
+    tr.appendChild(el("td",{text:String(x.n)}));
+    tr.appendChild(el("td",{text:dqFmtOv(x.ov)}));
+    tr.appendChild(el("td",{text:x.pf.toFixed(0)}));
+    const a=Math.min(1,Math.abs(x.res)/maxA)*0.38, rgb=x.res>=0?PQ_GOOD_RGB:PQ_BAD_RGB;
+    tr.appendChild(el("td",{text:(x.res>=0?"+":"−")+Math.abs(x.res).toFixed(1),style:"font-weight:700;background:rgba("+rgb.join(",")+","+a.toFixed(3)+")"}));
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  $("dq-over-lede").textContent="The gap between the PF+ each manager actually scored and the PF+ the best-fit line predicts for their draft score, averaged over their seasons (managers with 3+ qualifying seasons). Green = more points than the draft alone explains, which points to in-season management (waivers, trades, lineups) or luck; red = fewer. With only 3 to 13 seasons each, treat it as a lean rather than a verdict.";
+}
+/* ---- where the money went ---- */
+function dqMoney(){
+  const GR=["banger","hit","meh","bust","fail","injury"], per=new Map();
+  picks.forEach(r=>{
+    const k=pickGradeKey(r); if(!k) return;
+    if(!per.has(r.manager)) per.set(r.manager,{$:{banger:0,hit:0,meh:0,bust:0,fail:0,injury:0},tot:0,n:0,ss:new Set(),sc:0,scW:0,scDen:0});
+    const o=per.get(r.manager); o.$[k]+=r.price; o.tot+=r.price; o.n++; o.ss.add(r.season);
+    if(k!=="injury"){ o.scW+=PQ_SCORE[k]*r.price; o.scDen+=r.price; }
+  });
+  const rows=[...per.entries()].map(([m,o])=>({m, ...o, wsc:o.scDen?o.scW/o.scDen:0, waste:(o.$.bust+o.$.fail)/o.ss.size})).sort((a,b)=>b.wsc-a.wsc);
+  const traces=GR.map(g=>({type:"bar",orientation:"h",name:GRADE_META[g].icon+" "+GRADE_META[g].label,y:rows.map(r=>r.m+" ("+r.ss.size+")"),x:rows.map(r=>r.$[g]/r.tot*100),
+    marker:{color:GRADE_COLOR[g],line:{color:SURFACE,width:2}},
+    customdata:rows.map(r=>"<b>"+esc(r.m)+"</b><br>"+GRADE_META[g].icon+" "+GRADE_META[g].label+": "+fmt$(r.$[g])+" ("+Math.round(r.$[g]/r.tot*100)+"% of "+fmt$(r.tot)+" spent on graded picks)"),
+    hovertemplate:"%{customdata}<extra></extra>"}));
+  const hostEl=$("dq-money"); hostEl.style.height=Math.max(260,rows.length*30+110)+"px";
+  const lay=dqPlainLayout({margin:{l:narrow()?66:84,r:16,t:10,b:narrow()?90:70},legendY:-0.12,
+    xaxis:{range:[0,100],ticksuffix:"%",title:{text:"Share of dollars spent (graded picks)",font:{size:12}}},
+    yaxis:{autorange:"reversed",title:{text:""},gridcolor:"rgba(0,0,0,0)",automargin:true}});
+  lay.barmode="stack"; lay.bargap=0.28; lay.hovermode="closest"; lay.legend.traceorder="normal";
+  Plotly.react("dq-money",traces,lay,CFG);
+  const host=$("dq-money-table"); host.textContent="";
+  const t=el("table"), hr=el("tr"), tb=el("tbody");
+  ["Manager","Graded $",...GR.map(g=>GRADE_META[g].icon+" $ share"),"Bust+Fail $ per draft","$-weighted score"].forEach((h,i)=>hr.appendChild(el("th",{text:h,style:i===0?"text-align:left":""})));
+  rows.forEach(r=>{
+    const tr=el("tr"); tr.appendChild(el("td",{text:r.m}));
+    tr.appendChild(el("td",{text:fmt$(r.tot)}));
+    GR.forEach(g=>tr.appendChild(el("td",{text:Math.round(r.$[g]/r.tot*100)+"%"})));
+    tr.appendChild(el("td",{text:fmt$(r.waste)}));
+    tr.appendChild(el("td",{text:dqFmtOv(r.wsc)}));
+    tb.appendChild(tr);
+  });
+  t.appendChild(el("thead",{},[hr])); t.appendChild(tb); host.appendChild(t);
+  $("dq-money-lede").textContent="A pick’s grade says whether it paid off; this says how much of each manager’s auction budget sat in each grade. Every manager’s bar is 100% of the dollars they spent on graded picks (kickers, defenses and picks without a finish rank left out; 🩼 Injury dollars shown separately because they’re bad luck, not bad drafting). Managers are sorted by dollar-weighted score (the Overall formula, but a $60 pick counts for 60 times a $1 pick), so a manager can have a middling Overall and still be the one who spends their money best. The number in brackets is how many drafts that manager has been graded in, so the short-tenure managers at either end deserve a grain of salt. The table has the dollars wasted on Busts and Fails per draft.";
+}
+/* ---- fingerprint: manager x position / price ---- */
+const DQ_PRICE_BUCKETS=[["$1–4",1,4],["$5–14",5,14],["$15–29",15,29],["$30+",30,9999]];
+function dqFingerprint(){
+  const by=$("dq-fp-by").value;
+  const cols = by==="pos" ? PQ_POS.map(p=>({label:p, test:r=>r.position===p})) : DQ_PRICE_BUCKETS.map(b=>({label:b[0], test:r=>r.price>=b[1]&&r.price<=b[2]}));
+  const all=dqMgrList.map(m=>({m:m.name, list:dqSeasonList.flatMap(s=>dqBy.get(m.name+"|"+s)||[])}));
+  const lgAll=all.flatMap(x=>x.list);
+  const t=$("dq-fp-table"); t.textContent="";
+  t.appendChild(el("thead",{},[el("tr",{},["Manager",...cols.map(c=>c.label),"All picks"].map((h,i)=>el("th",{text:h,style:i===0?"text-align:left":""})))]));
+  const tb=el("tbody");
+  const cell=(title,list)=>{
+    const a=dqAgg(list), td=el("td",{class:"c"});
+    if(!a.n){ td.textContent="·"; td.style.color="var(--ink3)"; return td; }
+    const v=a.overall, al=Math.min(1,Math.abs(v)/0.5)*0.38, rgb=v>=0?PQ_GOOD_RGB:PQ_BAD_RGB;
+    td.style.background="rgba("+rgb.join(",")+","+al.toFixed(3)+")";
+    if(a.n<6) td.style.opacity=".55";
+    td.appendChild(el("div",{class:"val"},[dqFmtOv(v),el("span",{class:"n",text:String(a.n)})]));
+    const lines=["🔥 "+a.c.banger+"  ✅ "+a.c.hit+"  😐 "+a.c.meh+"  📉 "+a.c.bust+"  💀 "+a.c.fail];
+    if(a.n<=30) [...list].sort((x,y)=>x.r.season-y.r.season||y.r.price-x.r.price).forEach(g=>lines.push([String(g.r.season),GRADE_META[g.k].icon+" "+g.r.player+" ("+g.r.position+")",fmt$(g.r.price)]));
+    td._tip={title:title+" · Overall "+dqFmtOv(v)+" · "+a.n+" pick"+(a.n===1?"":"s"), lines};
+    td.addEventListener("mouseenter",()=>showTip(td)); td.addEventListener("mouseleave",hideTip);
+    td.addEventListener("click",e=>{ e.stopPropagation(); showTip(td); });
+    return td;
+  };
+  all.forEach(x=>{
+    const tr=el("tr"); tr.appendChild(el("td",{text:x.m,style:"font-weight:600"}));
+    cols.forEach(c=>tr.appendChild(cell(x.m+" · "+c.label,x.list.filter(g=>c.test(g.r)))));
+    const last=cell(x.m+" · all picks",x.list); last.style.borderLeft="2px solid #4a4f57"; tr.appendChild(last);
+    tb.appendChild(tr);
+  });
+  const lr=el("tr",{class:"lgrow"}); lr.appendChild(el("td",{text:"League",style:"font-weight:600"}));
+  cols.forEach(c=>lr.appendChild(cell("League · "+c.label,lgAll.filter(g=>c.test(g.r)))));
+  const ll=cell("League · all picks",lgAll); ll.style.borderLeft="2px solid #4a4f57"; lr.appendChild(ll);
+  tb.appendChild(lr);
+  t.appendChild(tb);
+  $("dq-fp-lede").textContent = by==="pos"
+    ? "Where each manager’s drafting skill actually lives. Same Overall score as above, split by position: a manager can be sharp at finding running backs and consistently lose money on tight ends."
+    : "Stars and scrubs: the same Overall score split by what the pick cost. The expensive tiers are graded against a higher bar, so compare a column to the League row at the bottom rather than to other columns. Some managers cash in on $1 lottery tickets; others are better at paying up for the right star.";
+}
+/* ---- hall of fame / shame ---- */
+function dqHof(){
+  const host=$("dq-hof"); host.textContent="";
+  const drafts=[...dqBy.entries()].filter(([,l])=>l.length>=10).map(([key,l])=>{ const [m,s]=key.split("|"); const a=dqAgg(l); return {m,s:+s,a}; });
+  const gradedAll=[]; picks.forEach(r=>{ const k=pickGradeKey(r); if(k) gradedAll.push({r,k}); });
+  const box=(title,sub,heads,rows)=>{
+    const t=el("table",{class:"dq-tbl"}); t.appendChild(el("thead",{},[el("tr",{},heads.map((h,i)=>el("th",{text:h,style:i<2?"text-align:left":""})))]));
+    const tb=el("tbody"); rows.forEach(r=>tb.appendChild(el("tr",{},r.map((c,i)=>el("td",{text:c,style:i<2?"text-align:left"+(i===0?";font-weight:600":""):""}))))); t.appendChild(tb);
+    host.appendChild(el("div",{class:"dq-hofbox"},[el("h3",{class:"dq-h3",text:title}),el("p",{class:"lede",text:sub}),el("div",{class:"tablewrap"},[t])]));
+  };
+  const N=8;
+  const dr=d=>[d.m,String(d.s),dqFmtOv(d.a.overall),d.a.n+" picks"];
+  box("Best drafts ever","Highest Overall in one draft (10+ graded picks).",["Manager","Year","Overall","Picks"],[...drafts].sort((a,b)=>b.a.overall-a.a.overall).slice(0,N).map(dr));
+  box("Worst drafts ever","Lowest Overall in one draft (10+ graded picks).",["Manager","Year","Overall","Picks"],[...drafts].sort((a,b)=>a.a.overall-b.a.overall).slice(0,N).map(dr));
+  box("Most Bangers in a draft","The most 🔥 picks a manager landed in a single auction.",["Manager","Year","🔥","Of picks"],[...drafts].sort((a,b)=>b.a.c.banger-a.a.c.banger||b.a.overall-a.a.overall).slice(0,N).map(d=>[d.m,String(d.s),String(d.a.c.banger),String(d.a.n)]));
+  box("Most dollars lost to Busts & Fails","Auction dollars spent on 📉 and 💀 picks in one draft, out of the $200 budget.",["Manager","Year","$ lost","Picks"],
+    [...drafts].map(d=>{ const l=dqBy.get(d.m+"|"+d.s).filter(g=>g.k==="bust"||g.k==="fail"); return {d, lost:l.reduce((a,g)=>a+g.r.price,0), n:l.length}; }).sort((a,b)=>b.lost-a.lost).slice(0,N).map(x=>[x.d.m,String(x.d.s),fmt$(x.lost),String(x.n)]));
+  const pr=g=>PRICE_RANK.get(g.r);
+  const steals=gradedAll.filter(g=>g.k==="banger"&&pr(g)).map(g=>({g, jump:pr(g).rank-g.r.pos_rank})).sort((a,b)=>b.jump-a.jump||a.g.r.price-b.g.r.price).slice(0,10);
+  box("Biggest steals","Bangers with the biggest gap between where the pick was bought (price rank at his position) and where he finished.",["Player","Manager","Year","Price","Bought → Finished"],
+    steals.map(x=>[x.g.r.player+" ("+x.g.r.position+")",x.g.r.manager,String(x.g.r.season),fmt$(x.g.r.price),x.g.r.position+pr(x.g).rank+" → "+x.g.r.position+x.g.r.pos_rank]));
+  const busts=gradedAll.filter(g=>(g.k==="fail"||g.k==="bust")&&pr(g)).sort((a,b)=>b.r.price-a.r.price||b.r.pos_rank-a.r.pos_rank).slice(0,10);
+  box("Costliest busts","The most expensive picks that graded as a Bust or Fail (injuries are in their own list below).",["Player","Manager","Year","Price","Bought → Finished"],
+    busts.map(g=>[g.r.player+" ("+g.r.position+")",g.r.manager,String(g.r.season),fmt$(g.r.price),g.r.position+pr(g).rank+" → "+g.r.position+g.r.pos_rank]));
+  const inj=gradedAll.filter(g=>g.k==="injury").sort((a,b)=>b.r.price-a.r.price||a.r.games-b.r.games).slice(0,10);
+  box("Costliest injuries","The most expensive picks that played 7 or fewer games. Bad luck, not counted against the manager.",["Player","Manager","Year","Price","Games"],
+    inj.map(g=>[g.r.player+" ("+g.r.position+")",g.r.manager,String(g.r.season),fmt$(g.r.price),String(g.r.games)]));
+}
+function drawDraft(){
+  dqInit();
+  dqHero();
+  if(!$("dq-chips").children.length){ dqRenderChips(); }
+  dqTrend();
+  dqWin();
+  dqMoney();
+  dqFingerprint();
+  dqHof();
+  const nh=$("notes-draft"); nh.textContent="";
+  ["Every analysis on this tab uses only graded picks: kickers, defenses, picks without a season-finish rank, and \ud83e\ude7c Injury picks are left out (except where a section says otherwise). A manager\u2019s draft Overall for one year needs at least "+DQ_MIN_PICKS+" graded picks to count as a data point in the correlation analyses.",
+   "These are correlations from "+dqSeasonRows.length+" manager-seasons, not proof of cause: a manager who drafts well may also be one who works the waiver wire well. 2012 has no standings, and the current season is ungraded until its NFL season is played."]
+   .forEach(n=>nh.appendChild(el("p",{text:n})));
+}
+$("dq-metric").addEventListener("change",()=>dqTrend());
+$("dq-smooth").addEventListener("change",()=>dqTrend());
+$("dq-fp-by").addEventListener("change",()=>dqFingerprint());
+$("dq-chipreset").addEventListener("click",()=>{ dqDefaultSel(); dqRenderChips(); dqTrend(); });
+
 /* ---------- MANAGERS view ---------- */
 const mgrSel=$("mgr-select");
 (function fillMgr(){
@@ -1518,7 +1935,7 @@ function drawManager(name){
   const extra=[];
   if(ss.length!==span(ss).length) extra.push(m.name+" sat out some seasons; the gaps in the charts are real years without an auction.");
   extra.push("Chart axes start at $0 and stop at $140 (position) and $80 (depth) unless a manager's spending goes higher.");
-  extra.push("Hovering a point on the depth chart, or a cell in its table below, shows the same tooltip as everywhere else on this site: where that price ranked among every pick at the position that draft, how the player finished the real NFL season, and how this manager's team did that year. The icon next to the player's name grades the pick; see the Drafts tab for what each icon means.");
+  extra.push("Hovering a point on the depth chart, or a cell in its table below, shows the same tooltip as everywhere else on this site: where that price ranked among every pick at the position that draft, how the player finished the real NFL season, and how this manager's team did that year. The icon next to the player's name grades the pick; see the Draft Quality tab for what each icon means.");
   if(ss.some(x=>standingFor(x,m.name))){
     extra.push("The label above each year is that team's regular-season finish by Rumbles (each week: 1 point per team outscored, plus 9 for winning the matchup; the league's official standings since 2022, ranked the same way for earlier seasons). A gold, silver or bronze medal above a label means the team finished the playoffs as champion, 2nd or 3rd; a 💩 marks that year's Sacko (last place after the losers bracket). Hover a label (or its medal) for the record, PF+ and playoff finish. Standings start in 2013, and a season appears once its regular season is over.");
     extra.push("PF+ (points-for plus) works like baseball's OPS+. Take the average regular-season points total of all teams in that season and call it 100; a manager's PF+ is their own points total measured against it: PF+ = their points ÷ that season's league average × 100. A manager who scored 2,200 in a season when the average team scored 2,000 has a PF+ of 110 (10% more scoring than the average team); 90 would be 10% less. Because each season is measured against its own average, PF+ compares fairly across years even when scoring or the number of games changed.");
@@ -1808,7 +2225,7 @@ function drawPlayer(key){
   lay.yaxis.range=[0,Math.max(...p.rows.map(r=>r.price))*1.25+2];
   Plotly.newPlot("pl-chart",[trace],lay,CFG);
   footnotes($("notes-players"),["Player identity: Sleeper player id for 2021 on. Older spreadsheet names were matched to real players by name and era (misspellings, nicknames and abbreviations included); a small number could not be matched and appear under their spreadsheet name.",
-    "Hovering a point also shows where that price ranked among every pick at the position in that draft, how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules), and how the buying manager's team did that season, when both are known. The NFL-season rank isn't available yet for 2012–2020 picks, or for the handful of players missing from that year's stat feed (usually because they didn't play). The icon next to the player's name grades the pick; see the Drafts tab for what each icon means."]);
+    "Hovering a point also shows where that price ranked among every pick at the position in that draft, how that player finished the real NFL season (his rank among every NFL player at his position that year, under our own scoring rules), and how the buying manager's team did that season, when both are known. The NFL-season rank isn't available yet for 2012–2020 picks, or for the handful of players missing from that year's stat feed (usually because they didn't play). The icon next to the player's name grades the pick; see the Draft Quality tab for what each icon means."]);
 }
 
 /* ---------- DRAFTS view ---------- */
@@ -1947,7 +2364,7 @@ function findDrafts(){
 
 
 /* ---------- routing ---------- */
-const views=["league","managers","drafts","players"];
+const views=["league","draft","managers","drafts","players"];
 function show(view){
   views.forEach(v=>{ $("view-"+v).classList.toggle("on",v===view); });
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.view===view)));
@@ -1958,6 +2375,7 @@ function route(){
   show(view);
   const arg=parts[1]?decodeURIComponent(parts.slice(1).join("/")):"";
   if(view==="league") drawLeague();
+  else if(view==="draft") drawDraft();
   else if(view==="managers") drawManager(arg||mgrSel.value||"Ben");
   else if(view==="drafts") drawDrafts(arg);
   else {

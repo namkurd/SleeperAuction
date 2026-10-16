@@ -498,6 +498,49 @@ def sync_season_ranks(offline, refresh):
     season_ranks.main(["--refresh"] if refresh else [])
 
 
+def sync_player_context(offline, refresh):
+    """Bring data/nfl_seasons.csv and data/player_context.csv up to date (see build_nfl_seasons.py and
+    build_player_context.py). The Draft Quality tab's overrated/underrated analysis is built on them, so a
+    failure here (an outside data source being down) must never stop the daily update: it just keeps
+    whatever was cached last time."""
+    if offline:
+        return
+    print("Player context (age, team changes, last season, offensive line ...):")
+    try:
+        import build_nfl_seasons as nfl_seasons
+        import build_player_context as player_context
+        args = ["--refresh"] if refresh else []
+        nfl_seasons.main(args)
+        player_context.main(args)
+    except Exception as e:  # noqa: BLE001
+        print(f"  WARNING: could not update player context ({e}); keeping the cached data/player_context.csv")
+
+
+CONTEXT_COLS = ["age", "rookie", "exp", "new_team", "prev_games", "prev_rank", "team_prev_rank", "new_qb", "new_hc",
+                "ol_prev_rank", "nfl_tm"]
+
+
+def load_player_context():
+    """(season, player_key) -> list of the CONTEXT_COLS values, numbers where numeric, None where blank."""
+    path = ROOT / "data" / "player_context.csv"
+    out = {}
+    if not path.exists():
+        return out
+    for r in read_csv(path):
+        vals = []
+        for c in CONTEXT_COLS:
+            v = r.get("team" if c == "nfl_tm" else c, "")
+            if v == "" or v is None:
+                vals.append(None)
+            elif c == "nfl_tm":
+                vals.append(v)
+            else:
+                f = float(v)
+                vals.append(int(f) if f == int(f) and c != "age" else f)
+        out[(int(r["season"]), r["player_key"])] = vals
+    return out
+
+
 def add_season_ranks(canon):
     """Attach each pick's real-NFL-season finish: points, rank among every NFL player at his position
     that year, and how many games he played that season (data/season_ranks.csv, built by
@@ -624,7 +667,9 @@ def build_site_json(canon, sources_note, boards, league, standings):
     spent = {str(s): sum(r["price"] for r in canon if r["season"] == s) for s in seasons}
     source = {str(s): next(r["source"] for r in canon if r["season"] == s) for s in seasons}
     cols = ["season", "manager", "player", "player_key", "position", "price", "depth", "pick_no", "row", "team", "college",
-            "pts", "pos_rank", "pos_n", "games"]
+            "pts", "pos_rank", "pos_n", "games"] + CONTEXT_COLS
+    ctx = load_player_context()
+    blank = [None] * len(CONTEXT_COLS)
     return {
         "generated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "latest_season": latest, "seasons": seasons, "teams": teams, "spent": spent,
@@ -639,6 +684,7 @@ def build_site_json(canon, sources_note, boards, league, standings):
                    int(r["pos_rank"]) if r["pos_rank"] != "" else None,
                    int(r["pos_n"]) if r["pos_n"] != "" else None,
                    int(r["games"]) if r["games"] != "" else None]
+                  + ctx.get((r["season"], r["player_key"]), blank)
                   for r in canon],
     }
 
@@ -680,6 +726,7 @@ def main(argv):
     add_team_college(canon, sync_player_meta(canon, offline))
     write_csv(ROOT / "data" / "picks.csv", canon, CANON_COLS)   # season_ranks needs this on disk first
     sync_season_ranks(offline, refresh)
+    sync_player_context(offline, refresh)
     add_season_ranks(canon)
     slots, order = add_slots(canon), add_order(canon)
     boards = {str(s): {"slots": slots[s], "order": order[s]} for s in sorted(slots)}

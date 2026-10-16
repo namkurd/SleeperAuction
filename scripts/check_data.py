@@ -63,6 +63,20 @@ for r in rows:
     elif rank != "" and not (1 <= int(rank) <= int(n)):
         problems.append(f"{r['season']} {r['player']}: pos_rank {rank} is outside 1..{n}")
 
+# player context (age, team changes, last season ...): optional file, but when present its values must be sane
+ctx_path = ROOT / "data" / "player_context.csv"
+if ctx_path.exists():
+    import csv as _csv
+    with open(ctx_path, newline="", encoding="utf-8") as _f:
+        for c in _csv.DictReader(_f):
+            tag = f"{c['season']} {c['player_key']}"
+            for col, lo, hi in (("age", 17, 50), ("prev_games", 0, 18), ("team_prev_rank", 1, 32), ("ol_prev_rank", 1, 32)):
+                if c.get(col, "") != "" and not (lo <= float(c[col]) <= hi):
+                    problems.append(f"player_context {tag}: {col} {c[col]} is outside {lo}..{hi}")
+            for col in ("rookie", "new_team", "new_qb", "new_hc"):
+                if c.get(col, "") not in ("", "0", "1"):
+                    problems.append(f"player_context {tag}: {col} should be 0, 1 or blank, got {c[col]!r}")
+
 if problems:
     print("DATA CHECK FAILED:")
     print("\n".join(" - " + p for p in problems))

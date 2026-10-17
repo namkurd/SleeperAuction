@@ -58,7 +58,6 @@ tbody tr:hover td:first-child{background:#33373d}
 .hero{display:flex;gap:26px;flex-wrap:wrap;margin:2px 0 6px}
 .hero div{min-width:110px}
 .hero b{display:block;font-size:24px;font-weight:700}
-#dq-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px 26px}
 .hero span{color:var(--ink3);font-size:12.5px}
 footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font-size:12.5px}
 .err{background:#4a2326;border:1px solid #7a3338;border-radius:10px;padding:14px 16px;margin:20px 24px}
@@ -334,11 +333,6 @@ html,body{max-width:100%}
   </section>
 
   <section class="view" id="view-draft">
-    <div class="card" id="dq-hero-card">
-      <h2>Draft quality at a glance</h2>
-      <p class="lede" id="dq-hero-lede"></p>
-      <div class="hero" id="dq-hero"></div>
-    </div>
     <div class="card" id="dq-trend-card">
       <h2>Draft quality over time</h2>
       <p class="lede" id="dq-trend-lede"></p>
@@ -1680,38 +1674,6 @@ function dqSelect(name, on){
     dqSel.push(name); dqSlotOf.set(name,slot);
   } else if(!on && i>=0){ dqSel.splice(i,1); dqSlotOf.delete(name); }
 }
-/* ---- headline numbers ---- */
-function dqHero(){
-  const host=$("dq-hero"); host.textContent="";
-  const perSeason=dqSeasonList.map(s=>{
-    const vals=dqMgrList.map(m=>dqBy.get(m.name+"|"+s)).filter(l=>l&&l.length>=DQ_MIN_PICKS).map(l=>dqAgg(l).overall);
-    const all=dqMgrList.flatMap(m=>dqBy.get(m.name+"|"+s)||[]);
-    return {s, avg:dqAgg(all).overall, sd:vals.length>1?Math.sqrt(dqMean(vals.map(v=>(v-dqMean(vals))**2))):null};
-  });
-  const k=Math.min(5,Math.floor(perSeason.length/2)), early=perSeason.slice(0,k), late=perSeason.slice(-k);
-  const stats=[];
-  if(k>=2){
-    stats.push([dqFmtOv(dqMean(early.map(x=>x.avg)))+" → "+dqFmtOv(dqMean(late.map(x=>x.avg))), "league-wide average Overall, "+early[0].s+"–"+early[k-1].s+" → "+late[0].s+"–"+late[k-1].s]);
-    const e=early.filter(x=>x.sd!=null), l=late.filter(x=>x.sd!=null);
-    if(e.length&&l.length) stats.push([dqMean(e.map(x=>x.sd)).toFixed(2)+" → "+dqMean(l.map(x=>x.sd)).toFixed(2), "gap between managers (spread of Overall) over the same spans"]);
-  }
-  const careers=dqMgrList.map(m=>{ const ss=dqSeasonList.filter(s=>dqBy.has(m.name+"|"+s)); return {name:m.name, n:ss.length, ov:dqAgg(ss.flatMap(s=>dqBy.get(m.name+"|"+s))).overall}; }).filter(x=>x.n>=5).sort((a,b)=>b.ov-a.ov);
-  if(careers.length) stats.push([careers[0].name+" "+dqFmtOv(careers[0].ov), "best career Overall ("+careers[0].n+" drafts; 5+ drafts to qualify)"]);
-  const drafts=[...dqBy.entries()].filter(([,l])=>l.length>=10).map(([key,l])=>({key,ov:dqAgg(l).overall})).sort((a,b)=>b.ov-a.ov);
-  if(drafts.length){ const [m,s]=drafts[0].key.split("|"); stats.push([m+" "+s+" "+dqFmtOv(drafts[0].ov), "best single draft (10+ graded picks)"]); }
-  const r=dqCorr(dqSeasonRows.map(x=>x.overall), dqSeasonRows.map(x=>x.pf));
-  if(r!=null) stats.push(["r = "+r.toFixed(2), "draft Overall vs that year’s points scored (PF+), "+dqSeasonRows.length+" manager-seasons"]);
-  const px=[],py=[];
-  dqMgrList.forEach(m=>dqSeasonList.forEach(s=>{
-    const a=dqBy.get(m.name+"|"+s), b=dqBy.get(m.name+"|"+(s+1));
-    if(a&&b&&a.length>=DQ_MIN_PICKS&&b.length>=DQ_MIN_PICKS){ px.push(dqAgg(a).overall); py.push(dqAgg(b).overall); }
-  }));
-  const rp=dqCorr(px,py);
-  if(rp!=null) stats.push(["r = "+rp.toFixed(2), "carry-over: a manager’s Overall one year vs the next ("+px.length+" pairs)"]);
-  stats.forEach(([big,small])=>host.appendChild(el("div",{},[el("b",{text:big}),el("span",{text:small})])));
-  $("dq-hero-lede").textContent="Every number on this tab comes from the same pick grades as the table below. Overall is the average grade score of a manager’s graded picks (Banger +2, Hit +1, Meh 0, Bust −1, Fail −2); r is a correlation (0 = unrelated, 1 = lockstep).";
-  return {r, rp};
-}
 /* ---- over time ---- */
 function dqSeriesFor(name, w){          // [{x, agg, label}] for one manager (or the whole league when name is null); null agg where there is no draft that year
   return dqSeasonList.map(x=>{
@@ -2116,7 +2078,6 @@ function dqHof(){
 }
 function drawDraft(){
   dqInit();
-  dqHero();
   if(!$("dq-chips").children.length){ dqRenderChips(); }
   dqTrend();
   dqWin();

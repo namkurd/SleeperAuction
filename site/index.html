@@ -342,10 +342,6 @@ html,body{max-width:100%}
           <option value="hit">Hit Rate (Banger + Hit)</option>
           <option value="miss">Miss Rate (Bust + Fail)</option>
         </select></label>
-        <label>Smoothing <select id="dq-smooth" aria-label="Smoothing">
-          <option value="1">Each season on its own</option>
-          <option value="3">3-season rolling</option>
-        </select></label>
       </div>
       <div class="dq-chipbar"><span class="dq-chiplabel">Highlight up to 6 managers:</span><div class="dq-chips" id="dq-chips" role="group" aria-label="Managers to highlight"></div><button type="button" class="chip" id="dq-chipreset">Reset</button></div>
       <div class="chart" id="dq-trend"></div>
@@ -410,14 +406,14 @@ html,body{max-width:100%}
       <details class="pq-criteria" open>
         <summary>Exactly how a grade is decided</summary>
         <p class="lede">Every graded pick is priced into a <b>tier</b> (A–E: where its price ranked among every pick at that position in that draft) and its result lands in a <b>band</b> (where it finished among every NFL player at that position that season). The grade is just that tier crossed with that band — the pricier the tier, the higher the bar for a good grade.</p>
-        <p class="lede"><b>Every band — including Top 5 and Top 10 — scales to each position's real scarcity.</b> Being the 9th-best player at a position only means something once you know how many were actually startable: 9th of 10 is barely droppable, 9th of 40 is a clear weekly starter. So "good enough to start," "elite," and everything between scale off how many roster spots the position actually fills league-wide — a league with one starting QB slot has only as many startable QBs as it has teams, while two starting RB/WR slots plus a shared flex make far more RB/WR finishes startable. A QB or TE is judged against its own, usually much smaller, startable pool — not a flex position's bigger one — and superflex or extra flex slots widen the pool they apply to:</p>
+        <p class="lede"><b>Every band — including Top 5 and Top 10 — scales to each position's real scarcity.</b> Being the 9th-best player at a position only means something once you know how many were actually startable: 9th of 10 is barely droppable, 9th of 40 is a clear weekly starter. So "good enough to start," "elite," and everything between scale off how many roster spots the position actually fills league-wide — a league with one starting QB slot has only as many startable QBs as it has teams, while two starting RB/WR slots plus a shared flex make far more RB/WR finishes startable (30 in a 10-team league, 36 in a 12-team one). A QB or TE is judged against its own, usually much smaller, startable pool — not a flex position's bigger one. A WR/TE flex slot only widens the WR pool, since a tight end almost never wins it, and superflex only widens the QB pool:</p>
         <div class="tablewrap">
           <table class="pqgridtbl" id="pq-slotstbl">
             <thead><tr><th style="text-align:left">Seasons</th><th>Teams</th><th>QB startable</th><th>RB startable</th><th>WR startable</th><th>TE startable</th></tr></thead>
             <tbody id="pq-slotstbl-body"></tbody>
           </table>
         </div>
-        <p class="lede">Two examples: Jay Cutler, QB14 for $1 in a 10-team, one-QB season — 14th is past that year's 10 startable quarterbacks, so no price makes it better than 😐 Meh. And Rob Gronkowski, TE9 at a roughly median TE price in that same 10-team, one-TE era — 9th is barely inside the 10 startable tight ends, not a difference-maker, so a middling price for it tops out at 😐 Meh rather than the 🔥 Banger a flat "top 10" cutoff used to hand it. The same price and TE9 finish, in a two-TE-slot season with 20 startable, would read very differently. Here's the full tier × band grid (band cutoffs are the "startable" column above, scaled the same way for every column):</p>
+        <p class="lede">Two examples: Jay Cutler, QB14 for $1 in a 10-team, one-QB season — 14th is past that year's 10 startable quarterbacks, so no price makes it better than 😐 Meh. And Rob Gronkowski, TE9 at a roughly median TE price in that same 10-team, one-TE era — 9th is barely inside the 10 startable tight ends, not a difference-maker, so a middling price for it tops out at 😐 Meh rather than the 🔥 Banger a flat "top 10" cutoff used to hand it. And Zach Ertz, TE19 for $1 in 2022: the W/T flex slot that year didn't make TE19 startable, so even at the minimum price it's a 😐 Meh, not a Hit. Pat Freiermuth, TE7 for $1 that same year, is a ✅ Hit — a back-end starter at the minimum price. Here's the full tier × band grid (band cutoffs are the "startable" column above, scaled the same way for every column):</p>
         <div class="tablewrap">
           <table class="pqgridtbl">
             <thead><tr><th style="text-align:left">Price tier</th><th>Top 5</th><th>Top 10</th><th>Great</th><th>Good<br>(startable)</th><th>Replacement</th><th>Deep</th></tr></thead>
@@ -430,7 +426,7 @@ html,body{max-width:100%}
             </tbody>
           </table>
         </div>
-        <p class="lede">A few guardrails on top of the grid: at a middling price (tier C/D), reaching Top 5/Top 10 only earns a Banger when the price was genuinely close to that position's cheapest pick that year (within $5, since the floor is almost always $1) — otherwise it's a Hit, not a Banger (barely-a-bargain shouldn't outrank a true steal). And a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
+        <p class="lede">A few guardrails on top of the grid: at a middling price (tier C/D), reaching Top 5/Top 10 only earns a Banger when it was a real steal: either the price was close to that position's cheapest pick that year (within $5, since the floor is almost always $1), or he finished at least a quarter of the position's drafted pool better than his price rank (Josh Jacobs, $9 and the 23rd RB taken in 2022, finishing RB3). Otherwise the finish just matched the price, which is a Hit, not a Banger. And a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
         <p class="lede"><b>🩼 Injury</b> pulls a real bad-luck case out of Fail: if the player took the field for 7 games or fewer that season — less than half of it — a Fail becomes an Injury instead, and it's dropped from Overall, Hit Rate, and Miss Rate entirely (it still gets its own column, and its share is of this manager's Fail-or-worse picks, not all picks). A $5-or-less pick that's already capped at Bust by the guardrail above never reaches Injury either — too little was risked either way.</p>
       </details>
       <div class="pq-legend">
@@ -684,17 +680,18 @@ function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:nul
    the same raw rank means something different at each position -- see outcomeBand/posSlots below.
 
    Two guardrails sit on top of the tier/band grid:
-   - A middling price (tier C or D) landing in the top5/top10 outcome bands only earns Banger when the price
-     was genuinely close to that position's floor that year (within $4 of the cheapest same-position pick in
-     that draft -- the floor itself is $1 in literally every season/position in this league's history, so in
-     practice this means $5 or less; see PQ_NEAR_FLOOR_MARGIN) -- tiers C/D span everything from "basically
-     free" down to "paid real money, just not the most," and a price that isn't actually near the floor
-     usually means the price rank and the finish rank landed in roughly the same place: a Hit (delivered what
-     the price demanded), not a steal. A truly cheap (tier E) pick never needed this check -- being in the
-     cheapest quarter already means the price was close to the floor. Two real examples: Austin Ekeler, $3
-     (tier D) in 2019, finished RB7 -- $3 is close enough to that year's $1 RB floor to call it a real steal,
-     so it's a Banger. Joe Mixon, $20 (tier C) in 2018, also finished top10 (RB9) -- $20 isn't remotely close
-     to that year's floor, so the price rank and the finish rank just matched: a Hit, not a steal.
+   - A middling price (tier C or D) landing in the top5/top10 outcome bands earns Banger only when it was a
+     real steal, which means one of two things: the price was genuinely close to that position's floor that
+     year (within $4 of the cheapest same-position pick in that draft -- the floor itself is $1 in literally
+     every season/position in this league's history, so in practice $5 or less; see PQ_NEAR_FLOOR_MARGIN), OR
+     the player finished far better than his price rank said he would (at least a quarter of that position's
+     drafted pool higher up the finish ladder than the price ladder; see PQ_BIG_BEAT_FRACTION). Otherwise the
+     price rank and the finish rank landed in roughly the same place -- he delivered what the price demanded,
+     which is a Hit, not a steal. Real examples: Austin Ekeler, $3 in 2019, RB7 -- near the floor, Banger.
+     Josh Jacobs, $9 in 2022 (the 23rd RB taken), RB3 -- 20 spots better than his price rank, Banger. Joe
+     Mixon, $20 in 2018 (16th RB taken), RB9 -- 7 spots better, just what the price asked for: Hit. A truly
+     cheap (tier E) pick never needed this check -- being in the cheapest quarter already means the price was
+     close to the floor.
    - A pick that cost $5 or less risked too little to ever be branded a total Fail -- it's capped at Bust.
 
    On top of that, a Fail that was really a bad injury rather than a bad pick becomes 🩼 Injury instead:
@@ -721,7 +718,8 @@ const GRADE_GRID = {              // price tier -> outcome band -> grade key
 };
 /* posSlots[season][pos] (baked in by scripts/update_data.py from config/lineups.json) is how many
    startable slots that position actually had league-wide that year -- 1 dedicated QB slot x 10 teams
-   is only 10 startable QBs, while 2 dedicated RB slots plus a shared FLEX is 30. Every band in
+   is only 10 startable QBs, while 2 dedicated RB slots plus a shared FLEX is 30. A W/T (WR/TE) flex slot
+   only counts toward WR: a tight end almost never wins it, so it doesn't make a TE19 startable. Every band in
    outcomeBand scales off that number, including top5/top10: being the 5th- or 10th-best QB in a season
    with only 10 startable QBs is barely startable, not elite, so that band has to shrink right along with
    "great"/"good"/"replacement" -- a QB or TE (a small, mostly non-flexable pool) is judged on a tighter
@@ -762,6 +760,8 @@ const PQ_NEAR_FLOOR_MARGIN = 4;    // a tier C/D "banger" needs a price within t
                                     // invested to judge harshly," and it's the same bar for "too little invested to deny
                                     // a steal." A $1 margin (price<=$2) was too tight -- it capped genuine bargain-bin
                                     // stories like a $3 Austin Ekeler finishing RB7 at Hit instead of Banger.
+const PQ_BIG_BEAT_FRACTION = 0.25; // ...unless he finished at least this share of the position's drafted pool better than his price rank
+                                    // (a $9 RB, the 23rd taken, finishing RB3 is 20 spots better of a 57-RB pool: a steal at any dollar amount)
 const PQ_NEVER_FAIL_MAX = 5;       // a pick priced at or under this never grades worse than Bust
 const PQ_INJURY_MAX_GAMES = 7;     // a Fail where he played this many games or fewer that season becomes an Injury instead
 function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail"/"injury", or null when ungraded
@@ -770,8 +770,9 @@ function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail"/"in
   const pr=PRICE_RANK.get(r); if(!pr) return null;
   const tier=priceTier(pr.rank,pr.pool), band=outcomeBand(r.pos_rank,r.position,r.season);
   let grade=GRADE_GRID[tier][band];
-  if(grade==="banger" && (tier==="C"||tier==="D") && (band==="top5"||band==="top10") && r.price>pr.poolMin+PQ_NEAR_FLOOR_MARGIN){
-    grade="hit";          // a middling price merely matching its outcome rank is a Hit, not a steal -- see the comment above
+  if(grade==="banger" && (tier==="C"||tier==="D") && (band==="top5"||band==="top10") && r.price>pr.poolMin+PQ_NEAR_FLOOR_MARGIN
+     && pr.rank-r.pos_rank<Math.round(pr.pool*PQ_BIG_BEAT_FRACTION)){
+    grade="hit";          // a middling price merely matching its outcome rank (not near the floor, not a huge beat) is a Hit, not a steal -- see the comment above
   }
   if(grade==="fail" && r.price<=PQ_NEVER_FAIL_MAX){
     grade="bust";          // too little was risked to ever call it a total Fail
@@ -1660,11 +1661,11 @@ function dqInit(){
   });
   dqDefaultSel();
 }
-function dqDefaultSel(){          // the three best career Overalls among managers with at least five graded drafts
+function dqDefaultSel(){          // the single best career Overall among managers with at least five graded drafts
   dqSel.length=0; dqSlotOf.clear();
   const car=dqMgrList.map(m=>{ const ss=dqSeasonList.filter(s=>dqBy.has(m.name+"|"+s)); const all=ss.flatMap(s=>dqBy.get(m.name+"|"+s)); return {name:m.name,seasons:ss.length,ov:dqAgg(all).overall}; })
     .filter(x=>x.seasons>=5).sort((a,b)=>b.ov-a.ov);
-  car.slice(0,3).forEach(x=>dqSelect(x.name,true));
+  car.slice(0,1).forEach(x=>dqSelect(x.name,true));
 }
 function dqSelect(name, on){
   const i=dqSel.indexOf(name);
@@ -1711,7 +1712,7 @@ function dqPlainLayout(o){
   };
 }
 function dqTrend(){
-  const metric=$("dq-metric").value, w=+$("dq-smooth").value, xs=dqSeasonList, traces=[];
+  const metric=$("dq-metric").value, w=1, xs=dqSeasonList, traces=[];
   const gradeLine=a=>"🔥 "+a.c.banger+"  ✅ "+a.c.hit+"  😐 "+a.c.meh+"  📉 "+a.c.bust+"  💀 "+a.c.fail;
   const tip=(who,pt)=>pt.agg?"<b>"+esc(who)+" · "+pt.label+"</b><br>"+dqMetricText(pt.agg,metric)+" · "+pt.agg.n+" graded picks<br>"+gradeLine(pt.agg):"";
   const tableRows=[];
@@ -1754,7 +1755,7 @@ function dqTrend(){
     tb.appendChild(tr);
   });
   t.appendChild(el("thead",{},[hr])); t.appendChild(tb); host.appendChild(t);
-  $("dq-trend-lede").textContent="One line per manager: how good that manager’s auction drafts were, season by season. Click names to highlight up to six (the rest stay as faint context); the dashed white line is the whole league. Hover a point for the grade counts behind it. Drafts with no season-finish ranks yet (the current season) aren’t graded, so the lines end at "+xs[xs.length-1]+(w>1?". With 3-season rolling, each point pools that manager’s picks from the three most recent drafts, which smooths out a single lucky or unlucky year.":". Single drafts are noisy: 15 or so graded picks per manager-season, so try the 3-season rolling view for the underlying trend.");
+  $("dq-trend-lede").textContent="One line per manager: how good that manager’s auction drafts were, season by season. Click names to highlight up to six (the rest stay as faint context); the dashed white line is the whole league. Hover a point for the grade counts behind it. Drafts with no season-finish ranks yet (the current season) aren’t graded, so the lines end at "+xs[xs.length-1]+". Single drafts are noisy — 15 or so graded picks per manager-season — so read the overall pattern, not one dip.";
 }
 /* ---- does a good draft win? ---- */
 function dqWin(){
@@ -2090,7 +2091,6 @@ function drawDraft(){
    .forEach(n=>nh.appendChild(el("p",{text:n})));
 }
 $("dq-metric").addEventListener("change",()=>dqTrend());
-$("dq-smooth").addEventListener("change",()=>dqTrend());
 $("dq-fp-by").addEventListener("change",()=>dqFingerprint());
 $("dq-chipreset").addEventListener("click",()=>{ dqDefaultSel(); dqRenderChips(); dqTrend(); });
 

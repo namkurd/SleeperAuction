@@ -620,11 +620,12 @@ def reconcile(canon, reference):
 
 # ----------------------------------------------------------------------------- site data
 # Which position(s) a shared flex-type slot realistically credits with an extra startable spot, for
-# compute_pos_slots below. FLEX (RB/WR) and W/T (WR/TE) genuinely go to whichever eligible position is
-# best that week, so both eligible positions get full credit for it; SFLEX (QB/RB/WR/TE) is technically
-# open to all four, but in practice a second quarterback wins a superflex spot over a third-tier
-# RB/WR/TE almost every time, so only QB gets credit for it.
-FLEX_CREDIT = {"FLEX": ["RB", "WR"], "W/T": ["WR", "TE"], "SFLEX": ["QB"]}
+# compute_pos_slots below. FLEX (RB/WR) genuinely goes to whichever eligible position is best that week, so
+# both RB and WR get full credit for it. W/T (WR/TE) is technically open to both, but a tight end almost never
+# beats a WR for it, so only WR gets credit (a TE19 is not a startable tight end just because a W/T slot
+# exists). SFLEX (QB/RB/WR/TE) is open to all four, but in practice a second quarterback wins a superflex
+# spot over a third-tier RB/WR/TE almost every time, so only QB gets credit for it.
+FLEX_CREDIT = {"FLEX": ["RB", "WR"], "W/T": ["WR"], "SFLEX": ["QB"]}
 
 
 def compute_pos_slots(seasons, teams):

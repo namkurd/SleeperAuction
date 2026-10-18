@@ -136,6 +136,7 @@ def price_rank_text(pos, rank, end):
     return f"{pos}{rank}" if rank == end else f"{pos}{rank}-{end}"
 
 
+PQ_BIG_BEAT_FRACTION = 0.25   # ...unless he finished at least this share of the position's drafted pool better than his price rank
 PQ_NEAR_FLOOR_MARGIN = 4    # a tier C/D "banger" needs a price within this many dollars of the position's floor that year --
                             # the floor itself is $1 in literally every season/position in this league's history, so this
                             # margin IS the real-dollar threshold (poolMin+4 = $5), matching PQ_NEVER_FAIL_MAX below
@@ -155,7 +156,8 @@ def pick_grade(r, pr, pos_slots):
     rank, end, pool, pool_min = pr
     tier, band = price_tier(rank, pool), outcome_band(r["pos_rank"], r["position"], r["season"], pos_slots)
     grade = GRADE_GRID[tier][band]
-    if grade == "banger" and tier in ("C", "D") and band in ("top5", "top10") and r["price"] > pool_min + PQ_NEAR_FLOOR_MARGIN:
+    if grade == "banger" and tier in ("C", "D") and band in ("top5", "top10") and r["price"] > pool_min + PQ_NEAR_FLOOR_MARGIN \
+            and rank - r["pos_rank"] < rhu(pool * PQ_BIG_BEAT_FRACTION):
         grade = "hit"
     if grade == "fail" and r["price"] <= PQ_NEVER_FAIL_MAX:
         grade = "bust"

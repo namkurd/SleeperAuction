@@ -146,7 +146,7 @@ PQ_INJURY_MAX_GAMES = 7     # a Fail where he played this many games or fewer th
 
 def pick_grade(r, pr, pos_slots):
     """Same grading as the live site's pickGradeKey (site/index.html) -- see the comment there for the
-    reasoning behind the scarcity-scaled bands and the three guardrails on top of the tier/band grid."""
+    reasoning behind the scarcity-scaled bands and the guardrails on top of the tier/band grid."""
     if r["position"] in ("K", "DEF") or r["pos_rank"] is None:
         return ""
     if r["pos_rank"] == 1:
@@ -156,6 +156,8 @@ def pick_grade(r, pr, pos_slots):
     rank, end, pool, pool_min = pr
     tier, band = price_tier(rank, pool), outcome_band(r["pos_rank"], r["position"], r["season"], pos_slots)
     grade = GRADE_GRID[tier][band]
+    if tier in ("A", "B") and grade == "meh" and r["pos_rank"] <= rank:
+        grade = "hit"       # a premium price that finished at least as high as it was priced delivered what it cost
     if grade == "banger" and tier in ("C", "D") and band in ("top5", "top10") and r["price"] > pool_min + PQ_NEAR_FLOOR_MARGIN \
             and rank - r["pos_rank"] < rhu(pool * PQ_BIG_BEAT_FRACTION):
         grade = "hit"

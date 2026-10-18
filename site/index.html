@@ -426,7 +426,7 @@ html,body{max-width:100%}
             </tbody>
           </table>
         </div>
-        <p class="lede">A few guardrails on top of the grid: at a middling price (tier C/D), reaching Top 5/Top 10 only earns a Banger when it was a real steal: either the price was close to that position's cheapest pick that year (within $5, since the floor is almost always $1), or he finished at least a quarter of the position's drafted pool better than his price rank (Josh Jacobs, $9 and the 23rd RB taken in 2022, finishing RB3). Otherwise the finish just matched the price, which is a Hit, not a Banger. And a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
+        <p class="lede">A few guardrails on top of the grid: a premium price (tier A or B) that finishes at least as high as it was priced — the 4th tight end taken finishing 4th, say — is never worse than a ✅ Hit, since he delivered exactly what he cost. At a middling price (tier C/D), reaching Top 5/Top 10 only earns a Banger when it was a real steal: either the price was close to that position's cheapest pick that year (within $5, since the floor is almost always $1), or he finished at least a quarter of the position's drafted pool better than his price rank (Josh Jacobs, $9 and the 23rd RB taken in 2022, finishing RB3). Otherwise the finish just matched the price, which is a Hit, not a Banger. And a pick that cost $5 or less can never be branded a full Fail, only a Bust. Finishing #1 at the position is always 🔥 Banger regardless of price. Kickers, defenses, and picks without a season-finish rank yet aren't graded.</p>
         <p class="lede"><b>🩼 Injury</b> pulls a real bad-luck case out of Fail: if the player took the field for 7 games or fewer that season — less than half of it — a Fail becomes an Injury instead, and it's dropped from Overall, Hit Rate, and Miss Rate entirely (it still gets its own column, and its share is of this manager's Fail-or-worse picks, not all picks). A $5-or-less pick that's already capped at Bust by the guardrail above never reaches Injury either — too little was risked either way.</p>
       </details>
       <div class="pq-legend">
@@ -679,7 +679,11 @@ function pickPriceRankText(r){ const pr=PRICE_RANK.get(r); return pr?pr.text:nul
    Scarcity: a QB or TE finish is judged against a much smaller startable pool than an RB or WR finish, so
    the same raw rank means something different at each position -- see outcomeBand/posSlots below.
 
-   Two guardrails sit on top of the tier/band grid:
+   Three guardrails sit on top of the tier/band grid:
+   - A premium price (tier A or B, the priciest quarter at the position) that finishes at least as high as
+     it was priced is never worse than a Hit: the 4th tight end taken (a $9 Greg Olsen in 2015) finishing as
+     the 4th tight end delivered exactly what he cost. The grid alone can call that a Meh, because the
+     premium tiers want a top-5/top-10 finish and a scarce position's top bands are only a few players wide.
    - A middling price (tier C or D) landing in the top5/top10 outcome bands earns Banger only when it was a
      real steal, which means one of two things: the price was genuinely close to that position's floor that
      year (within $4 of the cheapest same-position pick in that draft -- the floor itself is $1 in literally
@@ -770,6 +774,9 @@ function pickGradeKey(r){              // "banger"/"hit"/"meh"/"bust"/"fail"/"in
   const pr=PRICE_RANK.get(r); if(!pr) return null;
   const tier=priceTier(pr.rank,pr.pool), band=outcomeBand(r.pos_rank,r.position,r.season);
   let grade=GRADE_GRID[tier][band];
+  if((tier==="A"||tier==="B") && grade==="meh" && r.pos_rank<=pr.rank){
+    grade="hit";          // a premium price that finished at least as high as it was priced (drafted 4th, finished 4th) delivered exactly what it cost -- never a Meh
+  }
   if(grade==="banger" && (tier==="C"||tier==="D") && (band==="top5"||band==="top10") && r.price>pr.poolMin+PQ_NEAR_FLOOR_MARGIN
      && pr.rank-r.pos_rank<Math.round(pr.pool*PQ_BIG_BEAT_FRACTION)){
     grade="hit";          // a middling price merely matching its outcome rank (not near the floor, not a huge beat) is a Hit, not a steal -- see the comment above

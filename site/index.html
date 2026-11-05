@@ -1440,6 +1440,7 @@ function pqMgrCell(name){    // the Manager cell -- when exactly one season is s
       td._tip={title:name+" · "+ssn, lines:lines};
       td.style.cursor="help";
       td.addEventListener("mouseenter",()=>showTip(td)); td.addEventListener("mouseleave",hideTip);
+      td.addEventListener("click",e=>{ e.stopPropagation(); showTip(td); });   // a tap: without this the page-wide click closes the tip the moment it opens
     }
   }
   return td;

@@ -73,7 +73,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .twocol{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
 .plcols{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start}
 .plmain{min-width:0}
-.pltable-card{margin:0;position:sticky;top:12px}
+.pltable-card{margin:0;position:sticky;top:calc(12px + var(--dtf-top-h,0px))}
 .pltable{max-height:840px;overflow-y:auto;overflow-x:hidden}
 #pt-table{table-layout:fixed}
 #pt-table th:nth-child(1),#pt-table td:nth-child(1){width:56%}
@@ -2610,6 +2610,7 @@ initPickQuality();
 route();
 })();
 </script>
+<script>window.DTF_VIEWS = {"hide": "nav[role=tablist]", "items": [{"label": "League Trends", "sel": "nav[role=tablist] [data-view=league]", "native": 1}, {"label": "Draft Quality", "sel": "nav[role=tablist] [data-view=draft]", "native": 1}, {"label": "Managers", "sel": "nav[role=tablist] [data-view=managers]", "native": 1}, {"label": "Drafts", "sel": "nav[role=tablist] [data-view=drafts]", "native": 1}, {"label": "Players", "sel": "nav[role=tablist] [data-view=players]", "native": 1}]};</script>
 <script src="/shell/nav.js" defer></script>
 </body>
 </html>

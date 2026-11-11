@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DTF Club Auction Archive</title>
+<title>Auction Archive · DTF Club</title>
 <meta name="description" content="Fourteen-plus years of DTF Club auction-draft prices: league trends, draft quality, manager profiles and player price history.">
 <meta name="color-scheme" content="dark">
 <style>
@@ -2133,7 +2133,7 @@ function drawManager(name){
   extra.push("Chart axes start at $0 and stop at $140 (position) and $80 (depth) unless a manager's spending goes higher.");
   extra.push("Hovering a point on the depth chart, or a cell in its table below, shows the same tooltip as everywhere else on this site: where that price ranked among every pick at the position that draft, how the player finished the real NFL season, and how this manager's team did that year. The icon next to the player's name grades the pick; see the Draft Quality tab for what each icon means.");
   if(ss.some(x=>standingFor(x,m.name))){
-    extra.push("The label above each year is that team's regular-season finish by Rumbles (each week: 1 point per team outscored, plus 9 for winning the matchup; the league's official standings since 2022, ranked the same way for earlier seasons). A gold, silver or bronze medal above a label means the team finished the playoffs as champion, 2nd or 3rd; a 💩 marks that year's Sacko (last place after the losers bracket). Hover a label (or its medal) for the record, PF+ and playoff finish. Standings start in 2013, and a season appears once its regular season is over.");
+    extra.push("The label above each year is that team's regular-season finish by Rumbles (each week: 10 for a head-to-head win, plus 1 for each additional team outscored; the league's official standings since 2022, ranked the same way for earlier seasons). A gold, silver or bronze medal above a label means the team finished the playoffs as champion, 2nd or 3rd; a 💩 marks that year's Sacko (last place after the losers bracket). Hover a label (or its medal) for the record, PF+ and playoff finish. Standings start in 2013, and a season appears once its regular season is over.");
     extra.push("PF+ (points-for plus) works like baseball's OPS+. Take the average regular-season points total of all teams in that season and call it 100; a manager's PF+ is their own points total measured against it: PF+ = their points ÷ that season's league average × 100. A manager who scored 2,200 in a season when the average team scored 2,000 has a PF+ of 110 (10% more scoring than the average team); 90 would be 10% less. Because each season is measured against its own average, PF+ compares fairly across years even when scoring or the number of games changed.");
     const noMedal=Object.keys(D.standings).filter(y=>!Object.values(D.standings[y]).some(v=>v[1])).map(Number);
     if(noMedal.length) extra.push("Playoff results are not recorded yet for "+noMedal.join(", ")+", so those years show no medals. They can be added in config/playoffs.json.");

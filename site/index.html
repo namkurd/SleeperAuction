@@ -177,6 +177,16 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--ink3);font
 .dq-chip{display:inline-flex;align-items:center;gap:6px}
 .dq-chip .dot{width:9px;height:9px;border-radius:50%;border:1px solid var(--ink3);flex:0 0 auto}
 .dq-chip[aria-pressed="true"]{color:var(--ink);border-color:var(--ink2);background:var(--card2)}
+.dq-glegend{display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center;margin:2px 0 10px;font-size:12.5px;color:var(--ink2)}
+.dq-glegend span{display:inline-flex;align-items:center;gap:6px}
+.dq-glegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.dq-glegend i.ln{height:0;width:16px;border-top:2.5px solid #e8eaf0;border-radius:0}
+.dq-ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.dq-gcell{border:1px solid #2a2f3a;border-radius:12px;padding:8px 8px 2px;background:rgba(255,255,255,.015);min-width:0}
+.dq-gcell h4{margin:0 4px;font-size:14px;font-weight:650}
+.dq-gcell .sub{margin:1px 4px 0;color:var(--ink3);font-size:11.5px}
+.dq-gcell .gch{height:230px}
+@media (max-width:600px){ .dq-ggrid{grid-template-columns:1fr} .dq-gcell .gch{height:215px} }
 .dq-h3{font-size:15px;margin:22px 0 2px;font-weight:650}
 .dq-tbl th,.dq-tbl td{text-align:right}
 .dq-tbl th:first-child,.dq-tbl td:first-child{text-align:left}
@@ -346,6 +356,19 @@ html,body{max-width:100%}
       <div class="dq-chipbar"><span class="dq-chiplabel">Highlight up to 6 managers:</span><div class="dq-chips" id="dq-chips" role="group" aria-label="Managers to highlight"></div><button type="button" class="chip" id="dq-chipreset">Reset</button></div>
       <div class="chart" id="dq-trend"></div>
       <details><summary>Data table</summary><div class="tablewrap" id="dq-trend-table"></div></details>
+    </div>
+    <div class="card" id="dq-grid-card">
+      <h2>Every manager’s drafts, year by year</h2>
+      <p class="lede" id="dq-grid-lede"></p>
+      <div class="filters">
+        <label>Bars show <select id="dq-grid-mode" aria-label="What the bars show">
+          <option value="count">Number of picks of each quality</option>
+          <option value="share">Share of the year’s picks</option>
+        </select></label>
+      </div>
+      <div class="dq-glegend" id="dq-glegend"></div>
+      <div class="dq-ggrid" id="dq-ggrid"></div>
+      <details><summary>Data table</summary><div class="tablewrap" id="dq-gtable"></div></details>
     </div>
     <div class="card" id="pq-card">
       <h2>Pick quality by manager</h2>
@@ -1766,6 +1789,62 @@ function dqTrend(){
   t.appendChild(el("thead",{},[hr])); t.appendChild(tb); host.appendChild(t);
   $("dq-trend-lede").textContent="One line per manager: how good that manager’s auction drafts were, season by season. Click names to highlight up to six (the rest stay as faint context); the dashed white line is the whole league. Hover a point for the grade counts behind it. Drafts with no season-finish ranks yet (the current season) aren’t graded, so the lines end at "+xs[xs.length-1]+". Single drafts are noisy — 15 or so graded picks per manager-season — so read the overall pattern, not one dip.";
 }
+/* ---- every manager, year by year: stacked bars = how many picks of each quality, line = Overall ---- */
+const DQ_GRADE_ORDER=["banger","hit","meh","bust","fail","injury"];
+const DQ_GRADE_COLORS={banger:"#2fbf71",hit:"#8fd9a6",meh:"#8b93a3",bust:"#e89a5b",fail:"#e0454f",injury:"#7c6df0"};
+let dqGridBy=null;
+function dqGridData(){            // manager|season -> {c:{grade:n}, graded:n}, injuries included (they are a pick quality too, just not scored)
+  if(dqGridBy) return dqGridBy;
+  dqGridBy=new Map();
+  picks.forEach(r=>{
+    const k=pickGradeKey(r); if(!k) return;
+    const key=r.manager+"|"+r.season;
+    if(!dqGridBy.has(key)) dqGridBy.set(key,{c:{banger:0,hit:0,meh:0,bust:0,fail:0,injury:0},n:0});
+    const o=dqGridBy.get(key); o.c[k]++; o.n++;
+  });
+  return dqGridBy;
+}
+function dqGrid(){
+  const by=dqGridData(), xs=dqSeasonList, share=$("dq-grid-mode").value==="share";
+  const lab=xs.map(x=>"\u2019"+String(x).slice(2));
+  // the same y scale in every chart so managers can be compared by eye
+  let maxN=0; by.forEach(o=>{ if(o.n>maxN) maxN=o.n; });
+  const leg=$("dq-glegend"); leg.textContent="";
+  DQ_GRADE_ORDER.forEach(g=>leg.appendChild(el("span",{},[el("i",{style:"background:"+DQ_GRADE_COLORS[g]}),GRADE_META[g].icon+" "+GRADE_META[g].label])));
+  leg.appendChild(el("span",{},[el("i",{class:"ln"}),"Overall (right axis)"]));
+  const host=$("dq-ggrid"); host.textContent="";
+  const trows=[];
+  dqMgrList.forEach(m=>{
+    const seasons=xs.filter(s=>by.has(m.name+"|"+s));
+    if(!seasons.length) return;
+    const all=seasons.flatMap(s=>dqBy.get(m.name+"|"+s)||[]), career=all.length?dqAgg(all):null;
+    const cell=el("div",{class:"dq-gcell"}), chart=el("div",{class:"gch"});
+    cell.appendChild(el("h4",{text:m.name+(m.current?"":" (former)")}));
+    cell.appendChild(el("div",{class:"sub",text:seasons.length+" draft"+(seasons.length===1?"":"s")+" · "+(career?career.n+" graded picks · career Overall "+dqFmtOv(career.overall):"no scored picks")}));
+    cell.appendChild(chart); host.appendChild(cell);
+    const traces=DQ_GRADE_ORDER.map(g=>({type:"bar",name:GRADE_META[g].icon+" "+GRADE_META[g].label,x:lab,
+      y:xs.map(s=>{ const o=by.get(m.name+"|"+s); return o?(share?o.c[g]/o.n*100:o.c[g]):null; }),
+      marker:{color:DQ_GRADE_COLORS[g],line:{color:SURFACE,width:.6}},
+      hovertemplate:GRADE_META[g].icon+" "+GRADE_META[g].label+": %{y"+(share?":.0f}%":"}")+"<extra></extra>"}));
+    const ov=xs.map(s=>{ const l=dqBy.get(m.name+"|"+s); return l&&l.length?dqAgg(l).overall:null; });
+    traces.push({type:"scatter",mode:"lines+markers",name:"Overall",x:lab,y:ov,yaxis:"y2",connectgaps:false,
+      line:{color:INK,width:2},marker:{color:INK,size:6,line:{color:SURFACE,width:1.5}},hovertemplate:"<b>Overall %{y:+.2f}</b><extra></extra>"});
+    const lay=dqPlainLayout({margin:{l:30,r:34,t:6,b:30},xaxis:{type:"category",tickfont:{size:10.5},tickangle:xs.length>10?-60:0,automargin:true},
+      yaxis:{rangemode:"tozero",range:[0,share?100:Math.max(maxN,4)+1],tickfont:{size:10.5},ticksuffix:share?"%":""}});
+    lay.barmode="stack"; lay.showlegend=false; lay.hovermode="x unified"; lay.bargap=.22;
+    lay.yaxis2={overlaying:"y",side:"right",range:[-2.2,2.2],tickvals:[-2,-1,0,1,2],ticktext:["−2","−1","0","+1","+2"],tickfont:{size:10.5,color:INK2},showgrid:false,zeroline:false,fixedrange:true};
+    lay.shapes=[{type:"line",xref:"paper",x0:0,x1:1,yref:"y2",y0:0,y1:0,line:{color:"rgba(232,234,240,.28)",width:1,dash:"dot"}}];
+    Plotly.react(chart,traces,lay,CFG);
+    seasons.forEach(s=>{ const o=by.get(m.name+"|"+s), l=dqBy.get(m.name+"|"+s); trows.push({m:m.name,s,o,ov:l&&l.length?dqAgg(l).overall:null}); });
+  });
+  const tb=$("dq-gtable"); tb.textContent="";
+  const t=el("table",{class:"dq-tbl"}), hr=el("tr"), body=el("tbody");
+  ["Manager","Year"].concat(DQ_GRADE_ORDER.map(g=>GRADE_META[g].icon+" "+GRADE_META[g].label),["Overall"]).forEach(h=>hr.appendChild(el("th",{text:h})));
+  trows.forEach(r=>{ const tr=el("tr"); tr.appendChild(el("td",{text:r.m})); tr.appendChild(el("td",{text:String(r.s)}));
+    DQ_GRADE_ORDER.forEach(g=>tr.appendChild(el("td",{text:String(r.o.c[g])}))); tr.appendChild(el("td",{text:r.ov==null?"–":dqFmtOv(r.ov)})); body.appendChild(tr); });
+  t.appendChild(el("thead",{},[hr])); t.appendChild(body); tb.appendChild(t);
+  $("dq-grid-lede").textContent="One small chart per manager, all on the same scale. Each bar is one draft: the stack shows how many of that year’s graded picks were a Banger, Hit, Meh, Bust or Fail (and, in purple, how many were wrecked by injury, which is not counted against the manager); the white line is that draft’s Overall score on the right-hand axis (+2 = all Bangers, −2 = all Fails). Years a manager sat out are left empty. Hover a year for the numbers.";
+}
 /* ---- does a good draft win? ---- */
 function dqWin(){
   const rows=dqSeasonRows;
@@ -2090,6 +2169,7 @@ function drawDraft(){
   dqInit();
   if(!$("dq-chips").children.length){ dqRenderChips(); }
   dqTrend();
+  dqGrid();
   dqWin();
   dqOu();
   dqFingerprint();
@@ -2100,6 +2180,7 @@ function drawDraft(){
    .forEach(n=>nh.appendChild(el("p",{text:n})));
 }
 $("dq-metric").addEventListener("change",()=>dqTrend());
+$("dq-grid-mode").addEventListener("change",()=>dqGrid());
 $("dq-fp-by").addEventListener("change",()=>dqFingerprint());
 $("dq-chipreset").addEventListener("click",()=>{ dqDefaultSel(); dqRenderChips(); dqTrend(); });
 
